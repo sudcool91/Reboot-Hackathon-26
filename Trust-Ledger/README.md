@@ -244,8 +244,8 @@ TransactionID
 
 ### Notice
 
-* No Aadhaar
-* No PAN
+* No ID Proof
+* No Address Proof
 * No Passport
 * No Name
 * No Address
