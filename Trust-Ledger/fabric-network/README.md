@@ -38,12 +38,12 @@ First, ensure that the peer binaries are on your path, and the Fabric Config pat
 You can then set up the environment variables for each organization. The `./setOrgEnv.sh` command is designed to be run as follows.
 
 ```bash
-export $(./setOrgEnv.sh Org2 | xargs)
+export $(./setOrgEnv.sh Halifax | xargs)
 ```
 
 (Note bash v4 is required for the scripts.)
 
-You will now be able to run the `peer` commands in the context of Org2. If a different command prompt, you can run the same command with Org1 instead.
+You will now be able to run the `peer` commands in the context of Halifax. If a different command prompt, you can run the same command with Lloyds instead.
 The `setOrgEnv` script outputs a series of `<name>=<value>` strings. These can then be fed into the export command for your current shell.
 
 ## Chaincode-as-a-service
