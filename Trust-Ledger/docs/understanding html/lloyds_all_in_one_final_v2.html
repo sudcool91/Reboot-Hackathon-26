@@ -1,0 +1,2144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lloyds DLT Lending Platform</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  a { text-decoration: none; color: inherit; }
+
+  /* ============ GLOBAL FIXED SIDEBAR (shared across all pages, never scrolls) ============ */
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 264px;
+    background: #024731; padding: 1.6rem 1.1rem; display: flex; flex-direction: column;
+    z-index: 100; overflow-y: auto;
+    transition: transform 0.45s cubic-bezier(.2,.8,.2,1), opacity 0.4s ease;
+  }
+  .sidebar.hidden-for-fluid { transform: translateX(-100%); opacity: 0; pointer-events: none; }
+  .sb-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; margin-bottom: 6px; }
+  .sb-mark { width: 30px; height: 30px; border-radius: 7px; background: #F2F0E6; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #024731; flex-shrink: 0; }
+  .sb-name { font-weight: 700; font-size: 16px; color: #F2F0E6; letter-spacing: 0.04em; }
+  .sb-tagline { font-size: 11px; color: #7FAE96; padding: 0 8px; margin-bottom: 1.75rem; }
+  .sb-label { font-size: 10.5px; color: #5E9079; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; padding: 0 10px; margin: 1.3rem 0 0.55rem; }
+  .sb-label:first-of-type { margin-top: 0; }
+  .sb-link { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 9px; color: #B9D4C5; font-size: 13.5px; margin-bottom: 1px; cursor: pointer; border: none; background: none; width: 100%; text-align: left; font-family: inherit; }
+  .sb-link-left { display: flex; align-items: center; gap: 11px; }
+  .sb-link:hover { background: rgba(255,255,255,0.06); color: #F2F0E6; }
+  .sb-link.on { background: #0E6E4B; color: #F2F0E6; font-weight: 600; }
+  .sb-link svg { width: 17px; height: 17px; flex-shrink: 0; }
+  .sb-badge { font-size: 10.5px; background: #F2F0E6; color: #024731; padding: 1px 7px; border-radius: 999px; font-weight: 700; }
+  .sb-badge-m { font-size: 10.5px; color: #7FAE96; }
+  .sb-foot { margin-top: auto; padding-top: 1.1rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
+  .sb-av { width: 34px; height: 34px; border-radius: 50%; background: #0E6E4B; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; color: #F2F0E6; flex-shrink: 0; }
+  .sb-fname { font-weight: 700; font-size: 13.5px; color: #FFFFFF; }
+  .sb-frole { font-size: 11.5px; color: #BFE3CE; margin-top: 1px; font-weight: 500; }
+  /* ============ Motion: LLOYDS wordmark + page transitions ============ */
+  .sb-mark {
+    transition: transform 0.25s ease;
+  }
+  .sb-brand:hover .sb-mark { transform: scale(1.08) rotate(-3deg); }
+
+  .sb-name { position: relative; display: inline-block; overflow: hidden; }
+  .sb-name::after {
+    content: "";
+    position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+    background: linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.85) 50%, transparent 100%);
+    transform: skewX(-18deg);
+    animation: wordmarkShine 4.5s ease-in-out infinite;
+  }
+  @keyframes wordmarkShine {
+    0%   { left: -60%; }
+    35%  { left: 130%; }
+    100% { left: 130%; }
+  }
+
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .page-wrap { animation: pageIn 0.32s ease; }
+
+  .sb-link { transition: background 0.18s ease, color 0.18s ease, padding-left 0.18s ease; }
+  .sb-link:hover { padding-left: 15px; }
+  .sb-link.on { position: relative; }
+  .sb-link.on::before {
+    content: ""; position: absolute; left: -11px; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 16px; border-radius: 2px; background: #F2F0E6;
+  }
+
+  /* ============ Fluid overview nav button (global, appears on every page) ============ */
+  .fluid-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, #1D9E75 0%, #4FD89A 100%);
+    color: #06140E; border: 2px solid rgba(255,255,255,0.5); padding: 13px 26px; border-radius: 999px;
+    font-size: 15.5px; font-weight: 800; cursor: pointer; font-family: inherit;
+    position: relative; overflow: visible; letter-spacing: 0.01em;
+    transition: transform 0.2s cubic-bezier(.2,.8,.2,1), box-shadow 0.2s ease;
+    box-shadow: 0 4px 16px rgba(29,158,117,0.45);
+    animation: fluidBtnBreathe 2.6s ease-in-out infinite;
+  }
+  @keyframes fluidBtnBreathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.045); }
+  }
+  .fluid-btn:hover { transform: scale(1.08) !important; box-shadow: 0 8px 24px rgba(29,158,117,0.6); animation-play-state: paused; }
+  .fluid-btn:active { transform: scale(0.98) !important; }
+
+  .fluid-btn-halo {
+    position: absolute; inset: -9px; border-radius: 999px; z-index: -1;
+    background: radial-gradient(circle, rgba(79,216,154,0.6) 0%, transparent 70%);
+    animation: fluidHaloPulse 2.2s ease-in-out infinite;
+  }
+  @keyframes fluidHaloPulse {
+    0%, 100% { opacity: 0.55; transform: scale(0.95); }
+    50% { opacity: 1; transform: scale(1.22); }
+  }
+
+  .fluid-btn-inner { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 10px; overflow: hidden; }
+  .fluid-btn-inner::after {
+    content: ""; position: absolute; top: -14px; left: -60%; width: 35%; height: 150%;
+    background: linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.9) 50%, transparent 100%);
+    transform: skewX(-18deg); animation: fluidBtnShine 2.4s ease-in-out infinite;
+  }
+  @keyframes fluidBtnShine { 0% { left: -60%; } 45% { left: 140%; } 100% { left: 140%; } }
+  .fluid-btn svg { width: 17px; height: 17px; animation: fluidBtnPulse 1.6s ease-in-out infinite; flex-shrink: 0; }
+  @keyframes fluidBtnPulse { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.3) rotate(10deg); } }
+
+  /* ============ Special transition for the fluid overview page only ============ */
+  #page-fluid_overview { animation: fluidPageIn 0.5s ease; }
+  @keyframes fluidPageIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ============ Per-page scoped styles ============ */
+/* ===== dashboard ===== */
+#page-dashboard * { box-sizing: border-box; margin: 0; padding: 0; }
+#page-dashboard, #page-dashboard { height: 100%; }
+#page-dashboard {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #EFEEE6; color: #16160F; font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+#page-dashboard a { text-decoration: none; color: inherit; }
+#page-dashboard .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 264px;
+    background: #024731; padding: 1.6rem 1.1rem; display: flex; flex-direction: column;
+    z-index: 100; overflow-y: auto;
+  }
+#page-dashboard .sb-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; margin-bottom: 6px; }
+#page-dashboard .sb-mark { width: 30px; height: 30px; border-radius: 7px; background: #F2F0E6; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #024731; flex-shrink: 0; }
+#page-dashboard .sb-name { font-weight: 700; font-size: 16px; color: #F2F0E6; letter-spacing: 0.04em; }
+#page-dashboard .sb-tagline { font-size: 11px; color: #7FAE96; padding: 0 8px; margin-bottom: 1.75rem; }
+#page-dashboard .sb-label { font-size: 10.5px; color: #5E9079; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; padding: 0 10px; margin: 1.3rem 0 0.55rem; }
+#page-dashboard .sb-label:first-of-type { margin-top: 0; }
+#page-dashboard .sb-link { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 9px; color: #B9D4C5; font-size: 13.5px; margin-bottom: 1px; }
+#page-dashboard .sb-link-left { display: flex; align-items: center; gap: 11px; }
+#page-dashboard .sb-link:hover { background: rgba(255,255,255,0.06); color: #F2F0E6; }
+#page-dashboard .sb-link.on { background: #0E6E4B; color: #F2F0E6; font-weight: 600; }
+#page-dashboard .sb-link svg { width: 17px; height: 17px; flex-shrink: 0; }
+#page-dashboard .sb-badge { font-size: 10.5px; background: #F2F0E6; color: #024731; padding: 1px 7px; border-radius: 999px; font-weight: 700; }
+#page-dashboard .sb-badge-m { font-size: 10.5px; color: #7FAE96; }
+#page-dashboard .sb-foot { margin-top: auto; padding-top: 1.1rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
+#page-dashboard .sb-av { width: 34px; height: 34px; border-radius: 50%; background: #0E6E4B; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; color: #F2F0E6; flex-shrink: 0; }
+#page-dashboard .main { margin-left: 264px; min-height: 100vh; }
+#page-dashboard .navbar {
+    position: sticky; top: 0; z-index: 50;
+    background: #FFFFFF; border-bottom: 1px solid #E2E0D2;
+    padding: 1.1rem 2.75rem; display: flex; justify-content: space-between; align-items: center;
+  }
+#page-dashboard .navbar-crumbs { font-size: 12px; color: #8C8B7E; }
+#page-dashboard .navbar-crumbs b { color: #16160F; font-weight: 600; }
+#page-dashboard .navbar-right { display: flex; align-items: center; gap: 14px; }
+#page-dashboard .pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+#page-dashboard .pill-live { background: #E2EEE7; color: #024731; }
+#page-dashboard .pill-dot { width: 7px; height: 7px; border-radius: 50%; background: #1D9E75; display: inline-block; }
+#page-dashboard .icon-btn { width: 36px; height: 36px; border-radius: 9px; background: #F7F6EF; border: 1px solid #E2E0D2; display: flex; align-items: center; justify-content: center; }
+#page-dashboard .nav-av { width: 32px; height: 32px; border-radius: 50%; background: #E2EEE7; color: #024731; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; }
+#page-dashboard .content { padding: 2.1rem 2.75rem 3.5rem; max-width: 1500px; }
+#page-dashboard .hero { display: grid; grid-template-columns: 1.3fr 1fr; background: #024731; border-radius: 16px; overflow: hidden; margin-bottom: 2.25rem; }
+#page-dashboard .hero-l { padding: 2.1rem 2.3rem; color: #F2F0E6; }
+#page-dashboard .hero-eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #8FCBAE; font-weight: 700; margin-bottom: 12px; }
+#page-dashboard .hero-h { font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; max-width: 460px; }
+#page-dashboard .hero-h em { font-style: normal; color: #8FCBAE; }
+#page-dashboard .hero-sub { font-size: 13.5px; color: #BFD8CC; max-width: 430px; margin-bottom: 1.4rem; }
+#page-dashboard .hero-btns { display: flex; gap: 10px; }
+#page-dashboard .hbtn { padding: 10px 16px; border-radius: 9px; font-size: 12.5px; font-weight: 700; border: none; cursor: pointer; }
+#page-dashboard .hbtn-l { background: #F2F0E6; color: #024731; }
+#page-dashboard .hbtn-o { background: transparent; color: #F2F0E6; border: 1.5px solid rgba(255,255,255,0.35); }
+#page-dashboard .hero-r { background: rgba(0,0,0,0.16); padding: 2.1rem 1.8rem; display: flex; flex-direction: column; justify-content: center; gap: 1.3rem; border-left: 1px solid rgba(255,255,255,0.08); }
+#page-dashboard .compare { display: flex; align-items: center; gap: 1rem; }
+#page-dashboard .compare-b { flex: 1; }
+#page-dashboard .compare-l { font-size: 10.5px; color: #8FCBAE; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+#page-dashboard .compare-v { font-size: 23px; font-weight: 700; color: #F2F0E6; }
+#page-dashboard .compare-v.m { color: #7FAE96; text-decoration: line-through; font-size: 18px; }
+#page-dashboard .ticker { display: flex; align-items: center; gap: 9px; border-radius: 9px; padding: 9px 14px; font-size: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: #D7E8DF; }
+#page-dashboard .block { margin-bottom: 2.25rem; }
+#page-dashboard .block:last-child { margin-bottom: 0; }
+#page-dashboard .block-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; }
+#page-dashboard .block-title { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 9px; }
+#page-dashboard .block-num { font-family: ui-monospace, monospace; font-size: 11px; color: #0B5C3F; background: #E2EEE7; width: 21px; height: 21px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; }
+#page-dashboard .block-note { font-size: 12px; color: #8C8B7E; }
+#page-dashboard .block-link { font-size: 12.5px; color: #0B5C3F; font-weight: 700; }
+#page-dashboard .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+#page-dashboard .stat { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; padding: 1.2rem 1.3rem; position: relative; }
+#page-dashboard .stat::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #0E6E4B; border-radius: 14px 0 0 14px; }
+#page-dashboard .stat-label { font-size: 11.5px; color: #4A4A40; font-weight: 600; margin-bottom: 9px; }
+#page-dashboard .stat-value { font-size: 28px; font-weight: 700; margin-bottom: 7px; }
+#page-dashboard .stat-foot { font-size: 11.5px; font-weight: 600; }
+#page-dashboard .stat-foot.up { color: #0B5C3F; }
+#page-dashboard .stat-foot.flat { color: #8C8B7E; font-weight: 500; }
+#page-dashboard .ptrack { height: 7px; background: #F0EFE6; border-radius: 999px; overflow: hidden; margin: 7px 0; }
+#page-dashboard .pfill { height: 100%; background: #0E6E4B; border-radius: 999px; }
+#page-dashboard .card { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; }
+#page-dashboard .card-pad { padding: 1.3rem 1.4rem; }
+#page-dashboard table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#page-dashboard th { text-align: left; padding: 10px 8px; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: #8C8B7E; font-weight: 700; border-bottom: 1px solid #E2E0D2; }
+#page-dashboard td { padding: 13px 8px; border-bottom: 1px solid #EEEDE4; }
+#page-dashboard tr:last-child td { border-bottom: none; }
+#page-dashboard .person { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+#page-dashboard .av { width: 27px; height: 27px; border-radius: 50%; background: #E2EEE7; color: #024731; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+#page-dashboard .chain-ref { color: #0B5C3F; font-weight: 600; font-size: 12.5px; display: inline-flex; align-items: center; gap: 5px; }
+#page-dashboard .tag { font-size: 11px; padding: 4px 10px; border-radius: 999px; font-weight: 700; display: inline-block; }
+#page-dashboard .tag-go { background: #E2EEE7; color: #024731; }
+#page-dashboard .tag-warn { background: #FAEEDA; color: #854F0B; }
+#page-dashboard .tag-stop { background: #FCEBEB; color: #A32D2D; }
+#page-dashboard .mono-sm { font-family: ui-monospace, monospace; font-size: 11px; color: #8C8B7E; }
+#page-dashboard .grid2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; }
+#page-dashboard .net-canvas { position: relative; height: 210px; }
+#page-dashboard .net-node { position: absolute; width: 64px; text-align: center; }
+#page-dashboard .net-dot { width: 15px; height: 15px; border-radius: 50%; background: #0E6E4B; margin: 0 auto 5px; border: 3px solid #E2EEE7; }
+#page-dashboard .net-dot.observer { background: #8C8B7E; }
+#page-dashboard .net-label { font-size: 10px; font-weight: 600; color: #4A4A40; line-height: 1.2; }
+#page-dashboard .net-foot { border-top: 1px solid #E2E0D2; padding-top: 0.9rem; display: flex; justify-content: space-between; font-size: 12px; }
+#page-dashboard .activity-row { display: flex; align-items: flex-start; gap: 9px; font-size: 12.5px; padding: 8px 0; }
+
+/* ===== loan_applications ===== */
+#page-loan_applications * { box-sizing: border-box; margin: 0; padding: 0; }
+#page-loan_applications, #page-loan_applications { height: 100%; }
+#page-loan_applications { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: #EFEEE6; color: #16160F; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+#page-loan_applications a { text-decoration: none; color: inherit; }
+#page-loan_applications .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 264px; background: #024731; padding: 1.6rem 1.1rem; display: flex; flex-direction: column; z-index: 100; overflow-y: auto; }
+#page-loan_applications .sb-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; margin-bottom: 6px; }
+#page-loan_applications .sb-mark { width: 30px; height: 30px; border-radius: 7px; background: #F2F0E6; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #024731; flex-shrink: 0; }
+#page-loan_applications .sb-name { font-weight: 700; font-size: 16px; color: #F2F0E6; letter-spacing: 0.04em; }
+#page-loan_applications .sb-tagline { font-size: 11px; color: #7FAE96; padding: 0 8px; margin-bottom: 1.75rem; }
+#page-loan_applications .sb-label { font-size: 10.5px; color: #5E9079; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; padding: 0 10px; margin: 1.3rem 0 0.55rem; }
+#page-loan_applications .sb-label:first-of-type { margin-top: 0; }
+#page-loan_applications .sb-link { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 9px; color: #B9D4C5; font-size: 13.5px; margin-bottom: 1px; }
+#page-loan_applications .sb-link-left { display: flex; align-items: center; gap: 11px; }
+#page-loan_applications .sb-link:hover { background: rgba(255,255,255,0.06); color: #F2F0E6; }
+#page-loan_applications .sb-link.on { background: #0E6E4B; color: #F2F0E6; font-weight: 600; }
+#page-loan_applications .sb-link svg { width: 17px; height: 17px; flex-shrink: 0; }
+#page-loan_applications .sb-badge { font-size: 10.5px; background: #F2F0E6; color: #024731; padding: 1px 7px; border-radius: 999px; font-weight: 700; }
+#page-loan_applications .sb-badge-m { font-size: 10.5px; color: #7FAE96; }
+#page-loan_applications .sb-foot { margin-top: auto; padding-top: 1.1rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
+#page-loan_applications .sb-av { width: 34px; height: 34px; border-radius: 50%; background: #0E6E4B; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; color: #F2F0E6; flex-shrink: 0; }
+#page-loan_applications .main { margin-left: 264px; min-height: 100vh; }
+#page-loan_applications .navbar { position: sticky; top: 0; z-index: 50; background: #FFFFFF; border-bottom: 1px solid #E2E0D2; padding: 1.1rem 2.75rem; display: flex; justify-content: space-between; align-items: center; }
+#page-loan_applications .navbar-crumbs { font-size: 12px; color: #8C8B7E; }
+#page-loan_applications .navbar-crumbs b { color: #16160F; font-weight: 600; }
+#page-loan_applications .navbar-right { display: flex; align-items: center; gap: 14px; }
+#page-loan_applications .pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+#page-loan_applications .pill-live { background: #E2EEE7; color: #024731; }
+#page-loan_applications .pill-dot { width: 7px; height: 7px; border-radius: 50%; background: #1D9E75; display: inline-block; }
+#page-loan_applications .icon-btn { width: 36px; height: 36px; border-radius: 9px; background: #F7F6EF; border: 1px solid #E2E0D2; display: flex; align-items: center; justify-content: center; }
+#page-loan_applications .nav-av { width: 32px; height: 32px; border-radius: 50%; background: #E2EEE7; color: #024731; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; }
+#page-loan_applications .content { padding: 2.1rem 2.75rem 3.5rem; max-width: 1500px; }
+#page-loan_applications .page-title-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.6rem; }
+#page-loan_applications .page-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+#page-loan_applications .page-sub { font-size: 13.5px; color: #4A4A40; max-width: 560px; }
+#page-loan_applications .product-tabs { display: flex; gap: 8px; margin-bottom: 1.6rem; flex-wrap: wrap; }
+#page-loan_applications .ptab { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px; border: 1px solid #E2E0D2; background: #FFFFFF; font-size: 13px; font-weight: 600; color: #4A4A40; }
+#page-loan_applications .ptab.on { background: #024731; color: #F2F0E6; border-color: #024731; }
+#page-loan_applications .ptab-count { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: #F0EFE6; color: #4A4A40; font-weight: 700; }
+#page-loan_applications .ptab.on .ptab-count { background: rgba(255,255,255,0.18); color: #F2F0E6; }
+#page-loan_applications .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 1.75rem; }
+#page-loan_applications .stat { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; padding: 1.1rem 1.25rem; }
+#page-loan_applications .stat-label { font-size: 11.5px; color: #4A4A40; font-weight: 600; margin-bottom: 8px; }
+#page-loan_applications .stat-value { font-size: 25px; font-weight: 700; }
+#page-loan_applications .stat-tag { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 700; display: inline-block; margin-top: 6px; }
+#page-loan_applications .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+#page-loan_applications .search-box { display: flex; align-items: center; gap: 8px; border: 1px solid #E2E0D2; border-radius: 9px; padding: 8px 14px; background: #FFFFFF; font-size: 12.5px; color: #8C8B7E; width: 280px; }
+#page-loan_applications .filter-row { display: flex; gap: 8px; }
+#page-loan_applications .filter-chip { font-size: 12px; padding: 7px 13px; border-radius: 999px; border: 1px solid #E2E0D2; background: #FFFFFF; color: #4A4A40; font-weight: 600; }
+#page-loan_applications .filter-chip.on { background: #E2EEE7; color: #024731; border-color: #BFD8CC; }
+#page-loan_applications .card { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; }
+#page-loan_applications table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#page-loan_applications th { text-align: left; padding: 11px 10px; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: #8C8B7E; font-weight: 700; border-bottom: 1px solid #E2E0D2; }
+#page-loan_applications td { padding: 14px 10px; border-bottom: 1px solid #EEEDE4; vertical-align: middle; }
+#page-loan_applications tr:last-child td { border-bottom: none; }
+#page-loan_applications tbody tr:hover { background: #FAFAF6; }
+#page-loan_applications .person { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+#page-loan_applications .av { width: 28px; height: 28px; border-radius: 50%; background: #E2EEE7; color: #024731; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+#page-loan_applications .product-chip { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: #F0EFE6; color: #4A4A40; font-weight: 600; }
+#page-loan_applications .chain-ref { color: #0B5C3F; font-weight: 600; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; }
+#page-loan_applications .mono-sm { font-family: ui-monospace, monospace; font-size: 11px; color: #8C8B7E; }
+#page-loan_applications .tag { font-size: 11px; padding: 4px 10px; border-radius: 999px; font-weight: 700; display: inline-block; }
+#page-loan_applications .tag-go { background: #E2EEE7; color: #024731; }
+#page-loan_applications .tag-warn { background: #FAEEDA; color: #854F0B; }
+#page-loan_applications .tag-stop { background: #FCEBEB; color: #A32D2D; }
+#page-loan_applications .row-link { font-size: 12.5px; color: #0B5C3F; font-weight: 700; }
+
+/* ===== credit_cards ===== */
+#page-credit_cards * { box-sizing: border-box; margin: 0; padding: 0; }
+#page-credit_cards, #page-credit_cards { height: 100%; }
+#page-credit_cards { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: #EFEEE6; color: #16160F; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+#page-credit_cards a { text-decoration: none; color: inherit; }
+#page-credit_cards .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 264px; background: #024731; padding: 1.6rem 1.1rem; display: flex; flex-direction: column; z-index: 100; overflow-y: auto; }
+#page-credit_cards .sb-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; margin-bottom: 6px; }
+#page-credit_cards .sb-mark { width: 30px; height: 30px; border-radius: 7px; background: #F2F0E6; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #024731; flex-shrink: 0; }
+#page-credit_cards .sb-name { font-weight: 700; font-size: 16px; color: #F2F0E6; letter-spacing: 0.04em; }
+#page-credit_cards .sb-tagline { font-size: 11px; color: #7FAE96; padding: 0 8px; margin-bottom: 1.75rem; }
+#page-credit_cards .sb-label { font-size: 10.5px; color: #5E9079; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; padding: 0 10px; margin: 1.3rem 0 0.55rem; }
+#page-credit_cards .sb-label:first-of-type { margin-top: 0; }
+#page-credit_cards .sb-link { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 9px; color: #B9D4C5; font-size: 13.5px; margin-bottom: 1px; }
+#page-credit_cards .sb-link-left { display: flex; align-items: center; gap: 11px; }
+#page-credit_cards .sb-link:hover { background: rgba(255,255,255,0.06); color: #F2F0E6; }
+#page-credit_cards .sb-link.on { background: #0E6E4B; color: #F2F0E6; font-weight: 600; }
+#page-credit_cards .sb-link svg { width: 17px; height: 17px; flex-shrink: 0; }
+#page-credit_cards .sb-badge { font-size: 10.5px; background: #F2F0E6; color: #024731; padding: 1px 7px; border-radius: 999px; font-weight: 700; }
+#page-credit_cards .sb-badge-m { font-size: 10.5px; color: #7FAE96; }
+#page-credit_cards .sb-foot { margin-top: auto; padding-top: 1.1rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
+#page-credit_cards .sb-av { width: 34px; height: 34px; border-radius: 50%; background: #0E6E4B; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; color: #F2F0E6; flex-shrink: 0; }
+#page-credit_cards .main { margin-left: 264px; min-height: 100vh; }
+#page-credit_cards .navbar { position: sticky; top: 0; z-index: 50; background: #FFFFFF; border-bottom: 1px solid #E2E0D2; padding: 1.1rem 2.75rem; display: flex; justify-content: space-between; align-items: center; }
+#page-credit_cards .navbar-crumbs { font-size: 12px; color: #8C8B7E; }
+#page-credit_cards .navbar-crumbs b { color: #16160F; font-weight: 600; }
+#page-credit_cards .navbar-right { display: flex; align-items: center; gap: 14px; }
+#page-credit_cards .pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+#page-credit_cards .pill-live { background: #E2EEE7; color: #024731; }
+#page-credit_cards .pill-dot { width: 7px; height: 7px; border-radius: 50%; background: #1D9E75; display: inline-block; }
+#page-credit_cards .icon-btn { width: 36px; height: 36px; border-radius: 9px; background: #F7F6EF; border: 1px solid #E2E0D2; display: flex; align-items: center; justify-content: center; }
+#page-credit_cards .nav-av { width: 32px; height: 32px; border-radius: 50%; background: #E2EEE7; color: #024731; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; }
+#page-credit_cards .content { padding: 2.1rem 2.75rem 3.5rem; max-width: 1500px; }
+#page-credit_cards .page-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+#page-credit_cards .page-sub { font-size: 13.5px; color: #4A4A40; max-width: 600px; margin-bottom: 1.6rem; }
+#page-credit_cards .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 1.75rem; }
+#page-credit_cards .stat { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; padding: 1.1rem 1.25rem; }
+#page-credit_cards .stat-label { font-size: 11.5px; color: #4A4A40; font-weight: 600; margin-bottom: 8px; }
+#page-credit_cards .stat-value { font-size: 25px; font-weight: 700; }
+#page-credit_cards .block { margin-bottom: 2.1rem; }
+#page-credit_cards .block-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; }
+#page-credit_cards .block-title { font-size: 16px; font-weight: 700; }
+#page-credit_cards .block-note { font-size: 12px; color: #8C8B7E; }
+#page-credit_cards .card-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+#page-credit_cards .credit-card-tile { border-radius: 16px; padding: 1.4rem; color: #F2F0E6; position: relative; overflow: hidden; min-height: 170px; display: flex; flex-direction: column; justify-content: space-between; }
+#page-credit_cards .cc-platinum { background: linear-gradient(135deg, #024731 0%, #0B5C3F 100%); }
+#page-credit_cards .cc-gold { background: linear-gradient(135deg, #4A3A12 0%, #6B5420 100%); }
+#page-credit_cards .cc-classic { background: linear-gradient(135deg, #2B2A24 0%, #44423A 100%); }
+#page-credit_cards .cc-top { display: flex; justify-content: space-between; align-items: flex-start; }
+#page-credit_cards .cc-name { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; }
+#page-credit_cards .cc-chip { width: 32px; height: 24px; border-radius: 5px; background: rgba(255,255,255,0.25); }
+#page-credit_cards .cc-number { font-family: ui-monospace, monospace; font-size: 15px; letter-spacing: 0.1em; margin: 1rem 0; }
+#page-credit_cards .cc-foot { display: flex; justify-content: space-between; font-size: 11px; }
+#page-credit_cards .cc-foot div div:first-child { opacity: 0.7; margin-bottom: 2px; }
+#page-credit_cards .cc-foot div div:last-child { font-weight: 700; font-size: 13px; }
+#page-credit_cards .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+#page-credit_cards .review-card { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; padding: 1.4rem 1.5rem; }
+#page-credit_cards .review-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+#page-credit_cards .person { display: flex; align-items: center; gap: 11px; }
+#page-credit_cards .av { width: 38px; height: 38px; border-radius: 50%; background: #E2EEE7; color: #024731; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+#page-credit_cards .tag { font-size: 11px; padding: 4px 10px; border-radius: 999px; font-weight: 700; display: inline-block; }
+#page-credit_cards .tag-go { background: #E2EEE7; color: #024731; }
+#page-credit_cards .check-pill-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+#page-credit_cards .check-pill { font-size: 11px; padding: 5px 11px; border-radius: 999px; background: #E2EEE7; color: #024731; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+#page-credit_cards .limit-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #EEEDE4; font-size: 13px; }
+#page-credit_cards .limit-row:last-child { border-bottom: none; }
+#page-credit_cards .limit-row b { font-size: 14px; }
+#page-credit_cards .verdict-trace { font-size: 11.5px; color: #8C8B7E; margin-top: 12px; line-height: 1.6; font-family: ui-monospace, monospace; background: #F7F6EF; border: 1px solid #E2E0D2; border-radius: 6px; padding: 9px 11px; }
+#page-credit_cards .action-row { display: flex; gap: 10px; margin-top: 1.1rem; }
+#page-credit_cards .btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; font-weight: 700; font-size: 13px; border-radius: 9px; padding: 10px; cursor: pointer; border: none; }
+#page-credit_cards .btn-go { background: #024731; color: #F2F0E6; }
+#page-credit_cards .btn-stop { background: #FFFFFF; color: #A32D2D; border: 1.5px solid #E3B7B7; }
+
+/* ===== kyc_registry ===== */
+#page-kyc_registry * { box-sizing: border-box; margin: 0; padding: 0; }
+#page-kyc_registry, #page-kyc_registry { height: 100%; }
+#page-kyc_registry { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: #EFEEE6; color: #16160F; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+#page-kyc_registry a { text-decoration: none; color: inherit; }
+#page-kyc_registry .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 264px; background: #024731; padding: 1.6rem 1.1rem; display: flex; flex-direction: column; z-index: 100; overflow-y: auto; }
+#page-kyc_registry .sb-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; margin-bottom: 6px; }
+#page-kyc_registry .sb-mark { width: 30px; height: 30px; border-radius: 7px; background: #F2F0E6; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #024731; flex-shrink: 0; }
+#page-kyc_registry .sb-name { font-weight: 700; font-size: 16px; color: #F2F0E6; letter-spacing: 0.04em; }
+#page-kyc_registry .sb-tagline { font-size: 11px; color: #7FAE96; padding: 0 8px; margin-bottom: 1.75rem; }
+#page-kyc_registry .sb-label { font-size: 10.5px; color: #5E9079; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; padding: 0 10px; margin: 1.3rem 0 0.55rem; }
+#page-kyc_registry .sb-label:first-of-type { margin-top: 0; }
+#page-kyc_registry .sb-link { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 9px; color: #B9D4C5; font-size: 13.5px; margin-bottom: 1px; }
+#page-kyc_registry .sb-link-left { display: flex; align-items: center; gap: 11px; }
+#page-kyc_registry .sb-link:hover { background: rgba(255,255,255,0.06); color: #F2F0E6; }
+#page-kyc_registry .sb-link.on { background: #0E6E4B; color: #F2F0E6; font-weight: 600; }
+#page-kyc_registry .sb-link svg { width: 17px; height: 17px; flex-shrink: 0; }
+#page-kyc_registry .sb-badge { font-size: 10.5px; background: #F2F0E6; color: #024731; padding: 1px 7px; border-radius: 999px; font-weight: 700; }
+#page-kyc_registry .sb-badge-m { font-size: 10.5px; color: #7FAE96; }
+#page-kyc_registry .sb-foot { margin-top: auto; padding-top: 1.1rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
+#page-kyc_registry .sb-av { width: 34px; height: 34px; border-radius: 50%; background: #0E6E4B; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; color: #F2F0E6; flex-shrink: 0; }
+#page-kyc_registry .main { margin-left: 264px; min-height: 100vh; }
+#page-kyc_registry .navbar { position: sticky; top: 0; z-index: 50; background: #FFFFFF; border-bottom: 1px solid #E2E0D2; padding: 1.1rem 2.75rem; display: flex; justify-content: space-between; align-items: center; }
+#page-kyc_registry .navbar-crumbs { font-size: 12px; color: #8C8B7E; }
+#page-kyc_registry .navbar-crumbs b { color: #16160F; font-weight: 600; }
+#page-kyc_registry .navbar-right { display: flex; align-items: center; gap: 14px; }
+#page-kyc_registry .pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+#page-kyc_registry .pill-live { background: #E2EEE7; color: #024731; }
+#page-kyc_registry .pill-dot { width: 7px; height: 7px; border-radius: 50%; background: #1D9E75; display: inline-block; }
+#page-kyc_registry .icon-btn { width: 36px; height: 36px; border-radius: 9px; background: #F7F6EF; border: 1px solid #E2E0D2; display: flex; align-items: center; justify-content: center; }
+#page-kyc_registry .nav-av { width: 32px; height: 32px; border-radius: 50%; background: #E2EEE7; color: #024731; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; }
+#page-kyc_registry .content { padding: 2.1rem 2.75rem 3.5rem; max-width: 1500px; }
+#page-kyc_registry .page-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+#page-kyc_registry .page-sub { font-size: 13.5px; color: #4A4A40; max-width: 600px; margin-bottom: 1.6rem; }
+#page-kyc_registry .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 1.75rem; }
+#page-kyc_registry .stat { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; padding: 1.1rem 1.25rem; }
+#page-kyc_registry .stat-label { font-size: 11.5px; color: #4A4A40; font-weight: 600; margin-bottom: 8px; }
+#page-kyc_registry .stat-value { font-size: 25px; font-weight: 700; }
+#page-kyc_registry .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+#page-kyc_registry .search-box { display: flex; align-items: center; gap: 8px; border: 1px solid #E2E0D2; border-radius: 9px; padding: 8px 14px; background: #FFFFFF; font-size: 12.5px; color: #8C8B7E; width: 300px; }
+#page-kyc_registry .filter-row { display: flex; gap: 8px; }
+#page-kyc_registry .filter-chip { font-size: 12px; padding: 7px 13px; border-radius: 999px; border: 1px solid #E2E0D2; background: #FFFFFF; color: #4A4A40; font-weight: 600; }
+#page-kyc_registry .filter-chip.on { background: #E2EEE7; color: #024731; border-color: #BFD8CC; }
+#page-kyc_registry .card { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; }
+#page-kyc_registry table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#page-kyc_registry th { text-align: left; padding: 11px 10px; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: #8C8B7E; font-weight: 700; border-bottom: 1px solid #E2E0D2; }
+#page-kyc_registry td { padding: 14px 10px; border-bottom: 1px solid #EEEDE4; vertical-align: middle; }
+#page-kyc_registry tr:last-child td { border-bottom: none; }
+#page-kyc_registry tbody tr:hover { background: #FAFAF6; }
+#page-kyc_registry .person { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+#page-kyc_registry .av { width: 28px; height: 28px; border-radius: 50%; background: #E2EEE7; color: #024731; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+#page-kyc_registry .mono-sm { font-family: ui-monospace, monospace; font-size: 11px; color: #8C8B7E; }
+#page-kyc_registry .tag { font-size: 11px; padding: 4px 10px; border-radius: 999px; font-weight: 700; display: inline-block; }
+#page-kyc_registry .tag-go { background: #E2EEE7; color: #024731; }
+#page-kyc_registry .tag-warn { background: #FAEEDA; color: #854F0B; }
+#page-kyc_registry .tag-stop { background: #FCEBEB; color: #A32D2D; }
+#page-kyc_registry .issuer-chip { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: #F0EFE6; color: #4A4A40; font-weight: 600; }
+#page-kyc_registry .row-link { font-size: 12.5px; color: #0B5C3F; font-weight: 700; }
+#page-kyc_registry .products-used { display: flex; gap: 4px; }
+#page-kyc_registry .pdot { width: 7px; height: 7px; border-radius: 50%; background: #0E6E4B; }
+#page-kyc_registry .pdot.muted { background: #D8D6CC; }
+
+/* ===== admin_control_center ===== */
+#page-admin_control_center * { box-sizing: border-box; margin: 0; padding: 0; }
+#page-admin_control_center, #page-admin_control_center { height: 100%; }
+#page-admin_control_center { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: #EFEEE6; color: #16160F; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+#page-admin_control_center a { text-decoration: none; color: inherit; }
+#page-admin_control_center .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 264px; background: #024731; padding: 1.6rem 1.1rem; display: flex; flex-direction: column; z-index: 100; overflow-y: auto; }
+#page-admin_control_center .sb-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; margin-bottom: 6px; }
+#page-admin_control_center .sb-mark { width: 30px; height: 30px; border-radius: 7px; background: #F2F0E6; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #024731; flex-shrink: 0; }
+#page-admin_control_center .sb-name { font-weight: 700; font-size: 16px; color: #F2F0E6; letter-spacing: 0.04em; }
+#page-admin_control_center .sb-tagline { font-size: 11px; color: #7FAE96; padding: 0 8px; margin-bottom: 1.75rem; }
+#page-admin_control_center .sb-label { font-size: 10.5px; color: #5E9079; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; padding: 0 10px; margin: 1.3rem 0 0.55rem; }
+#page-admin_control_center .sb-label:first-of-type { margin-top: 0; }
+#page-admin_control_center .sb-link { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 9px; color: #B9D4C5; font-size: 13.5px; margin-bottom: 1px; }
+#page-admin_control_center .sb-link-left { display: flex; align-items: center; gap: 11px; }
+#page-admin_control_center .sb-link:hover { background: rgba(255,255,255,0.06); color: #F2F0E6; }
+#page-admin_control_center .sb-link.on { background: #0E6E4B; color: #F2F0E6; font-weight: 600; }
+#page-admin_control_center .sb-link svg { width: 17px; height: 17px; flex-shrink: 0; }
+#page-admin_control_center .sb-badge-m { font-size: 10.5px; color: #7FAE96; }
+#page-admin_control_center .sb-foot { margin-top: auto; padding-top: 1.1rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
+#page-admin_control_center .sb-av { width: 34px; height: 34px; border-radius: 50%; background: #0E6E4B; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; color: #F2F0E6; flex-shrink: 0; }
+#page-admin_control_center .main { margin-left: 264px; min-height: 100vh; }
+#page-admin_control_center .navbar { position: sticky; top: 0; z-index: 50; background: #FFFFFF; border-bottom: 1px solid #E2E0D2; padding: 1.1rem 2.75rem; display: flex; justify-content: space-between; align-items: center; }
+#page-admin_control_center .navbar-crumbs { font-size: 12px; color: #8C8B7E; }
+#page-admin_control_center .navbar-crumbs b { color: #16160F; font-weight: 600; }
+#page-admin_control_center .navbar-right { display: flex; align-items: center; gap: 14px; }
+#page-admin_control_center .pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+#page-admin_control_center .pill-dark { background: #024731; color: #F2F0E6; }
+#page-admin_control_center .nav-av { width: 32px; height: 32px; border-radius: 50%; background: #E2EEE7; color: #024731; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; }
+#page-admin_control_center .content { padding: 2.1rem 2.75rem 3.5rem; max-width: 1500px; }
+#page-admin_control_center .page-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+#page-admin_control_center .page-sub { font-size: 13.5px; color: #4A4A40; max-width: 640px; margin-bottom: 1.9rem; }
+#page-admin_control_center .block { margin-bottom: 2.25rem; }
+#page-admin_control_center .block-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; }
+#page-admin_control_center .block-title { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 9px; }
+#page-admin_control_center .block-num { font-family: ui-monospace, monospace; font-size: 11px; color: #0B5C3F; background: #E2EEE7; width: 21px; height: 21px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; }
+#page-admin_control_center .block-note { font-size: 12px; color: #8C8B7E; }
+#page-admin_control_center .role-rank { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+#page-admin_control_center .role-card { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; padding: 1.3rem; position: relative; }
+#page-admin_control_center .role-card.mine { border: 2px solid #0B5C3F; background: #F4FAF7; }
+#page-admin_control_center .tier-bar { position: absolute; top: 0; left: 0; right: 0; height: 4px; border-radius: 14px 14px 0 0; }
+#page-admin_control_center .tier-1 { background: #B9D4C5; }
+#page-admin_control_center .tier-2 { background: #0B5C3F; }
+#page-admin_control_center .tier-3 { background: #8C8B7E; }
+#page-admin_control_center .role-icon { width: 36px; height: 36px; border-radius: 9px; background: #E2EEE7; display: flex; align-items: center; justify-content: center; margin-bottom: 11px; }
+#page-admin_control_center .role-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+#page-admin_control_center .role-desc { font-size: 11.5px; color: #4A4A40; line-height: 1.5; margin-bottom: 11px; min-height: 50px; }
+#page-admin_control_center .role-foot { display: flex; justify-content: space-between; padding-top: 9px; border-top: 1px solid #E2E0D2; font-size: 11px; color: #8C8B7E; font-weight: 600; }
+#page-admin_control_center .mine-tag { font-size: 9px; background: #0B5C3F; color: #F2F0E6; padding: 2px 7px; border-radius: 999px; font-weight: 800; text-transform: uppercase; }
+#page-admin_control_center .card { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; }
+#page-admin_control_center table.matrix { width: 100%; border-collapse: collapse; font-size: 13px; }
+#page-admin_control_center table.matrix th { text-align: left; padding: 11px 14px; background: #F7F6EF; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: #4A4A40; font-weight: 700; border-bottom: 1px solid #E2E0D2; }
+#page-admin_control_center table.matrix th:not(:first-child) { text-align: center; width: 125px; }
+#page-admin_control_center table.matrix td { padding: 11px 14px; border-bottom: 1px solid #EEEDE4; }
+#page-admin_control_center table.matrix td:not(:first-child) { text-align: center; }
+#page-admin_control_center table.matrix tr:last-child td { border-bottom: none; }
+#page-admin_control_center .perm-name { font-weight: 700; font-size: 12.5px; }
+#page-admin_control_center .perm-desc { font-size: 10.5px; color: #8C8B7E; margin-top: 2px; }
+#page-admin_control_center .yes { color: #0B5C3F; }
+#page-admin_control_center .no { color: #D8D6CC; }
+#page-admin_control_center .partial { font-size: 10px; color: #854F0B; font-weight: 700; }
+#page-admin_control_center .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+#page-admin_control_center .card-pad { padding: 1.3rem 1.4rem; }
+#page-admin_control_center .qm-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.1rem; }
+#page-admin_control_center .qm { background: #F7F6EF; border-radius: 9px; padding: 11px 13px; }
+#page-admin_control_center .qm-label { font-size: 10.5px; color: #4A4A40; font-weight: 600; margin-bottom: 4px; }
+#page-admin_control_center .qm-value { font-size: 19px; font-weight: 700; }
+#page-admin_control_center table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+#page-admin_control_center th { text-align: left; padding: 8px 6px; font-size: 10px; text-transform: uppercase; color: #8C8B7E; font-weight: 700; border-bottom: 1px solid #E2E0D2; }
+#page-admin_control_center td { padding: 11px 6px; border-bottom: 1px solid #EEEDE4; }
+#page-admin_control_center tr:last-child td { border-bottom: none; }
+#page-admin_control_center .tag { font-size: 10.5px; padding: 4px 9px; border-radius: 999px; font-weight: 700; }
+#page-admin_control_center .tag-go { background: #E2EEE7; color: #024731; }
+#page-admin_control_center .tag-warn { background: #FAEEDA; color: #854F0B; }
+#page-admin_control_center .tag-stop { background: #FCEBEB; color: #A32D2D; }
+#page-admin_control_center .policy-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #E2E0D2; }
+#page-admin_control_center .policy-row:last-child { border-bottom: none; }
+#page-admin_control_center .policy-name { font-size: 12.5px; font-weight: 700; }
+#page-admin_control_center .policy-rule { font-size: 11px; color: #8C8B7E; margin-top: 2px; font-family: ui-monospace, monospace; }
+#page-admin_control_center .toggle { width: 36px; height: 19px; border-radius: 999px; background: #0B5C3F; position: relative; flex-shrink: 0; }
+#page-admin_control_center .toggle::after { content: ""; width: 15px; height: 15px; border-radius: 50%; background: #F2F0E6; position: absolute; top: 2px; right: 2px; }
+
+/* ===== ledger_explorer ===== */
+#page-ledger_explorer * { box-sizing: border-box; margin: 0; padding: 0; }
+#page-ledger_explorer, #page-ledger_explorer { height: 100%; }
+#page-ledger_explorer { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: #EFEEE6; color: #16160F; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+#page-ledger_explorer a { text-decoration: none; color: inherit; }
+#page-ledger_explorer .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 264px; background: #024731; padding: 1.6rem 1.1rem; display: flex; flex-direction: column; z-index: 100; overflow-y: auto; }
+#page-ledger_explorer .sb-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; margin-bottom: 6px; }
+#page-ledger_explorer .sb-mark { width: 30px; height: 30px; border-radius: 7px; background: #F2F0E6; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #024731; flex-shrink: 0; }
+#page-ledger_explorer .sb-name { font-weight: 700; font-size: 16px; color: #F2F0E6; letter-spacing: 0.04em; }
+#page-ledger_explorer .sb-tagline { font-size: 11px; color: #7FAE96; padding: 0 8px; margin-bottom: 1.75rem; }
+#page-ledger_explorer .sb-label { font-size: 10.5px; color: #5E9079; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; padding: 0 10px; margin: 1.3rem 0 0.55rem; }
+#page-ledger_explorer .sb-label:first-of-type { margin-top: 0; }
+#page-ledger_explorer .sb-link { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 9px; color: #B9D4C5; font-size: 13.5px; margin-bottom: 1px; }
+#page-ledger_explorer .sb-link-left { display: flex; align-items: center; gap: 11px; }
+#page-ledger_explorer .sb-link:hover { background: rgba(255,255,255,0.06); color: #F2F0E6; }
+#page-ledger_explorer .sb-link.on { background: #0E6E4B; color: #F2F0E6; font-weight: 600; }
+#page-ledger_explorer .sb-link svg { width: 17px; height: 17px; flex-shrink: 0; }
+#page-ledger_explorer .sb-badge-m { font-size: 10.5px; color: #7FAE96; }
+#page-ledger_explorer .sb-foot { margin-top: auto; padding-top: 1.1rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
+#page-ledger_explorer .sb-av { width: 34px; height: 34px; border-radius: 50%; background: #0E6E4B; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; color: #F2F0E6; flex-shrink: 0; }
+#page-ledger_explorer .main { margin-left: 264px; min-height: 100vh; }
+#page-ledger_explorer .navbar { position: sticky; top: 0; z-index: 50; background: #FFFFFF; border-bottom: 1px solid #E2E0D2; padding: 1.1rem 2.75rem; display: flex; justify-content: space-between; align-items: center; }
+#page-ledger_explorer .navbar-crumbs { font-size: 12px; color: #8C8B7E; font-family: ui-monospace, monospace; }
+#page-ledger_explorer .navbar-crumbs b { color: #16160F; font-weight: 600; }
+#page-ledger_explorer .navbar-right { display: flex; align-items: center; gap: 16px; font-size: 12px; font-family: ui-monospace, monospace; color: #4A4A40; }
+#page-ledger_explorer .pill-dot { width: 7px; height: 7px; border-radius: 50%; background: #1D9E75; display: inline-block; margin-right: 6px; }
+#page-ledger_explorer .nav-av { width: 32px; height: 32px; border-radius: 50%; background: #E2EEE7; color: #024731; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; }
+#page-ledger_explorer .content { padding: 2.1rem 2.75rem 3.5rem; max-width: 1300px; }
+#page-ledger_explorer .page-title-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.75rem; }
+#page-ledger_explorer .page-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+#page-ledger_explorer .page-sub { font-size: 13.5px; color: #4A4A40; max-width: 600px; }
+#page-ledger_explorer .pill-dark { background: #024731; color: #F2F0E6; padding: 7px 15px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+#page-ledger_explorer .id-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 2rem; }
+#page-ledger_explorer .id-card { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; padding: 1.15rem 1.3rem; }
+#page-ledger_explorer .id-label { font-size: 10.5px; color: #4A4A40; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+#page-ledger_explorer .id-value { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+#page-ledger_explorer .id-sub { font-size: 11px; color: #8C8B7E; font-family: ui-monospace, monospace; }
+#page-ledger_explorer .id-sub.good { color: #0B5C3F; font-family: inherit; font-weight: 600; }
+#page-ledger_explorer .block { margin-bottom: 2.1rem; }
+#page-ledger_explorer .block-head { margin-bottom: 1rem; }
+#page-ledger_explorer .block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 9px; }
+#page-ledger_explorer .block-num { font-family: ui-monospace, monospace; font-size: 11px; color: #0B5C3F; background: #E2EEE7; width: 21px; height: 21px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; }
+#page-ledger_explorer .trail { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; padding: 1.5rem 1.7rem; }
+#page-ledger_explorer .trail-row { display: flex; gap: 15px; padding-bottom: 20px; position: relative; }
+#page-ledger_explorer .trail-row:last-child { padding-bottom: 0; }
+#page-ledger_explorer .node-wrap { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+#page-ledger_explorer .node-circle { width: 32px; height: 32px; border-radius: 50%; background: #E2EEE7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+#page-ledger_explorer .node-circle.muted { background: #F0EFE6; }
+#page-ledger_explorer .node-line { width: 1.5px; flex: 1; background: #E2E0D2; margin-top: 7px; }
+#page-ledger_explorer .trail-content { flex: 1; padding-top: 2px; }
+#page-ledger_explorer .trail-top { display: flex; justify-content: space-between; align-items: baseline; }
+#page-ledger_explorer .trail-fn { font-family: ui-monospace, monospace; font-size: 13.5px; font-weight: 700; color: #024731; }
+#page-ledger_explorer .trail-fn.muted { color: #8C8B7E; }
+#page-ledger_explorer .trail-time { font-size: 11px; color: #8C8B7E; }
+#page-ledger_explorer .trail-desc { font-size: 12px; color: #4A4A40; margin-top: 3px; }
+#page-ledger_explorer .trail-tx { font-size: 10.5px; color: #8C8B7E; font-family: ui-monospace, monospace; margin-top: 7px; background: #F7F6EF; display: inline-block; padding: 4px 9px; border-radius: 5px; }
+#page-ledger_explorer .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+#page-ledger_explorer .card-pad { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; padding: 1.3rem 1.4rem; }
+#page-ledger_explorer .reuse-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #F7F6EF; border-radius: 9px; margin-bottom: 8px; }
+#page-ledger_explorer .reuse-row:last-child { margin-bottom: 0; }
+#page-ledger_explorer .tag { font-size: 11px; padding: 4px 10px; border-radius: 999px; font-weight: 700; }
+#page-ledger_explorer .tag-go { background: #E2EEE7; color: #024731; }
+#page-ledger_explorer .tag-mute { background: #F0EFE6; color: #4A4A40; }
+#page-ledger_explorer .privacy-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid #E2E0D2; font-size: 12.5px; }
+#page-ledger_explorer .privacy-item:last-child { border-bottom: none; }
+#page-ledger_explorer .privacy-item svg { flex-shrink: 0; margin-top: 2px; }
+
+/* ===== shared layout rules for new pages ===== */
+#page-new_customer_upload .main, #page-loan_decision .main { margin-left: 264px; min-height: 100vh; }
+#page-new_customer_upload .navbar, #page-loan_decision .navbar {
+  position: sticky; top: 0; z-index: 50; background: #FFFFFF; border-bottom: 1px solid #E2E0D2;
+  padding: 1.1rem 2.75rem; display: flex; justify-content: space-between; align-items: center;
+}
+#page-new_customer_upload .navbar-crumbs, #page-loan_decision .navbar-crumbs { font-size: 12px; color: #8C8B7E; }
+#page-new_customer_upload .navbar-crumbs b, #page-loan_decision .navbar-crumbs b { color: #16160F; font-weight: 600; }
+#page-new_customer_upload .navbar-right, #page-loan_decision .navbar-right { display: flex; align-items: center; gap: 14px; }
+#page-new_customer_upload .pill, #page-loan_decision .pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+#page-new_customer_upload .pill-live { background: #E2EEE7; color: #024731; }
+#page-new_customer_upload .pill-dot, #page-loan_decision .pill-dot { width: 7px; height: 7px; border-radius: 50%; background: #1D9E75; display: inline-block; }
+#page-new_customer_upload .icon-btn, #page-loan_decision .icon-btn { width: 36px; height: 36px; border-radius: 9px; background: #F7F6EF; border: 1px solid #E2E0D2; display: flex; align-items: center; justify-content: center; }
+#page-new_customer_upload .nav-av, #page-loan_decision .nav-av { width: 32px; height: 32px; border-radius: 50%; background: #E2EEE7; color: #024731; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; }
+
+/* ===== new_customer_upload ===== */
+#page-new_customer_upload .ncu-content { padding: 2.4rem 3rem 3.5rem; max-width: 1280px; margin: 0 auto; }
+#page-new_customer_upload .ncu-hero { display: flex; justify-content: space-between; align-items: center; gap: 2rem; background: linear-gradient(135deg, #024731 0%, #0B5C3F 100%); border-radius: 18px; padding: 2.1rem 2.4rem; margin-bottom: 1.9rem; }
+#page-new_customer_upload .ncu-hero-text { max-width: 600px; }
+#page-new_customer_upload .ncu-eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #8FCBAE; font-weight: 700; margin-bottom: 10px; }
+#page-new_customer_upload .ncu-h1 { font-size: 26px; font-weight: 700; color: #F2F0E6; line-height: 1.25; margin-bottom: 10px; }
+#page-new_customer_upload .ncu-sub { font-size: 13px; color: #BFD8CC; line-height: 1.55; }
+#page-new_customer_upload .ncu-hero-progress { flex-shrink: 0; background: rgba(255,255,255,0.08); border-radius: 50%; padding: 6px; }
+
+#page-new_customer_upload .ncu-steps { display: flex; align-items: center; gap: 0; margin-bottom: 1.9rem; background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 12px; padding: 1rem 1.4rem; }
+#page-new_customer_upload .ncu-step { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: #8C8B7E; font-weight: 600; }
+#page-new_customer_upload .ncu-step.current { color: #16160F; }
+#page-new_customer_upload .ncu-step-dot { width: 24px; height: 24px; border-radius: 50%; background: #F0EFE6; color: #8C8B7E; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+#page-new_customer_upload .ncu-step.done .ncu-step-dot { background: #024731; color: #FFFFFF; }
+#page-new_customer_upload .ncu-step.current .ncu-step-dot { background: #E2EEE7; color: #024731; border: 2px solid #0B5C3F; }
+#page-new_customer_upload .ncu-step-line { flex: 1; height: 1.5px; background: #E2E0D2; margin: 0 14px; }
+#page-new_customer_upload .ncu-step-line.done { background: #0B5C3F; }
+
+#page-new_customer_upload .ncu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 1.7rem; }
+#page-new_customer_upload .ncu-card { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 14px; padding: 1.2rem 1.3rem; transition: transform 0.18s ease, box-shadow 0.18s ease; }
+#page-new_customer_upload .ncu-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+#page-new_customer_upload .ncu-card.upcoming { background: #F7F6EF; opacity: 0.85; }
+#page-new_customer_upload .ncu-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.9rem; }
+#page-new_customer_upload .ncu-card-icon { width: 38px; height: 38px; border-radius: 10px; background: #E2EEE7; display: flex; align-items: center; justify-content: center; }
+#page-new_customer_upload .ncu-card-icon.pending { background: #FAEEDA; }
+#page-new_customer_upload .ncu-card-icon.upcoming { background: #ECEBE2; }
+#page-new_customer_upload .ncu-status-chip { font-size: 10.5px; padding: 3px 10px; border-radius: 999px; font-weight: 700; }
+#page-new_customer_upload .ncu-status-chip.done { background: #E2EEE7; color: #024731; }
+#page-new_customer_upload .ncu-status-chip.pending { background: #FAEEDA; color: #854F0B; }
+#page-new_customer_upload .ncu-status-chip.upcoming { background: #ECEBE2; color: #8C8B7E; }
+#page-new_customer_upload .ncu-card-name { font-size: 14.5px; font-weight: 700; margin-bottom: 4px; }
+#page-new_customer_upload .ncu-card-meta { font-size: 11.5px; color: #8C8B7E; margin-bottom: 0.9rem; }
+#page-new_customer_upload .ncu-card-action { font-size: 12px; color: #0B5C3F; font-weight: 700; cursor: pointer; }
+#page-new_customer_upload .ncu-card-action.muted { color: #8C8B7E; cursor: default; }
+#page-new_customer_upload .ncu-dropzone { border: 1.5px dashed #E0B05A; border-radius: 10px; padding: 0.9rem; display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; font-size: 11.5px; color: #854F0B; background: #FFFBF2; }
+#page-new_customer_upload .ncu-dropzone b { text-decoration: underline; }
+
+#page-new_customer_upload .ncu-banner { display: flex; align-items: flex-start; gap: 12px; background: #FAEEDA; border: 1px solid #F0D5A0; border-radius: 12px; padding: 1.1rem 1.3rem; margin-bottom: 1.7rem; font-size: 12.5px; color: #6B4308; }
+#page-new_customer_upload .ncu-banner svg { flex-shrink: 0; margin-top: 1px; }
+
+#page-new_customer_upload .ncu-submit { width: 100%; background: #D8D6CC; color: #8C8B7E; border: none; font-weight: 700; padding: 14px; border-radius: 12px; font-size: 14px; cursor: not-allowed; }
+
+/* ===== loan_decision ===== */
+#page-loan_decision .ld-content { padding: 2.1rem 2.75rem 3.5rem; max-width: 1300px; }
+#page-loan_decision .ld-title-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.4rem; }
+#page-loan_decision .ld-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+#page-loan_decision .ld-sub { font-size: 13.5px; color: #4A4A40; max-width: 620px; }
+#page-loan_decision .pill-dark { background: #024731; color: #F2F0E6; padding: 7px 15px; border-radius: 999px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+
+#page-loan_decision .ld-banner { display: flex; align-items: center; gap: 11px; background: #E2EEE7; border: 1px solid #BFD8CC; border-radius: 12px; padding: 1rem 1.3rem; margin-bottom: 1.7rem; font-size: 12.5px; color: #024731; }
+#page-loan_decision .ld-banner svg { flex-shrink: 0; }
+
+#page-loan_decision .ld-layout { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; }
+#page-loan_decision .ld-card { background: #FFFFFF; border: 1px solid #E2E0D2; border-radius: 16px; padding: 1.5rem 1.6rem; margin-bottom: 16px; }
+#page-loan_decision .ld-card:last-child { margin-bottom: 0; }
+#page-loan_decision .ld-applicant-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.3rem; }
+#page-loan_decision .ld-applicant-left { display: flex; align-items: center; gap: 13px; }
+#page-loan_decision .ld-av { width: 46px; height: 46px; border-radius: 50%; background: #E2EEE7; color: #024731; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+#page-loan_decision .ld-applicant-name { font-size: 16px; font-weight: 700; }
+#page-loan_decision .ld-applicant-meta { font-size: 12px; color: #4A4A40; margin-top: 2px; }
+#page-loan_decision .ld-tag.existing { font-size: 11px; padding: 5px 12px; border-radius: 999px; background: #024731; color: #F2F0E6; font-weight: 700; }
+
+#page-loan_decision .ld-check-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.3rem; }
+#page-loan_decision .ld-check { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 7px 12px; border-radius: 999px; background: #E2EEE7; color: #024731; font-weight: 600; }
+
+#page-loan_decision .ld-divider { height: 1px; background: #ECEBE2; margin: 1.3rem 0; }
+#page-loan_decision .ld-detail-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+#page-loan_decision .ld-detail-label { font-size: 11px; color: #8C8B7E; font-weight: 600; margin-bottom: 5px; }
+#page-loan_decision .ld-detail-value { font-size: 16px; font-weight: 700; }
+#page-loan_decision .ld-trace-label { font-size: 11px; color: #8C8B7E; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+#page-loan_decision .ld-trace { font-family: ui-monospace, monospace; font-size: 12px; color: #4A4A40; background: #F7F6EF; border: 1px solid #E2E0D2; border-radius: 8px; padding: 12px 14px; line-height: 1.7; }
+
+#page-loan_decision .ld-score-card { display: flex; flex-direction: column; align-items: center; text-align: center; }
+#page-loan_decision .ld-gauge-wrap { margin-bottom: 0.6rem; }
+#page-loan_decision .ld-score-label { font-size: 12px; color: #4A4A40; font-weight: 600; }
+#page-loan_decision .ld-score-tag { font-size: 12.5px; font-weight: 700; color: #0B5C3F; margin-top: 3px; }
+
+#page-loan_decision .ld-ledger-label { font-size: 11.5px; color: #4A4A40; font-weight: 600; margin-bottom: 8px; }
+#page-loan_decision .ld-ledger-mono { font-family: ui-monospace, monospace; font-size: 11.5px; color: #4A4A40; line-height: 1.7; }
+
+#page-loan_decision .ld-remark { width: 100%; min-height: 64px; border: 1px solid #D8D6CC; border-radius: 10px; padding: 11px 13px; font-family: inherit; font-size: 13px; resize: none; margin-bottom: 14px; }
+#page-loan_decision .ld-action-row { display: flex; gap: 10px; }
+#page-loan_decision .ld-btn-grant { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; background: #024731; color: #F2F0E6; border: none; font-weight: 700; font-size: 13.5px; padding: 12px; border-radius: 10px; cursor: pointer; }
+#page-loan_decision .ld-btn-reject { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; background: #FFFFFF; color: #A32D2D; border: 1.5px solid #E3B7B7; font-weight: 700; font-size: 13.5px; padding: 12px; border-radius: 10px; cursor: pointer; }
+
+
+/* ============ Guided tour overlay ============ */
+.tour-veil {
+  position: fixed; inset: 0; z-index: 499;
+  background: transparent;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+.tour-veil.active { opacity: 1; pointer-events: auto; }
+
+.tour-spotlight {
+  position: fixed; z-index: 501; border-radius: 14px;
+  box-shadow: 0 0 0 4px #4FD89A, 0 0 0 9999px rgba(6,20,14,0.68), 0 0 36px 6px rgba(79,216,154,0.55);
+  transition: top 0.45s cubic-bezier(.2,.8,.2,1), left 0.45s cubic-bezier(.2,.8,.2,1), width 0.45s cubic-bezier(.2,.8,.2,1), height 0.45s cubic-bezier(.2,.8,.2,1);
+  opacity: 0; pointer-events: none;
+}
+.tour-spotlight.active { opacity: 1; }
+
+.tour-card {
+  position: fixed; z-index: 502; width: 300px;
+  background: #FFFFFF; border-radius: 16px; padding: 1.4rem 1.5rem;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+  opacity: 0; transform: translateY(10px); pointer-events: none;
+  transition: top 0.45s cubic-bezier(.2,.8,.2,1), left 0.45s cubic-bezier(.2,.8,.2,1), opacity 0.3s ease 0.15s, transform 0.3s ease 0.15s;
+}
+.tour-card.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.tour-step-label { font-size: 10.5px; color: #0B5C3F; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+.tour-title { font-size: 15px; font-weight: 700; color: #16160F; margin-bottom: 6px; }
+.tour-desc { font-size: 12.5px; color: #4A4A40; line-height: 1.55; margin-bottom: 1.1rem; }
+.tour-foot { display: flex; align-items: center; justify-content: space-between; }
+.tour-dots { display: flex; gap: 5px; }
+.tour-dot { width: 6px; height: 6px; border-radius: 50%; background: #E2E0D2; transition: background 0.2s ease, transform 0.2s ease; }
+.tour-dot.on { background: #0B5C3F; transform: scale(1.3); }
+.tour-btns { display: flex; gap: 8px; }
+.tour-skip { font-size: 12px; color: #8C8B7E; font-weight: 600; cursor: pointer; background: none; border: none; font-family: inherit; }
+.tour-next { font-size: 12.5px; font-weight: 700; color: #FFFFFF; background: #024731; border: none; padding: 7px 16px; border-radius: 999px; cursor: pointer; font-family: inherit; }
+.tour-next:hover { background: #0B5C3F; }
+
+.tour-launcher {
+  position: fixed; bottom: 24px; right: 24px; z-index: 90;
+  display: flex; align-items: center; gap: 8px;
+  background: #024731; color: #F2F0E6; border: none; padding: 11px 18px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18); transition: transform 0.2s ease;
+}
+.tour-launcher:hover { transform: translateY(-2px); }
+
+/* ===== fluid_overview ===== */
+#page-fluid_overview { scroll-behavior: smooth; }
+#page-fluid_overview {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #06140E; color: #F2F0E6; overflow-x: hidden;
+  }
+#page-fluid_overview ::selection { background: #1D9E75; color: #06140E; }
+#page-fluid_overview .bg-glow {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(circle at 18% 20%, rgba(29,158,117,0.14) 0%, transparent 45%),
+      radial-gradient(circle at 82% 55%, rgba(15,90,62,0.18) 0%, transparent 50%),
+      radial-gradient(circle at 50% 95%, rgba(29,158,117,0.09) 0%, transparent 40%);
+  }
+#page-fluid_overview .grain {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.035; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+#page-fluid_overview .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 60; display: flex; justify-content: space-between; align-items: center; padding: 1.6rem 3rem; backdrop-filter: blur(6px); }
+#page-fluid_overview .nav-brand { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+#page-fluid_overview .nav-mark { width: 26px; height: 26px; border-radius: 6px; background: #F2F0E6; color: #06140E; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; }
+#page-fluid_overview .nav-back { font-size: 12.5px; color: #9FC9B3; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+#page-fluid_overview .thread-wrap { position: absolute; top: 0; left: 50%; width: 2px; height: 100%; transform: translateX(-50%); z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.4s ease; }
+#page-fluid_overview .thread-wrap.visible { opacity: 1; }
+#page-fluid_overview .thread-track { position: absolute; inset: 0; width: 2px; background: rgba(255,255,255,0.07); }
+#page-fluid_overview .thread-fill { position: absolute; top: 0; left: 0; width: 2px; height: 0px; background: linear-gradient(180deg, #4FD89A 0%, #1D9E75 100%); box-shadow: 0 0 12px rgba(79,216,154,0.55); transition: height 0.05s linear; }
+#page-fluid_overview .thread-flame { position: absolute; left: 50%; top: 0; width: 40px; height: 56px; transform: translate(-50%, -86%); opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+#page-fluid_overview .thread-flame.visible { opacity: 1; }
+#page-fluid_overview .thread-flame svg { width: 100%; height: 100%; display: block; position: relative; z-index: 2; animation: flameWobble 0.35s ease-in-out infinite alternate; transform-origin: 50% 92%; }
+@keyframes flameWobble {
+  0%   { transform: rotate(-2.5deg) scaleX(1); }
+  50%  { transform: rotate(1.5deg) scaleX(0.97); }
+  100% { transform: rotate(-1.5deg) scaleX(1.02); }
+}
+
+#page-fluid_overview .flame-glow-halo {
+  position: absolute; left: 50%; bottom: 6px; width: 70px; height: 70px;
+  transform: translateX(-50%); border-radius: 50%; z-index: 1;
+  background: radial-gradient(circle, rgba(255,180,90,0.55) 0%, rgba(232,124,42,0.28) 45%, transparent 75%);
+  filter: blur(4px);
+  animation: flameHaloPulse 1.1s ease-in-out infinite;
+}
+@keyframes flameHaloPulse {
+  0%, 100% { opacity: 0.7; transform: translateX(-50%) scale(0.92); }
+  50%      { opacity: 1; transform: translateX(-50%) scale(1.12); }
+}
+
+#page-fluid_overview .ember {
+  position: absolute; bottom: 30px; width: 3px; height: 3px; border-radius: 50%;
+  background: radial-gradient(circle, #FFE3A8 0%, #F2954A 70%, transparent 100%);
+  opacity: 0; z-index: 3;
+}
+#page-fluid_overview .ember-1 { left: 38%; animation: emberRise 1.6s ease-in infinite; animation-delay: 0s; }
+#page-fluid_overview .ember-2 { left: 55%; animation: emberRise 1.9s ease-in infinite; animation-delay: 0.5s; }
+#page-fluid_overview .ember-3 { left: 47%; width: 2px; height: 2px; animation: emberRise 1.3s ease-in infinite; animation-delay: 1s; }
+@keyframes emberRise {
+  0%   { opacity: 0; transform: translate(0, 0) scale(1); }
+  15%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(6px, -48px) scale(0.3); }
+}
+
+#page-fluid_overview .spine-section { position: relative; z-index: 2; }
+#page-fluid_overview .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 2rem; position: relative; z-index: 2; }
+#page-fluid_overview .hero-eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #6FB897; margin-bottom: 1.6rem; opacity: 0; animation: rise 0.8s ease forwards; animation-delay: 0.1s; }
+#page-fluid_overview .hero-title { font-size: clamp(40px, 7vw, 84px); font-weight: 800; line-height: 1.04; letter-spacing: -0.02em; max-width: 1000px; opacity: 0; animation: rise 0.9s ease forwards; animation-delay: 0.25s; }
+#page-fluid_overview .hero-title .accent { color: #4FD89A; }
+#page-fluid_overview .hero-sub { font-size: 16px; color: #B9D4C5; max-width: 560px; margin-top: 1.6rem; line-height: 1.6; opacity: 0; animation: rise 0.9s ease forwards; animation-delay: 0.5s; }
+@keyframes rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+#page-fluid_overview .scroll-cue { margin-top: 3.2rem; display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: 0; animation: rise 0.8s ease forwards, bob 2.2s ease-in-out infinite; animation-delay: 1.1s, 1.1s; }
+#page-fluid_overview .scroll-cue span { font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #6FB897; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+#page-fluid_overview .stem-row { display: grid; grid-template-columns: 1fr 90px 1fr; align-items: center; min-height: 62vh; padding: 0 3rem; max-width: 1280px; margin: 0 auto; position: relative; }
+#page-fluid_overview .stem-row.right .stem-card { grid-column: 3; }
+#page-fluid_overview .stem-row.left .stem-card { grid-column: 1; }
+#page-fluid_overview .stem-node-col { grid-column: 2; display: flex; justify-content: center; }
+#page-fluid_overview .stem-node {
+    width: 16px; height: 16px; border-radius: 50%; background: #0E2A1F; border: 2px solid rgba(255,255,255,0.18);
+    transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease, transform 0.5s ease;
+  }
+#page-fluid_overview .stem-node.lit { background: #4FD89A; border-color: #4FD89A; box-shadow: 0 0 0 6px rgba(79,216,154,0.16), 0 0 18px rgba(79,216,154,0.6); transform: scale(1.15); }
+#page-fluid_overview .stem-branch { position: absolute; top: 50%; height: 2px; background: rgba(255,255,255,0.12); transform: translateY(-50%); width: 0; transition: width 0.6s cubic-bezier(.2,.8,.2,1) 0.15s, background 0.6s ease; }
+#page-fluid_overview .stem-row.right .stem-branch { left: 50%; }
+#page-fluid_overview .stem-row.left .stem-branch { right: 50%; }
+#page-fluid_overview .stem-row.lit .stem-branch { width: 70px; background: rgba(79,216,154,0.5); }
+#page-fluid_overview .stem-card {
+    background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px;
+    padding: 1.9rem 2.1rem; max-width: 440px; opacity: 0; transition: opacity 0.7s ease 0.25s, transform 0.7s cubic-bezier(.2,.8,.2,1) 0.25s, border-color 0.4s ease;
+  }
+#page-fluid_overview .stem-row.right .stem-card { transform: translateX(34px); }
+#page-fluid_overview .stem-row.left .stem-card { transform: translateX(-34px); }
+#page-fluid_overview .stem-row.lit .stem-card { opacity: 1; transform: translateX(0); border-color: rgba(79,216,154,0.28); }
+#page-fluid_overview .stem-tag { font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #6FB897; margin-bottom: 0.9rem; font-weight: 700; }
+#page-fluid_overview .stem-h { font-size: 22px; font-weight: 700; margin-bottom: 0.8rem; line-height: 1.3; }
+#page-fluid_overview .stem-p { font-size: 13.5px; color: #B9D4C5; line-height: 1.7; }
+#page-fluid_overview .stem-stat { display: inline-flex; align-items: baseline; gap: 6px; margin-top: 1.1rem; }
+#page-fluid_overview .stem-stat-num { font-size: 26px; font-weight: 800; color: #4FD89A; }
+#page-fluid_overview .stem-stat-label { font-size: 11.5px; color: #9FC9B3; }
+#page-fluid_overview .future-section { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6rem 2rem; position: relative; z-index: 2; }
+#page-fluid_overview .future-badge { display: flex; align-items: center; gap: 8px; background: rgba(79,216,154,0.1); border: 1px solid rgba(79,216,154,0.3); padding: 7px 16px; border-radius: 999px; font-size: 11.5px; font-weight: 700; color: #4FD89A; margin-bottom: 1.6rem; opacity: 0; transition: opacity 0.7s ease, transform 0.7s ease; transform: translateY(16px); }
+#page-fluid_overview .future-section.in .future-badge { opacity: 1; transform: translateY(0); }
+#page-fluid_overview .future-h { font-size: clamp(28px, 4vw, 46px); font-weight: 800; text-align: center; max-width: 820px; line-height: 1.18; margin-bottom: 1.1rem; opacity: 0; transition: opacity 0.7s ease 0.1s, transform 0.7s ease 0.1s; transform: translateY(16px); }
+#page-fluid_overview .future-section.in .future-h { opacity: 1; transform: translateY(0); }
+#page-fluid_overview .future-h .accent { color: #4FD89A; }
+#page-fluid_overview .future-sub { font-size: 14.5px; color: #B9D4C5; max-width: 600px; text-align: center; line-height: 1.7; margin-bottom: 3.2rem; opacity: 0; transition: opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s; transform: translateY(16px); }
+#page-fluid_overview .future-section.in .future-sub { opacity: 1; transform: translateY(0); }
+#page-fluid_overview .bank-web { position: relative; width: 100%; max-width: 880px; height: 360px; }
+#page-fluid_overview .bank-web svg { width: 100%; height: 100%; overflow: visible; }
+#page-fluid_overview .web-path { fill: none; stroke: rgba(255,255,255,0.14); stroke-width: 1.3; stroke-dasharray: 600; stroke-dashoffset: 600; transition: stroke-dashoffset 1.4s ease; }
+#page-fluid_overview .future-section.in .web-path { stroke-dashoffset: 0; }
+#page-fluid_overview .web-node-ring { fill: none; stroke-width: 1.5; opacity: 0; transition: opacity 0.6s ease; }
+#page-fluid_overview .future-section.in .web-node-ring { opacity: 1; }
+#page-fluid_overview .web-particle { opacity: 0; transition: opacity 0.4s ease; }
+#page-fluid_overview .future-section.in .web-particle { opacity: 1; }
+#page-fluid_overview .future-benefits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; max-width: 980px; width: 100%; margin-top: 3rem; }
+#page-fluid_overview .fb-card { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.6rem 1.5rem; opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s ease; }
+#page-fluid_overview .future-section.in .fb-card { opacity: 1; transform: translateY(0); }
+#page-fluid_overview .future-section.in .fb-card:nth-child(1) { transition-delay: 0.1s; }
+#page-fluid_overview .future-section.in .fb-card:nth-child(2) { transition-delay: 0.22s; }
+#page-fluid_overview .future-section.in .fb-card:nth-child(3) { transition-delay: 0.34s; }
+#page-fluid_overview .fb-card:hover { border-color: rgba(79,216,154,0.35); }
+#page-fluid_overview .fb-num { font-size: 11px; font-weight: 800; color: #4FD89A; font-family: ui-monospace, monospace; margin-bottom: 0.9rem; }
+#page-fluid_overview .fb-h { font-size: 15px; font-weight: 700; margin-bottom: 0.5rem; }
+#page-fluid_overview .fb-p { font-size: 12.5px; color: #9FC9B3; line-height: 1.6; }
+#page-fluid_overview .closing { min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem 6rem; position: relative; z-index: 2; }
+#page-fluid_overview .closing-quote { font-size: clamp(24px, 3.4vw, 36px); font-weight: 700; line-height: 1.35; max-width: 760px; margin-bottom: 2.2rem; }
+#page-fluid_overview .closing-quote .accent { color: #4FD89A; }
+#page-fluid_overview .closing-cta { display: flex; gap: 12px; }
+#page-fluid_overview .cta-btn { padding: 13px 24px; border-radius: 11px; font-size: 13.5px; font-weight: 700; cursor: pointer; border: none; }
+#page-fluid_overview .cta-primary { background: #4FD89A; color: #06140E; }
+#page-fluid_overview .cta-primary:hover { background: #6FE5B0; }
+#page-fluid_overview .cta-ghost { background: transparent; color: #F2F0E6; border: 1.5px solid rgba(255,255,255,0.25); }
+#page-fluid_overview .cta-ghost:hover { border-color: rgba(255,255,255,0.5); }
+#page-fluid_overview .fluid-back {
+  position: fixed; top: 1.6rem; right: 2.2rem; z-index: 70;
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16);
+  color: #F2F0E6; padding: 9px 16px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; backdrop-filter: blur(6px); transition: background 0.2s ease, border-color 0.2s ease;
+}
+#page-fluid_overview .fluid-back:hover { background: rgba(79,216,154,0.15); border-color: rgba(79,216,154,0.4); }
+
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-brand"><div class="sb-mark">L</div><span class="sb-name">LLOYDS</span></div>
+  <div class="sb-tagline">DLT lending &amp; reusable KYC platform</div>
+
+  <div class="sb-label">Platform</div>
+  <button class="sb-link" data-page="dashboard" onclick="showPage('dashboard')"><span class="sb-link-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</span></button>
+  <button class="sb-link" data-page="loan_applications" onclick="showPage('loan_applications')"><span class="sb-link-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Loan applications</span><span class="sb-badge-m">47</span></button>
+  <button class="sb-link" data-page="credit_cards" onclick="showPage('credit_cards')"><span class="sb-link-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Credit cards</span><span class="sb-badge-m">23</span></button>
+  <button class="sb-link" data-page="kyc_registry" onclick="showPage('kyc_registry')"><span class="sb-link-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg>KYC registry</span></button>
+
+  <div class="sb-label">Customer view</div>
+  <button class="sb-link" data-page="new_customer_upload" onclick="showPage('new_customer_upload')"><span class="sb-link-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>New customer upload</span></button>
+  <button class="sb-link" data-page="loan_decision" onclick="showPage('loan_decision')"><span class="sb-link-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Loan decision</span></button>
+
+  <div class="sb-label">Administration</div>
+  <button class="sb-link" data-page="admin_control_center" onclick="showPage('admin_control_center')"><span class="sb-link-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Admin control center</span></button>
+
+  <div class="sb-label">Blockchain</div>
+  <button class="sb-link" data-page="ledger_explorer" onclick="showPage('ledger_explorer')"><span class="sb-link-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88"/><path d="M14.47 14.48L20 20"/><path d="M8.12 8.12L12 12"/></svg>Ledger explorer</span></button>
+
+  <div class="sb-foot"><div class="sb-av">AK</div><div><div class="sb-fname">Anita Kulkarni</div><div class="sb-frole">Senior loan admin</div></div></div>
+</aside>
+
+<div class="page-wrap" id="page-dashboard" style="display:block;">
+<div class="main">
+  <div class="navbar">
+    <div class="navbar-crumbs">Lloyds DLT Platform / <b>Dashboard</b></div>
+    <div class="navbar-right">
+      <button class="fluid-btn" onclick="showPage('fluid_overview')">
+        <span class="fluid-btn-halo"></span>
+        <span class="fluid-btn-inner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+          Overview
+        </span>
+      </button>
+      <span class="pill pill-live"><span class="pill-dot"></span>Network healthy</span>
+      <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A4A40" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+      <div class="nav-av">AK</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="hero">
+      <div class="hero-l">
+        <div class="hero-eyebrow">Why this platform exists</div>
+        <div class="hero-h">One verified identity, <em>reused</em> across every lender on the network.</div>
+        <div class="hero-sub">Customers verify KYC once. The credential is hashed and committed on-chain, then trusted instantly by Lloyds and every connected institution.</div>
+        <div class="hero-btns">
+          <a class="hbtn hbtn-l" href="#" onclick="showPage('loan_applications'); return false;">Walk through an application →</a>
+          <a class="hbtn hbtn-o" href="#" onclick="showPage('ledger_explorer'); return false;">Inspect the ledger</a>
+        </div>
+      </div>
+      <div class="hero-r">
+        <div class="compare">
+          <div class="compare-b"><div class="compare-l">Legacy KYC re-check</div><div class="compare-v m">48 hrs</div></div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8FCBAE" stroke-width="2"><path d="M5 12h14"/><path d="M13 5l7 7-7 7"/></svg>
+          <div class="compare-b"><div class="compare-l">On-chain reuse</div><div class="compare-v">4.2 min</div></div>
+        </div>
+        <div class="ticker"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8FCBAE" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg><span><b style="color:#8FCBAE;">31 of 47</b> applications skipped re-upload today</span></div>
+      </div>
+    </div>
+
+    <section class="block">
+      <div class="block-head"><div class="block-title"><span class="block-num">01</span>Today across all products</div><div class="block-note">Auto-refreshes every 30 seconds</div></div>
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-label">Applications received</div><div class="stat-value">47</div><div class="stat-foot up">↑ 12% vs yesterday</div></div>
+        <div class="stat"><div class="stat-label">Fast-tracked via on-chain KYC</div><div class="stat-value">31</div><div class="ptrack"><div class="pfill" style="width:66%;"></div></div><div class="stat-foot flat">66% of total volume</div></div>
+        <div class="stat"><div class="stat-label">Avg. time to decision</div><div class="stat-value">4.2 min</div><div class="stat-foot up">↓ from 48 hrs baseline</div></div>
+        <div class="stat"><div class="stat-label">Credentials live on ledger</div><div class="stat-value">12,884</div><div class="stat-foot flat">across 3 institutions</div></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="block-head"><div class="block-title"><span class="block-num">02</span>Permissioned network topology</div><div class="block-note">Live block height, consensus, and validator sync</div></div>
+      <div class="card card-pad">
+        <div class="net-canvas" style="height:260px;">
+          <svg width="100%" height="100%" viewBox="0 0 920 260" style="position:absolute; top:0; left:0;">
+            <!-- connection lines, all from hub at 460,130 -->
+            <line x1="460" y1="130" x2="460" y2="42" stroke="#D8D6CC" stroke-width="1.5"/>
+            <line x1="460" y1="130" x2="724" y2="84" stroke="#D8D6CC" stroke-width="1.5"/>
+            <line x1="460" y1="130" x2="724" y2="196" stroke="#D8D6CC" stroke-width="1.5"/>
+            <line x1="460" y1="130" x2="196" y2="196" stroke="#D8D6CC" stroke-width="1.5"/>
+            <line x1="460" y1="130" x2="196" y2="84" stroke="#D8D6CC" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+            <!-- animated pulses traveling along each connection -->
+            <circle r="3.5" fill="#0E6E4B"><animateMotion dur="2.6s" repeatCount="indefinite" path="M460,130 L460,42" /></circle>
+            <circle r="3.5" fill="#0E6E4B"><animateMotion dur="2.6s" begin="0.5s" repeatCount="indefinite" path="M460,130 L724,84" /></circle>
+            <circle r="3.5" fill="#0E6E4B"><animateMotion dur="2.6s" begin="1s" repeatCount="indefinite" path="M460,130 L724,196" /></circle>
+            <circle r="3.5" fill="#0E6E4B"><animateMotion dur="2.6s" begin="1.5s" repeatCount="indefinite" path="M460,130 L196,196" /></circle>
+            <circle r="3" fill="#8C8B7E"><animateMotion dur="2.6s" begin="2s" repeatCount="indefinite" path="M460,130 L196,84" /></circle>
+
+            <!-- hub: Lloyds validator -->
+            <circle cx="460" cy="130" r="15" fill="#0E6E4B" stroke="#E2EEE7" stroke-width="4"/>
+            <text x="460" y="168" text-anchor="middle" font-size="13" font-weight="700" fill="#16160F" font-family="-apple-system, sans-serif">Lloyds</text>
+            <text x="460" y="184" text-anchor="middle" font-size="13" font-weight="700" fill="#16160F" font-family="-apple-system, sans-serif">validator</text>
+
+            <!-- spoke: Partner bank validator (top) -->
+            <circle cx="460" cy="42" r="10" fill="#0E6E4B" stroke="#E2EEE7" stroke-width="3"/>
+            <text x="460" y="20" text-anchor="middle" font-size="12" font-weight="600" fill="#4A4A40" font-family="-apple-system, sans-serif">Partner bank</text>
+            <text x="460" y="34" text-anchor="middle" font-size="12" font-weight="600" fill="#4A4A40" font-family="-apple-system, sans-serif">validator</text>
+
+            <!-- spoke: Credit bureau validator (top right) -->
+            <circle cx="724" cy="84" r="10" fill="#0E6E4B" stroke="#E2EEE7" stroke-width="3"/>
+            <text x="724" y="62" text-anchor="middle" font-size="12" font-weight="600" fill="#4A4A40" font-family="-apple-system, sans-serif">Credit bureau</text>
+            <text x="724" y="76" text-anchor="middle" font-size="12" font-weight="600" fill="#4A4A40" font-family="-apple-system, sans-serif">validator</text>
+
+            <!-- spoke: Backup validator (bottom right) -->
+            <circle cx="724" cy="196" r="10" fill="#0E6E4B" stroke="#E2EEE7" stroke-width="3"/>
+            <text x="724" y="222" text-anchor="middle" font-size="12" font-weight="600" fill="#4A4A40" font-family="-apple-system, sans-serif">Backup</text>
+            <text x="724" y="236" text-anchor="middle" font-size="12" font-weight="600" fill="#4A4A40" font-family="-apple-system, sans-serif">validator</text>
+
+            <!-- spoke: Regulator observer (bottom left) -->
+            <circle cx="196" cy="196" r="10" fill="#8C8B7E" stroke="#E2EEE7" stroke-width="3"/>
+            <text x="196" y="222" text-anchor="middle" font-size="12" font-weight="600" fill="#4A4A40" font-family="-apple-system, sans-serif">Regulator</text>
+            <text x="196" y="236" text-anchor="middle" font-size="12" font-weight="600" fill="#4A4A40" font-family="-apple-system, sans-serif">observer</text>
+
+            <!-- spoke: extra validator slot (top left) -->
+            <circle cx="196" cy="84" r="10" fill="#0E6E4B" stroke="#E2EEE7" stroke-width="3"/>
+            <text x="196" y="62" text-anchor="middle" font-size="12" font-weight="600" fill="#4A4A40" font-family="-apple-system, sans-serif">Reserve</text>
+            <text x="196" y="76" text-anchor="middle" font-size="12" font-weight="600" fill="#4A4A40" font-family="-apple-system, sans-serif">validator</text>
+          </svg>
+        </div>
+        <div class="net-foot"><span class="mono-sm">Consensus: RAFT</span><span class="mono-sm">Block #48,221</span><span style="color:#0B5C3F; font-weight:700;">4/4 in sync</span></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="block-head"><div class="block-title"><span class="block-num">03</span>Recent activity across products</div><a class="block-link" href="#" onclick="showPage('loan_applications'); return false;">Open loan queue →</a></div>
+      <div class="card">
+        <table>
+          <tr><th>Applicant</th><th>Product</th><th>Amount</th><th>KYC source</th><th>Status</th><th></th></tr>
+          <tr>
+            <td><div class="person"><div class="av">RS</div>Rohan Sharma</div></td>
+            <td>Personal loan</td><td>£300,000</td>
+            <td><span class="chain-ref"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88"/></svg>On-chain</span></td>
+            <td><span class="tag tag-go">Auto-eligible</span></td>
+            <td><a class="block-link" href="#" onclick="showPage('loan_applications'); return false;">Review →</a></td>
+          </tr>
+          <tr>
+            <td><div class="person"><div class="av">PN</div>Priya Nair</div></td>
+            <td>Credit card</td><td>£20,000 limit</td>
+            <td><span class="chain-ref"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88"/></svg>On-chain</span></td>
+            <td><span class="tag tag-go">Auto-eligible</span></td>
+            <td><a class="block-link" href="#" onclick="showPage('credit_cards'); return false;">Review →</a></td>
+          </tr>
+          <tr>
+            <td><div class="person"><div class="av">VD</div>Vikram Desai</div></td>
+            <td>Home loan</td><td>£450,000</td>
+            <td><span class="mono-sm">New · uploading</span></td>
+            <td><span class="tag tag-warn">Pending docs</span></td>
+            <td><span class="mono-sm">awaiting</span></td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="block" style="margin-bottom:0;">
+      <div class="block-head"><div class="block-title"><span class="block-num">04</span>Live activity</div></div>
+      <div class="card card-pad">
+        <div class="activity-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0E6E4B" stroke-width="2.3"><path d="M20 6L9 17l-5-5"/></svg><div><b>Anita accepted LN20458</b> for Rohan Sharma — <span class="mono-sm">2 min ago</span></div></div>
+        <div class="activity-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#854F0B" stroke-width="2.3"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><div><b>Compliance flagged</b> credential KYC-VD-19042 — <span class="mono-sm">38 min ago</span></div></div>
+        <div class="activity-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0E6E4B" stroke-width="2.3"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg><div><b>New credential issued</b> for Meera Iyer · block #48,201 — <span class="mono-sm">1 hr ago</span></div></div>
+        <div class="activity-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4A4A40" stroke-width="2.3"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg><div><b>Partner bank verified</b> a credential via verifyKYC() — <span class="mono-sm">3 hrs ago</span></div></div>
+        <div class="activity-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4A4A40" stroke-width="2.3"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><div><b>Regulator node synced</b> to block #48,221 — <span class="mono-sm">3 hrs ago</span></div></div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</div>
+
+<div class="page-wrap" id="page-loan_applications" style="display:none;">
+<div class="main">
+  <div class="navbar">
+    <div class="navbar-crumbs">Lloyds DLT Platform / <b>Loan applications</b></div>
+    <div class="navbar-right">
+      <button class="fluid-btn" onclick="showPage('fluid_overview')">
+        <span class="fluid-btn-halo"></span>
+        <span class="fluid-btn-inner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+          Overview
+        </span>
+      </button>
+      <span class="pill pill-live"><span class="pill-dot"></span>Network healthy</span>
+      <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A4A40" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+      <div class="nav-av">AK</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-title-row">
+      <div>
+        <div class="page-title">Loan applications</div>
+        <div class="page-sub">Every secured and unsecured lending product, in one queue — filtered by type, status, and KYC source.</div>
+      </div>
+    </div>
+
+    <div class="product-tabs">
+      <div class="ptab on">All products <span class="ptab-count">47</span></div>
+      <div class="ptab">Personal loans <span class="ptab-count">18</span></div>
+      <div class="ptab">Home loans <span class="ptab-count">9</span></div>
+      <div class="ptab">Vehicle loans <span class="ptab-count">6</span></div>
+      <div class="ptab">Business loans <span class="ptab-count">4</span></div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-label">Total applications</div><div class="stat-value">47</div><span class="tag tag-go">12% up vs yesterday</span></div>
+      <div class="stat"><div class="stat-label">Auto-eligible</div><div class="stat-value">29</div><span class="stat-tag" style="background:#E2EEE7; color:#024731;">62% of queue</span></div>
+      <div class="stat"><div class="stat-label">Manual review</div><div class="stat-value">11</div><span class="stat-tag" style="background:#FCEBEB; color:#A32D2D;">needs decision</span></div>
+      <div class="stat"><div class="stat-label">Pending documents</div><div class="stat-value">7</div><span class="stat-tag" style="background:#FAEEDA; color:#854F0B;">awaiting upload</span></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8C8B7E" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search applicant or ID</div>
+      <div class="filter-row">
+        <span class="filter-chip on">All statuses</span>
+        <span class="filter-chip">Auto-eligible</span>
+        <span class="filter-chip">Manual review</span>
+        <span class="filter-chip">Pending docs</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <table>
+        <tr><th>Applicant</th><th>Product</th><th>Amount</th><th>credit score</th><th>KYC source</th><th>Status</th><th></th></tr>
+        <tr>
+          <td><div class="person"><div class="av">RS</div>Rohan Sharma</div></td>
+          <td><span class="product-chip">Personal loan</span></td>
+          <td>£300,000</td><td>782</td>
+          <td><span class="chain-ref"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88"/></svg>On-chain · Lloyds</span></td>
+          <td><span class="tag tag-go">Auto-eligible</span></td>
+          <td><span class="row-link">Review →</span></td>
+        </tr>
+        <tr>
+          <td><div class="person"><div class="av">VD</div>Vikram Desai</div></td>
+          <td><span class="product-chip">Home loan</span></td>
+          <td>£450,000</td><td>—</td>
+          <td><span class="mono-sm">New · uploading docs</span></td>
+          <td><span class="tag tag-warn">Pending docs</span></td>
+          <td><span class="mono-sm">awaiting</span></td>
+        </tr>
+        <tr>
+          <td><div class="person"><div class="av">ST</div>Sara Thomas</div></td>
+          <td><span class="product-chip">Vehicle loan</span></td>
+          <td>£85,000</td><td>688</td>
+          <td><span class="chain-ref"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88"/></svg>On-chain · Lloyds</span></td>
+          <td><span class="tag tag-stop">Manual review</span></td>
+          <td><span class="row-link">Review →</span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="page-wrap" id="page-credit_cards" style="display:none;">
+<div class="main">
+  <div class="navbar">
+    <div class="navbar-crumbs">Lloyds DLT Platform / <b>Credit cards</b></div>
+    <div class="navbar-right">
+      <button class="fluid-btn" onclick="showPage('fluid_overview')">
+        <span class="fluid-btn-halo"></span>
+        <span class="fluid-btn-inner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+          Overview
+        </span>
+      </button>
+      <span class="pill pill-live"><span class="pill-dot"></span>Network healthy</span>
+      <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A4A40" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+      <div class="nav-av">AK</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-title">Credit cards</div>
+    <div class="page-sub">Card applications and limit decisioning, powered by the same on-chain KYC credential used across every Lloyds product.</div>
+
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-label">Applications today</div><div class="stat-value">23</div></div>
+      <div class="stat"><div class="stat-label">Auto-approved limits</div><div class="stat-value">16</div></div>
+      <div class="stat"><div class="stat-label">Manual underwriting</div><div class="stat-value">5</div></div>
+      <div class="stat"><div class="stat-label">Avg. approved limit</div><div class="stat-value">£24,000</div></div>
+    </div>
+
+    <section class="block">
+      <div class="block-head"><div class="block-title">Card products</div><div class="block-note">Limit tiers driven by the policy engine</div></div>
+      <div class="card-grid">
+        <div class="credit-card-tile cc-platinum">
+          <div class="cc-top"><span class="cc-name">LLOYDS PLATINUM</span><div class="cc-chip"></div></div>
+          <div class="cc-number">•••• •••• •••• 4821</div>
+          <div class="cc-foot"><div><div>Limit range</div><div>£30K – £100K</div></div><div><div>Requires credit score</div><div>750+</div></div></div>
+        </div>
+        <div class="credit-card-tile cc-gold">
+          <div class="cc-top"><span class="cc-name">LLOYDS GOLD</span><div class="cc-chip"></div></div>
+          <div class="cc-number">•••• •••• •••• 7732</div>
+          <div class="cc-foot"><div><div>Limit range</div><div>£10K – £30K</div></div><div><div>Requires credit score</div><div>700+</div></div></div>
+        </div>
+        <div class="credit-card-tile cc-classic">
+          <div class="cc-top"><span class="cc-name">LLOYDS CLASSIC</span><div class="cc-chip"></div></div>
+          <div class="cc-number">•••• •••• •••• 1059</div>
+          <div class="cc-foot"><div><div>Limit range</div><div>£2.5K – £10K</div></div><div><div>Requires credit score</div><div>650+</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" style="margin-bottom:0;">
+      <div class="block-head"><div class="block-title">Active applications</div></div>
+      <div class="review-grid">
+        <div class="review-card">
+          <div class="review-top">
+            <div class="person"><div class="av">PN</div><div><div style="font-weight:700; font-size:14px;">Priya Nair</div><div style="font-size:11.5px; color:#4A4A40;">Lloyds Gold · requested</div></div></div>
+            <span class="tag tag-go">Auto-eligible</span>
+          </div>
+          <div class="check-pill-row">
+            <span class="check-pill"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>KYC valid</span>
+            <span class="check-pill"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Income verified</span>
+            <span class="check-pill"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>No defaults on file</span>
+          </div>
+          <div class="limit-row"><span>credit score score</span><b>801</b></div>
+          <div class="limit-row"><span>Requested limit</span><b>£20,000</b></div>
+          <div class="limit-row"><span>Policy-recommended limit</span><b style="color:#0B5C3F;">£20,000</b></div>
+          <div class="verdict-trace">verifyKYC(0x55a1) → valid: true<br>policyEngine.cardLimit(credit_score=801, tier=GOLD) → £20,000</div>
+          <div class="action-row"><button class="btn btn-go"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Approve limit</button><button class="btn btn-stop"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>Decline</button></div>
+        </div>
+
+        <div class="review-card">
+          <div class="review-top">
+            <div class="person"><div class="av">AS</div><div><div style="font-weight:700; font-size:14px;">Aditya Singh</div><div style="font-size:11.5px; color:#4A4A40;">Lloyds Platinum · requested</div></div></div>
+            <span class="tag" style="background:#FCEBEB; color:#A32D2D;">Manual review</span>
+          </div>
+          <div class="check-pill-row">
+            <span class="check-pill"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>KYC valid</span>
+            <span class="check-pill"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Income verified</span>
+            <span class="check-pill" style="background:#FAEEDA; color:#854F0B;">Existing exposure flagged</span>
+          </div>
+          <div class="limit-row"><span>credit score score</span><b>738</b></div>
+          <div class="limit-row"><span>Requested limit</span><b>£80,000</b></div>
+          <div class="limit-row"><span>Policy-recommended limit</span><b style="color:#854F0B;">Review required</b></div>
+          <div class="verdict-trace">verifyKYC(0x91c4) → valid: true<br>policyEngine.cardLimit(credit_score=738, tier=PLATINUM, exposure=high) → flagged</div>
+          <div class="action-row"><button class="btn btn-go"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Approve limit</button><button class="btn btn-stop"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>Decline</button></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+</div>
+
+<div class="page-wrap" id="page-kyc_registry" style="display:none;">
+<div class="main">
+  <div class="navbar">
+    <div class="navbar-crumbs">Lloyds DLT Platform / <b>KYC registry</b></div>
+    <div class="navbar-right">
+      <button class="fluid-btn" onclick="showPage('fluid_overview')">
+        <span class="fluid-btn-halo"></span>
+        <span class="fluid-btn-inner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+          Overview
+        </span>
+      </button>
+      <span class="pill pill-live"><span class="pill-dot"></span>Network healthy</span>
+      <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A4A40" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+      <div class="nav-av">AK</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-title">KYC registry</div>
+    <div class="page-sub">Every customer's on-chain identity credential, where it was issued, and which products it has been used to unlock — one record, reused everywhere.</div>
+
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-label">Total credentials issued</div><div class="stat-value">12,884</div></div>
+      <div class="stat"><div class="stat-label">Active</div><div class="stat-value">12,401</div></div>
+      <div class="stat"><div class="stat-label">Expiring within 90 days</div><div class="stat-value">312</div></div>
+      <div class="stat"><div class="stat-label">Revoked</div><div class="stat-value">171</div></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8C8B7E" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search by name, credential ID, or DID</div>
+      <div class="filter-row">
+        <span class="filter-chip on">All statuses</span>
+        <span class="filter-chip">Active</span>
+        <span class="filter-chip">Expiring soon</span>
+        <span class="filter-chip">Revoked</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <table>
+        <tr><th>Customer</th><th>Credential ID</th><th>Issuer</th><th>Products unlocked</th><th>Expires</th><th>Status</th><th></th></tr>
+        <tr>
+          <td><div class="person"><div class="av">RS</div>Rohan Sharma</div></td>
+          <td><span class="mono-sm">KYC-RS-88213</span></td>
+          <td><span class="issuer-chip">Lloyds</span></td>
+          <td><div class="products-used"><span class="pdot" title="Personal loan"></span><span class="pdot muted"></span><span class="pdot muted"></span></div></td>
+          <td>12 Jun 2027</td>
+          <td><span class="tag tag-go">Active</span></td>
+          <td><span class="row-link">View trail →</span></td>
+        </tr>
+        <tr>
+          <td><div class="person"><div class="av">PN</div>Priya Nair</div></td>
+          <td><span class="mono-sm">KYC-PN-44021</span></td>
+          <td><span class="issuer-chip">Partner bank</span></td>
+          <td><div class="products-used"><span class="pdot"></span><span class="pdot"></span><span class="pdot muted"></span></div></td>
+          <td>03 Apr 2027</td>
+          <td><span class="tag tag-go">Active</span></td>
+          <td><span class="row-link">View trail →</span></td>
+        </tr>
+        <tr>
+          <td><div class="person"><div class="av">ST</div>Sara Thomas</div></td>
+          <td><span class="mono-sm">KYC-ST-30187</span></td>
+          <td><span class="issuer-chip">Lloyds</span></td>
+          <td><div class="products-used"><span class="pdot"></span><span class="pdot muted"></span><span class="pdot muted"></span></div></td>
+          <td>19 Aug 2026</td>
+          <td><span class="tag tag-warn">Expiring soon</span></td>
+          <td><span class="row-link">View trail →</span></td>
+        </tr>
+        <tr>
+          <td><div class="person"><div class="av">VD</div>Vikram Desai</div></td>
+          <td><span class="mono-sm">KYC-VD-19042</span></td>
+          <td><span class="issuer-chip">Lloyds</span></td>
+          <td><div class="products-used"><span class="pdot muted"></span><span class="pdot muted"></span><span class="pdot muted"></span></div></td>
+          <td>—</td>
+          <td><span class="tag tag-stop">Revoked</span></td>
+          <td><span class="row-link">View trail →</span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="page-wrap" id="page-admin_control_center" style="display:none;">
+<div class="main">
+  <div class="navbar">
+    <div class="navbar-crumbs">Lloyds DLT Platform / <b>Admin control center</b></div>
+    <div class="navbar-right">
+      <button class="fluid-btn" onclick="showPage('fluid_overview')">
+        <span class="fluid-btn-halo"></span>
+        <span class="fluid-btn-inner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+          Overview
+        </span>
+      </button>
+      <span class="pill pill-dark"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg>Tier 2 · Senior admin</span>
+      <div class="nav-av">AK</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-title">Admin control center</div>
+    <div class="page-sub">Who can see what, decide what, and write to the ledger — and the rules the policy engine runs automatically before any human looks at a file.</div>
+
+    <section class="block">
+      <div class="block-head"><div class="block-title"><span class="block-num">01</span>Role hierarchy</div><div class="block-note">4 access tiers · 24 active users · 2 external observer nodes</div></div>
+      <div class="role-rank">
+        <div class="role-card">
+          <div class="tier-bar tier-1"></div>
+          <div class="role-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#024731" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          <div class="role-name">Loan officer</div>
+          <div class="role-desc">Reviews and decisions applications up to £50,000. Escalates larger or flagged cases upward.</div>
+          <div class="role-foot"><span>14 users</span><span>Tier 1</span></div>
+        </div>
+        <div class="role-card mine">
+          <div class="tier-bar tier-2"></div>
+          <div class="role-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#024731" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg></div>
+          <div class="role-name">Senior admin <span class="mine-tag" style="margin-left:5px;">You</span></div>
+          <div class="role-desc">Unlimited decision authority, manages the policy engine, can issue and revoke on-chain credentials.</div>
+          <div class="role-foot"><span>5 users</span><span>Tier 2</span></div>
+        </div>
+        <div class="role-card">
+          <div class="tier-bar tier-2"></div>
+          <div class="role-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#024731" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <div class="role-name">Compliance officer</div>
+          <div class="role-desc">Independent audit access. Can flag or revoke any credential network-wide regardless of issuer.</div>
+          <div class="role-foot"><span>3 users</span><span>Tier 2</span></div>
+        </div>
+        <div class="role-card">
+          <div class="tier-bar tier-3"></div>
+          <div class="role-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#024731" stroke-width="2"><path d="M14 13V8a4 4 0 0 0-8 0v5"/><rect x="2" y="13" width="14" height="8" rx="1"/></svg></div>
+          <div class="role-name">Regulator observer</div>
+          <div class="role-desc">External read-only validator node. Sees anonymized application data and the full audit trail.</div>
+          <div class="role-foot"><span>2 nodes</span><span>External</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="block-head"><div class="block-title"><span class="block-num">02</span>Permission matrix</div><div class="block-note">Enforced at the smart contract layer, not just the UI</div></div>
+      <div class="card">
+        <table class="matrix">
+          <tr><th>Capability</th><th>Loan officer</th><th>Senior admin</th><th>Compliance officer</th><th>Regulator observer</th></tr>
+          <tr><td><div class="perm-name">View applications</div><div class="perm-desc">See applicant details and loan requests</div></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><span class="partial">Anonymized</span></td></tr>
+          <tr><td><div class="perm-name">Accept / reject loans</div><div class="perm-desc">Final decision authority on applications</div></td><td><span class="partial">Up to £50K</span></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="no" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg></td><td><svg class="no" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg></td></tr>
+          <tr><td><div class="perm-name">Query verifyKYC()</div><div class="perm-desc">Inspect credential validity and tx history on-chain</div></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td></tr>
+          <tr><td><div class="perm-name">Call issueKYC()</div><div class="perm-desc">Commit a new credential attestation on-chain</div></td><td><svg class="no" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="no" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg></td><td><svg class="no" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg></td></tr>
+          <tr><td><div class="perm-name">Call revokeKYC()</div><div class="perm-desc">Invalidate a credential network-wide</div></td><td><svg class="no" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="no" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg></td></tr>
+          <tr><td><div class="perm-name">Configure policy engine</div><div class="perm-desc">Set auto-eligibility thresholds and risk rules</div></td><td><svg class="no" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="no" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg></td><td><svg class="no" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg></td></tr>
+          <tr><td><div class="perm-name">Access raw KYC documents</div><div class="perm-desc">View encrypted off-chain PII in S3</div></td><td><span class="partial">Assigned only</span></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="no" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg></td></tr>
+          <tr><td><div class="perm-name">Export full audit trail</div><div class="perm-desc">Download ledger event history for any credential</div></td><td><svg class="no" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td><td><svg class="yes" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></td></tr>
+        </table>
+      </div>
+    </section>
+
+    <div class="grid2">
+      <section class="block" style="margin-bottom:0;">
+        <div class="block-head"><div class="block-title"><span class="block-num">03</span>Policy engine rules</div></div>
+        <div class="card card-pad">
+          <div class="policy-row"><div><div class="policy-name">Auto-eligible threshold</div><div class="policy-rule">amount ≤ 50,000 AND credit_score ≥ 700 AND kyc.valid = true</div></div><div class="toggle"></div></div>
+          <div class="policy-row"><div><div class="policy-name">Manual review trigger</div><div class="policy-rule">credit_score &lt; 700 OR amount &gt; 50,000</div></div><div class="toggle"></div></div>
+          <div class="policy-row"><div><div class="policy-name">Revocation cascade</div><div class="policy-rule">on revokeKYC() → flag all open applications using credential</div></div><div class="toggle"></div></div>
+          <div class="policy-row"><div><div class="policy-name">Cross-bank credential trust</div><div class="policy-rule">accept verifyKYC() from any network-validated issuer</div></div><div class="toggle"></div></div>
+        </div>
+      </section>
+
+      <section class="block" style="margin-bottom:0;">
+        <div class="block-head"><div class="block-title"><span class="block-num">04</span>Personal loans queue</div></div>
+        <div class="card card-pad">
+          <div class="qm-row">
+            <div class="qm"><div class="qm-label">Auto-eligible</div><div class="qm-value">12</div></div>
+            <div class="qm"><div class="qm-label">Manual review</div><div class="qm-value">4</div></div>
+            <div class="qm"><div class="qm-label">Pending docs</div><div class="qm-value">2</div></div>
+          </div>
+          <table>
+            <tr><th>Applicant</th><th>Amount</th><th>credit score</th><th>Status</th></tr>
+            <tr><td>Rohan Sharma</td><td>£300,000</td><td>782</td><td><span class="tag tag-go">Auto-eligible</span></td></tr>
+            <tr><td>Sara Thomas</td><td>£22,000</td><td>688</td><td><span class="tag tag-stop">Manual review</span></td></tr>
+            <tr><td>Vikram Desai</td><td>£50,000</td><td>—</td><td><span class="tag tag-warn">Pending docs</span></td></tr>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="page-wrap" id="page-ledger_explorer" style="display:none;">
+<div class="main">
+  <div class="navbar">
+    <div class="navbar-crumbs">node://besu-validator-01 · RAFT consensus</div>
+    <div class="navbar-right">
+      <button class="fluid-btn" onclick="showPage('fluid_overview')">
+        <span class="fluid-btn-halo"></span>
+        <span class="fluid-btn-inner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+          Overview
+        </span>
+      </button>
+      <span><span class="pill-dot"></span>block #48,221</span>
+      <span>4/4 validators</span>
+      <div class="nav-av">AK</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-title-row">
+      <div>
+        <div class="page-title">Credential audit trail</div>
+        <div class="page-sub">Every smart contract call this credential has ever triggered — issuance, consent, verification, and (if it ever happens) revocation.</div>
+      </div>
+      <span class="pill-dark">Credential ID: KYC-RS-88213</span>
+    </div>
+
+    <div class="id-row">
+      <div class="id-card"><div class="id-label">Subject</div><div class="id-value">Rohan Sharma</div><div class="id-sub">DID: did:lloyds:0x88213a..</div></div>
+      <div class="id-card"><div class="id-label">Issuer</div><div class="id-value">Lloyds Banking Group</div><div class="id-sub good">✓ Signature verified</div></div>
+      <div class="id-card"><div class="id-label">Status</div><div class="id-value" style="color:#0B5C3F;">Active · not revoked</div><div class="id-sub">Expires 12 Jun 2027</div></div>
+    </div>
+
+    <section class="block">
+      <div class="block-head"><div class="block-title"><span class="block-num">01</span>On-chain event history</div></div>
+      <div class="trail">
+        <div class="trail-row">
+          <div class="node-wrap"><div class="node-circle"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B5C3F" stroke-width="2"><path d="M12 1l3 6 6 .75-4.5 4.5L18 19l-6-3-6 3 1.5-6.75L3 7.75 9 7z"/></svg></div><div class="node-line"></div></div>
+          <div class="trail-content"><div class="trail-top"><span class="trail-fn">issueKYC()</span><span class="trail-time">12 Jun 2026, 10:14 AM</span></div><div class="trail-desc">Credential hash committed to ledger by Lloyds validator after in-branch identity verification</div><div class="trail-tx">tx 0x4a7f...e21b · block #44,102 · confirmed 4/4</div></div>
+        </div>
+        <div class="trail-row">
+          <div class="node-wrap"><div class="node-circle"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B5C3F" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h6"/></svg></div><div class="node-line"></div></div>
+          <div class="trail-content"><div class="trail-top"><span class="trail-fn">consentLogged()</span><span class="trail-time">12 Jun 2026, 10:15 AM</span></div><div class="trail-desc">Customer consented to share this credential with the lending platform and connected partners</div><div class="trail-tx">tx 0x2b81...77ac · block #44,103 · confirmed 4/4</div></div>
+        </div>
+        <div class="trail-row">
+          <div class="node-wrap"><div class="node-circle"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B5C3F" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div><div class="node-line"></div></div>
+          <div class="trail-content"><div class="trail-top"><span class="trail-fn">verifyKYC()</span><span class="trail-time">23 Jun 2026, 09:02 AM</span></div><div class="trail-desc">Queried by the lending platform during application LN20458 — returned <b>valid: true</b></div><div class="trail-tx">tx 0x7e21...4bcd · block #48,221 · confirmed 4/4</div></div>
+        </div>
+        <div class="trail-row">
+          <div class="node-wrap"><div class="node-circle muted"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8C8B7E" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div></div>
+          <div class="trail-content"><div class="trail-top"><span class="trail-fn muted">revokeKYC()</span><span class="trail-time">not triggered</span></div><div class="trail-desc">No revocation event recorded — credential remains valid across every connected institution</div></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="bottom-row">
+      <section class="block" style="margin-bottom:0;">
+        <div class="block-head"><div class="block-title"><span class="block-num">02</span>Cross-institution reuse</div></div>
+        <div class="card-pad">
+          <p style="font-size:12px; color:#4A4A40; margin-bottom:0.9rem;">This is the actual thesis of the platform: one credential, checked twice, zero repeated paperwork.</p>
+          <div class="reuse-row"><span style="font-size:13px; font-weight:700;">Lloyds Banking Group</span><span class="tag tag-go">Issuer</span></div>
+          <div class="reuse-row"><span style="font-size:13px; font-weight:700;">Partner bank node</span><span class="tag tag-mute">Verified 23 Jun</span></div>
+        </div>
+      </section>
+      <section class="block" style="margin-bottom:0;">
+        <div class="block-head"><div class="block-title"><span class="block-num">03</span>Privacy architecture</div></div>
+        <div class="card-pad">
+          <div class="privacy-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0E6E4B" stroke-width="2.3"><path d="M20 6L9 17l-5-5"/></svg>Only document <b>hashes</b> are written to the ledger — never the documents themselves</div>
+          <div class="privacy-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0E6E4B" stroke-width="2.3"><path d="M20 6L9 17l-5-5"/></svg>Source documents live in AES-256 encrypted S3, access-controlled per role</div>
+          <div class="privacy-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0E6E4B" stroke-width="2.3"><path d="M20 6L9 17l-5-5"/></svg>No personally identifiable information is ever committed on-chain</div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="page-wrap" id="page-new_customer_upload" style="display:none;">
+<div class="main">
+  <div class="navbar">
+    <div class="navbar-crumbs">Lloyds DLT Platform / <b>New customer upload</b></div>
+    <div class="navbar-right">
+      <button class="fluid-btn" onclick="showPage('fluid_overview')">
+        <span class="fluid-btn-halo"></span>
+        <span class="fluid-btn-inner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+          Overview
+        </span>
+      </button>
+      <span class="pill pill-live"><span class="pill-dot"></span>Network healthy</span>
+      <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A4A40" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+      <div class="nav-av">AK</div>
+    </div>
+  </div>
+
+  <div class="ncu-content">
+
+    <div class="ncu-hero">
+      <div class="ncu-hero-text">
+        <div class="ncu-eyebrow">First time at Lloyds</div>
+        <h1 class="ncu-h1">Let's get you verified — once, for everything.</h1>
+        <p class="ncu-sub">No existing account means no shortcuts yet. Upload your documents below and we'll issue your on-chain KYC credential. Every loan, card, and product after this moment reuses it instantly.</p>
+      </div>
+      <div class="ncu-hero-progress">
+        <svg width="92" height="92" viewBox="0 0 92 92">
+          <circle cx="46" cy="46" r="40" fill="none" stroke="#E2EEE7" stroke-width="8"/>
+          <circle cx="46" cy="46" r="40" fill="none" stroke="#024731" stroke-width="8" stroke-linecap="round"
+            stroke-dasharray="251.2" stroke-dashoffset="100.5" transform="rotate(-90 46 46)"/>
+          <text x="46" y="42" text-anchor="middle" font-size="18" font-weight="700" fill="#024731" font-family="-apple-system, sans-serif">3/5</text>
+          <text x="46" y="58" text-anchor="middle" font-size="9" fill="#4A4A40" font-family="-apple-system, sans-serif">uploaded</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="ncu-steps">
+      <div class="ncu-step done"><div class="ncu-step-dot"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>Basic details</div>
+      <div class="ncu-step-line done"></div>
+      <div class="ncu-step current"><div class="ncu-step-dot">2</div>Upload documents</div>
+      <div class="ncu-step-line"></div>
+      <div class="ncu-step"><div class="ncu-step-dot">3</div>Video KYC</div>
+      <div class="ncu-step-line"></div>
+      <div class="ncu-step"><div class="ncu-step-dot">4</div>Review &amp; submit</div>
+    </div>
+
+    <div class="ncu-grid">
+      <div class="ncu-card done">
+        <div class="ncu-card-top"><div class="ncu-card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#024731" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h6M14 14h4"/></svg></div><span class="ncu-status-chip done">Uploaded</span></div>
+        <div class="ncu-card-name">Photo ID</div>
+        <div class="ncu-card-meta">pan_card_scan.pdf · 412 KB</div>
+        <div class="ncu-card-action">Replace file</div>
+      </div>
+
+      <div class="ncu-card done">
+        <div class="ncu-card-top"><div class="ncu-card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#024731" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg></div><span class="ncu-status-chip done">Uploaded</span></div>
+        <div class="ncu-card-name">Proof of identity (front + back)</div>
+        <div class="ncu-card-meta">proof_of_identity.pdf · 1.1 MB</div>
+        <div class="ncu-card-action">Replace file</div>
+      </div>
+
+      <div class="ncu-card done">
+        <div class="ncu-card-top"><div class="ncu-card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#024731" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></div><span class="ncu-status-chip done">Uploaded</span></div>
+        <div class="ncu-card-name">Address proof</div>
+        <div class="ncu-card-meta">electricity_bill_may.pdf · 286 KB</div>
+        <div class="ncu-card-action">Replace file</div>
+      </div>
+
+      <div class="ncu-card pending">
+        <div class="ncu-card-top"><div class="ncu-card-icon pending"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#854F0B" stroke-width="2"><path d="M16 2v4M8 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/></svg></div><span class="ncu-status-chip pending">Required</span></div>
+        <div class="ncu-card-name">Income proof</div>
+        <div class="ncu-card-meta">Salary slip or Form 16, last 3 months</div>
+        <div class="ncu-dropzone">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#854F0B" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+          <span>Drag file here or <b>browse</b></span>
+        </div>
+      </div>
+
+      <div class="ncu-card pending">
+        <div class="ncu-card-top"><div class="ncu-card-icon pending"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#854F0B" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div><span class="ncu-status-chip pending">Required</span></div>
+        <div class="ncu-card-name">Bank statement</div>
+        <div class="ncu-card-meta">Last 6 months, any existing account</div>
+        <div class="ncu-dropzone">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#854F0B" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+          <span>Drag file here or <b>browse</b></span>
+        </div>
+      </div>
+
+      <div class="ncu-card upcoming">
+        <div class="ncu-card-top"><div class="ncu-card-icon upcoming"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8C8B7E" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div><span class="ncu-status-chip upcoming">Next step</span></div>
+        <div class="ncu-card-name">Video KYC</div>
+        <div class="ncu-card-meta">Live identity check, 3–5 minutes</div>
+        <div class="ncu-card-action muted">Unlocks after uploads</div>
+      </div>
+    </div>
+
+    <div class="ncu-banner">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#854F0B" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <div><b>Verification usually takes 24–48 hours</b> once all five documents are in and video KYC is complete. After that, this credential works everywhere — instantly.</div>
+    </div>
+
+    <button class="ncu-submit" disabled>Submit for verification — 2 documents remaining</button>
+  </div>
+</div>
+</div>
+
+<div class="page-wrap" id="page-loan_decision" style="display:none;">
+<div class="main">
+  <div class="navbar">
+    <div class="navbar-crumbs">Lloyds DLT Platform / <b>Loan decision</b></div>
+    <div class="navbar-right">
+      <button class="fluid-btn" onclick="showPage('fluid_overview')">
+        <span class="fluid-btn-halo"></span>
+        <span class="fluid-btn-inner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+          Overview
+        </span>
+      </button>
+      <span class="pill pill-dark"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg>Tier 2 · Senior admin</span>
+      <div class="nav-av">AK</div>
+    </div>
+  </div>
+
+  <div class="ld-content">
+    <div class="ld-title-row">
+      <div>
+        <div class="ld-title">Loan decision</div>
+        <div class="ld-sub">Existing customer, KYC already verified on-chain — this is the fast path. Review the policy engine's recommendation and grant or decline.</div>
+      </div>
+      <span class="pill-dark">Application #LN20458</span>
+    </div>
+
+    <div class="ld-banner">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#024731" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88"/><path d="M14.47 14.48L20 20"/><path d="M8.12 8.12L12 12"/></svg>
+      <div><b>This customer's identity is already verified on-chain.</b> No documents to chase, no waiting — the policy engine has already done the first pass.</div>
+    </div>
+
+    <div class="ld-layout">
+      <div class="ld-main-col">
+        <div class="ld-card">
+          <div class="ld-applicant-row">
+            <div class="ld-applicant-left">
+              <div class="ld-av">RS</div>
+              <div>
+                <div class="ld-applicant-name">Rohan Sharma</div>
+                <div class="ld-applicant-meta">Customer since March 2021 · Savings account holder</div>
+              </div>
+            </div>
+            <span class="ld-tag existing">Existing customer</span>
+          </div>
+
+          <div class="ld-check-row">
+            <div class="ld-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#024731" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Photo ID verified</div>
+            <div class="ld-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#024731" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Identity check passed</div>
+            <div class="ld-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#024731" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Address verified</div>
+            <div class="ld-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#024731" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Video KYC done</div>
+            <div class="ld-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#024731" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Credential not expired</div>
+          </div>
+
+          <div class="ld-divider"></div>
+
+          <div class="ld-detail-grid">
+            <div><div class="ld-detail-label">Requested amount</div><div class="ld-detail-value">£300,000</div></div>
+            <div><div class="ld-detail-label">Tenure</div><div class="ld-detail-value">24 months</div></div>
+            <div><div class="ld-detail-label">Purpose</div><div class="ld-detail-value">Home renovation</div></div>
+            <div><div class="ld-detail-label">Estimated EMI</div><div class="ld-detail-value">£1,420/mo</div></div>
+          </div>
+
+          <div class="ld-divider"></div>
+
+          <div class="ld-trace-label">Smart contract verdict</div>
+          <div class="ld-trace">verifyKYC(0x88213a) → valid: true, expiry: 2027-06-12, issuer: Lloyds<br>policyEngine.evaluate(amount=300000, credit_score=782) → <b style="color:#0B5C3F;">eligible: true</b></div>
+        </div>
+      </div>
+
+      <div class="ld-side-col">
+        <div class="ld-card ld-score-card">
+          <div class="ld-gauge-wrap">
+            <svg width="84" height="84" viewBox="0 0 84 84">
+              <circle cx="42" cy="42" r="36" fill="none" stroke="#E2E0D2" stroke-width="8"/>
+              <circle cx="42" cy="42" r="36" fill="none" stroke="#0B5C3F" stroke-width="8" stroke-linecap="round"
+                stroke-dasharray="226" stroke-dashoffset="38" transform="rotate(-90 42 42)"/>
+              <text x="42" y="47" text-anchor="middle" font-size="19" font-weight="700" fill="#16160F" font-family="-apple-system, sans-serif">782</text>
+            </svg>
+          </div>
+          <div class="ld-score-label">credit score score</div>
+          <div class="ld-score-tag">Good · low risk</div>
+        </div>
+
+        <div class="ld-card">
+          <div class="ld-ledger-label">Ledger reference</div>
+          <div class="ld-ledger-mono">tx 0x7e21...4bcd</div>
+          <div class="ld-ledger-mono">block #48,221 · 4/4 confirmed</div>
+        </div>
+
+        <div class="ld-card">
+          <textarea class="ld-remark" placeholder="Add a remark for the audit trail (optional)"></textarea>
+          <div class="ld-action-row">
+            <button class="ld-btn-grant"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Grant loan</button>
+            <button class="ld-btn-reject"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>Reject</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+
+<div class="page-wrap" id="page-fluid_overview" style="display:none;">
+<div class="bg-glow"></div>
+<div class="grain"></div>
+
+<div class="fluid-back" onclick="showPage('dashboard')">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+  Back to platform
+</div>
+
+<section class="hero">
+  <div class="hero-eyebrow">Distributed ledger technology · explained in 90 seconds</div>
+  <h1 class="hero-title">Verify once.<br>Trust <span class="accent">everywhere</span>.</h1>
+  <p class="hero-sub">A KYC credential, issued once by Lloyds, cryptographically provable, never re-checked from scratch again. Follow the thread.</p>
+  <div class="scroll-cue"><span>Scroll to follow the thread</span>
+    <svg width="14" height="20" viewBox="0 0 14 20" fill="none"><rect x="1" y="1" width="12" height="18" rx="6" stroke="#6FB897" stroke-width="1.3"/><circle cx="7" cy="6" r="1.6" fill="#4FD89A"/></svg>
+  </div>
+</section>
+
+<div class="spine-section" id="spineSection">
+
+  <div class="thread-wrap" id="threadWrap">
+    <div class="thread-track"></div>
+    <div class="thread-fill" id="threadFill"></div>
+    <div class="thread-flame" id="threadFlame">
+      <div class="flame-glow-halo"></div>
+      <svg viewBox="0 0 40 56" style="filter: drop-shadow(0 0 6px rgba(232,124,42,0.6));">
+        <defs>
+          <radialGradient id="flameOuterGrad" cx="50%" cy="78%" r="65%">
+            <stop offset="0%" stop-color="#FFD27A"/>
+            <stop offset="35%" stop-color="#F2954A"/>
+            <stop offset="75%" stop-color="#D9622B"/>
+            <stop offset="100%" stop-color="#B8451E"/>
+          </radialGradient>
+          <radialGradient id="flameMidGrad" cx="50%" cy="82%" r="60%">
+            <stop offset="0%" stop-color="#FFF4D6"/>
+            <stop offset="40%" stop-color="#FFC65C"/>
+            <stop offset="100%" stop-color="#F2954A"/>
+          </radialGradient>
+          <radialGradient id="flameCoreGrad" cx="50%" cy="88%" r="55%">
+            <stop offset="0%" stop-color="#FFFFFF"/>
+            <stop offset="50%" stop-color="#FFF0C2"/>
+            <stop offset="100%" stop-color="#FFD27A"/>
+          </radialGradient>
+        </defs>
+
+        <path class="flame-layer flame-outer" fill="url(#flameOuterGrad)" opacity="0.92">
+          <animate attributeName="d" dur="0.9s" repeatCount="indefinite"
+            values="
+              M20 4 C9 16 5 28 7 38 C9 48 14 53 20 53 C26 53 31 48 33 38 C35 28 31 16 20 4Z;
+              M20 6 C11 17 6 27 8 37 C10 47 14 52 20 52 C27 52 32 46 32 37 C33 27 29 15 20 6Z;
+              M20 3 C8 15 4 29 6 39 C8 49 15 54 20 54 C25 54 32 49 34 39 C36 28 30 14 20 3Z;
+              M20 4 C9 16 5 28 7 38 C9 48 14 53 20 53 C26 53 31 48 33 38 C35 28 31 16 20 4Z"
+          />
+        </path>
+
+        <path class="flame-layer flame-mid" fill="url(#flameMidGrad)" opacity="0.95">
+          <animate attributeName="d" dur="0.65s" repeatCount="indefinite"
+            values="
+              M20 12 C13 21 10 30 11 37 C12 45 16 49 20 49 C24 49 28 45 29 37 C30 30 26 20 20 12Z;
+              M20 14 C14 22 11 29 12 36 C13 44 16 48 20 48 C25 48 29 43 28 36 C28 29 25 21 20 14Z;
+              M20 11 C12 20 9 31 10 38 C11 46 16 50 20 50 C24 50 29 45 30 38 C31 30 27 19 20 11Z;
+              M20 12 C13 21 10 30 11 37 C12 45 16 49 20 49 C24 49 28 45 29 37 C30 30 26 20 20 12Z"
+          />
+        </path>
+
+        <path class="flame-layer flame-core" fill="url(#flameCoreGrad)">
+          <animate attributeName="d" dur="0.5s" repeatCount="indefinite"
+            values="
+              M20 24 C16 29 15 35 16 39 C17 44 18 46 20 46 C22 46 23 44 24 39 C25 35 23 28 20 24Z;
+              M20 26 C17 30 16 35 17 38 C18 43 18 45 20 45 C22 45 22 43 23 38 C23 34 22 29 20 26Z;
+              M20 23 C15 28 14 36 15 40 C16 45 18 47 20 47 C22 47 24 44 25 40 C26 35 24 27 20 23Z;
+              M20 24 C16 29 15 35 16 39 C17 44 18 46 20 46 C22 46 23 44 24 39 C25 35 23 28 20 24Z"
+          />
+        </path>
+      </svg>
+      <span class="ember ember-1"></span>
+      <span class="ember ember-2"></span>
+      <span class="ember ember-3"></span>
+    </div>
+  </div>
+
+  <div class="stem-row left" data-stem="0">
+    <div class="stem-card">
+      <div class="stem-tag">The old way</div>
+      <div class="stem-h">Every bank starts from zero.</div>
+      <p class="stem-p">Same passport. Same utility bill. Same address proof — re-uploaded and re-checked every single time a customer applies somewhere new.</p>
+      <div class="stem-stat"><span class="stem-stat-num">48</span><span class="stem-stat-label">hours, on average</span></div>
+    </div>
+    <div class="stem-node-col"><div class="stem-node"></div></div>
+    <div class="stem-branch"></div>
+  </div>
+
+  <div class="stem-row right" data-stem="1">
+    <div class="stem-node-col"><div class="stem-node"></div></div>
+    <div class="stem-branch"></div>
+    <div class="stem-card">
+      <div class="stem-tag">The Lloyds way</div>
+      <div class="stem-h">Verified once. Remembered forever.</div>
+      <p class="stem-p">The credential is hashed, signed, and committed to a shared ledger — any connected institution can confirm it's real without touching the documents.</p>
+      <div class="stem-stat"><span class="stem-stat-num">4.2</span><span class="stem-stat-label">minutes, on-chain</span></div>
+    </div>
+  </div>
+
+  <div class="stem-row left" data-stem="2">
+    <div class="stem-card">
+      <div class="stem-tag">What stays private</div>
+      <div class="stem-h">Only proof travels. Never the documents.</div>
+      <p class="stem-p">Document hashes live on-chain. The actual identity documents and bank statements stay encrypted off-chain — no personally identifiable information ever touches the ledger.</p>
+    </div>
+    <div class="stem-node-col"><div class="stem-node"></div></div>
+    <div class="stem-branch"></div>
+  </div>
+
+  <div class="stem-row right" data-stem="3">
+    <div class="stem-node-col"><div class="stem-node"></div></div>
+    <div class="stem-branch"></div>
+    <div class="stem-card">
+      <div class="stem-tag">Who can check it</div>
+      <div class="stem-h">Built for regulators, not against them.</div>
+      <p class="stem-p">A regulator runs its own observer node and sees the same verified history as everyone else — transparency without needing special access.</p>
+    </div>
+  </div>
+
+</div>
+
+<section class="future-section" id="futureSection">
+  <div class="future-badge">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+    On the roadmap
+  </div>
+  <h2 class="future-h">Today it's one bank.<br>Tomorrow it's <span class="accent">every bank.</span></h2>
+  <p class="future-sub">The same credential Lloyds issues can be designed to extend across the industry — a shared trust network where any participating bank, NBFC, or fintech recognizes a customer's verified identity instantly.</p>
+
+  <div class="bank-web">
+    <svg viewBox="0 0 880 360">
+      <path class="web-path" d="M440,180 L160,80" />
+      <path class="web-path" d="M440,180 L160,280" />
+      <path class="web-path" d="M440,180 L720,80" />
+      <path class="web-path" d="M440,180 L720,280" />
+      <path class="web-path" d="M440,180 L440,40" />
+      <path class="web-path" d="M160,80 L160,280" stroke-dasharray="3 5" />
+      <path class="web-path" d="M720,80 L720,280" stroke-dasharray="3 5" />
+
+      <circle class="web-particle" r="3" fill="#4FD89A"><animateMotion dur="3.4s" repeatCount="indefinite" path="M440,180 L160,80" /></circle>
+      <circle class="web-particle" r="3" fill="#4FD89A"><animateMotion dur="3.4s" begin="0.6s" repeatCount="indefinite" path="M440,180 L160,280" /></circle>
+      <circle class="web-particle" r="3" fill="#4FD89A"><animateMotion dur="3.4s" begin="1.2s" repeatCount="indefinite" path="M440,180 L720,80" /></circle>
+      <circle class="web-particle" r="3" fill="#4FD89A"><animateMotion dur="3.4s" begin="1.8s" repeatCount="indefinite" path="M440,180 L720,280" /></circle>
+      <circle class="web-particle" r="2.5" fill="#9FC9B3"><animateMotion dur="3.4s" begin="2.4s" repeatCount="indefinite" path="M440,180 L440,40" /></circle>
+
+      <circle class="web-node-ring" cx="440" cy="180" r="32" stroke="#4FD89A"/>
+      <circle cx="440" cy="180" r="32" fill="#0F5A3E" stroke="#4FD89A" stroke-width="1.5"/>
+      <text x="440" y="175" text-anchor="middle" font-size="10.5" font-weight="700" fill="#F2F0E6" font-family="-apple-system, sans-serif">LLOYDS</text>
+      <text x="440" y="188" text-anchor="middle" font-size="9" fill="#9FC9B3" font-family="-apple-system, sans-serif">issuer node</text>
+
+      <circle cx="440" cy="40" r="18" fill="#0E2A1F" stroke="rgba(255,255,255,0.25)"/>
+      <text x="440" y="44" text-anchor="middle" font-size="8" fill="#B9D4C5" font-family="-apple-system, sans-serif">Regulator</text>
+
+      <circle cx="160" cy="80" r="20" fill="#0E2A1F" stroke="rgba(255,255,255,0.25)"/>
+      <text x="160" y="84" text-anchor="middle" font-size="8.5" fill="#B9D4C5" font-family="-apple-system, sans-serif">Bank B</text>
+      <circle cx="160" cy="280" r="20" fill="#0E2A1F" stroke="rgba(255,255,255,0.25)"/>
+      <text x="160" y="284" text-anchor="middle" font-size="8.5" fill="#B9D4C5" font-family="-apple-system, sans-serif">NBFC</text>
+      <circle cx="720" cy="80" r="20" fill="#0E2A1F" stroke="rgba(255,255,255,0.25)"/>
+      <text x="720" y="84" text-anchor="middle" font-size="8.5" fill="#B9D4C5" font-family="-apple-system, sans-serif">Bank C</text>
+      <circle cx="720" cy="280" r="20" fill="#0E2A1F" stroke="rgba(255,255,255,0.25)"/>
+      <text x="720" y="284" text-anchor="middle" font-size="8" fill="#B9D4C5" font-family="-apple-system, sans-serif">Fintech</text>
+    </svg>
+  </div>
+
+  <div class="future-benefits">
+    <div class="fb-card">
+      <div class="fb-num">01</div>
+      <div class="fb-h">One KYC, industry-wide</div>
+      <div class="fb-p">A customer verified at Lloyds never repeats the process at a partner bank, NBFC, or fintech on the network.</div>
+    </div>
+    <div class="fb-card">
+      <div class="fb-num">02</div>
+      <div class="fb-h">Shared fraud signal</div>
+      <div class="fb-p">A revoked or flagged credential is visible across every participating institution instantly — not siloed at one bank.</div>
+    </div>
+    <div class="fb-card">
+      <div class="fb-num">03</div>
+      <div class="fb-h">Faster onboarding, lower cost</div>
+      <div class="fb-p">Every institution on the network saves the cost of re-verifying identity that's already been cryptographically proven.</div>
+    </div>
+  </div>
+</section>
+
+<section class="closing">
+  <p class="closing-quote">This isn't a faster form.<br>It's a <span class="accent">trust layer</span> the entire lending industry can finally share.</p>
+  <div class="closing-cta">
+    <button class="cta-btn cta-primary">Walk through the platform →</button>
+    <button class="cta-btn cta-ghost">Inspect the ledger</button>
+  </div>
+</section>
+</div>
+
+<div class="tour-veil" id="tourVeil"></div>
+<div class="tour-spotlight" id="tourSpotlight"></div>
+<div class="tour-card" id="tourCard">
+  <div class="tour-step-label" id="tourStepLabel">Step 1 of 4</div>
+  <div class="tour-title" id="tourTitle"></div>
+  <div class="tour-desc" id="tourDesc"></div>
+  <div class="tour-foot">
+    <div class="tour-dots" id="tourDots"></div>
+    <div class="tour-btns">
+      <button class="tour-skip" onclick="endTour(true)">Skip</button>
+      <button class="tour-next" id="tourNextBtn" onclick="nextTourStep()">Next</button>
+    </div>
+  </div>
+</div>
+<button class="tour-launcher" id="tourLauncher" onclick="startTour()">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
+  Take a tour
+</button>
+
+<script>
+var currentPageId = 'dashboard';
+var tourDismissedThisSession = false;
+function showPage(pageId) {
+  document.querySelectorAll('.page-wrap').forEach(function(el) { el.style.display = 'none'; });
+  var target = document.getElementById('page-' + pageId);
+  target.style.display = 'block';
+  currentPageId = pageId;
+  // restart the fade-in animation every time, even if the element never left the DOM
+  target.style.animation = 'none';
+  void target.offsetHeight;
+  target.style.animation = '';
+  document.querySelectorAll('.sb-link').forEach(function(el) { el.classList.remove('on'); });
+  var sidebarLink = document.querySelector('.sb-link[data-page="' + pageId + '"]');
+  if (sidebarLink) sidebarLink.classList.add('on');
+  window.scrollTo(0, 0);
+
+  var sidebar = document.querySelector('.sidebar');
+  if (sidebar) sidebar.classList.toggle('hidden-for-fluid', pageId === 'fluid_overview');
+
+  if (pageId === 'fluid_overview' && typeof updateFluidThread === 'function') {
+    setTimeout(updateFluidThread, 50);
+  }
+}
+showPage('dashboard');
+
+/* ============ Fluid overview: scroll-driven thread, bidirectional ============ */
+var fluidInit = false;
+function setupFluidOverview() {
+  if (fluidInit) return;
+  fluidInit = true;
+
+  var threadFill = document.getElementById('threadFill');
+  var threadFlame = document.getElementById('threadFlame');
+  var threadWrap = document.getElementById('threadWrap');
+  var spineSection = document.getElementById('spineSection');
+  var stemRows = document.querySelectorAll('#page-fluid_overview .stem-row');
+  var futureSection = document.getElementById('futureSection');
+
+  window.updateFluidThread = function () {
+    if (!spineSection || document.getElementById('page-fluid_overview').style.display === 'none') return;
+    var spineRect = spineSection.getBoundingClientRect();
+    var viewportH = window.innerHeight;
+    var triggerLine = viewportH * 0.55;
+
+    var scrolledIntoSpine = triggerLine - spineRect.top;
+    var clamped = Math.min(Math.max(scrolledIntoSpine, 0), spineRect.height);
+    var active = scrolledIntoSpine > 0 && scrolledIntoSpine < spineRect.height;
+
+    threadWrap.classList.toggle('visible', scrolledIntoSpine > -40);
+    threadFill.style.height = clamped + 'px';
+    threadFlame.style.top = clamped + 'px';
+    threadFlame.classList.toggle('visible', active);
+
+    stemRows.forEach(function (row) {
+      var r = row.getBoundingClientRect();
+      var center = r.top + r.height / 2;
+      var shouldBeLit = center < triggerLine;
+      row.classList.toggle('lit', shouldBeLit);
+      row.querySelector('.stem-node').classList.toggle('lit', shouldBeLit);
+    });
+
+    if (futureSection) {
+      var fr = futureSection.getBoundingClientRect();
+      var inView = fr.top < viewportH * 0.78 && fr.bottom > viewportH * 0.22;
+      futureSection.classList.toggle('in', inView);
+    }
+  };
+
+  window.addEventListener('scroll', window.updateFluidThread, { passive: true });
+  window.addEventListener('resize', window.updateFluidThread);
+}
+setupFluidOverview();
+
+/* ============ Guided tour ============ */
+var tourSteps = [
+  {
+    selector: '.sb-link[data-page="dashboard"]',
+    title: 'Everything starts here',
+    desc: 'The sidebar is your map of the whole platform — applications, cards, the KYC registry, admin tools, and the blockchain layer, all one click away.',
+    page: 'dashboard'
+  },
+  {
+    selector: '.fluid-btn',
+    title: 'The story, in motion',
+    desc: 'This button opens a fluid, scroll-driven explainer of why the platform exists — the thread literally connects each idea as you scroll.',
+    page: 'dashboard'
+  },
+  {
+    selector: '.ncu-hero',
+    title: 'A clear path for new customers',
+    desc: 'First-time applicants upload documents here in one guided flow — clean steps, live progress, and no confusion about what is still needed.',
+    page: 'new_customer_upload'
+  },
+  {
+    selector: '.role-card.mine',
+    title: 'Built for admins, with real control',
+    desc: 'Admins see exactly what they are allowed to do — roles, permissions, and policy rules are explicit, not buried in settings.',
+    page: 'admin_control_center'
+  },
+  {
+    selector: '.trail',
+    title: 'See the proof, not just the claim',
+    desc: 'Every credential check is a real on-chain event. The ledger explorer shows the full audit trail — who verified what, and when.',
+    page: 'ledger_explorer'
+  }
+];
+var tourIndex = 0;
+
+function getTourTargetRect(step) {
+  var el = document.querySelector(step.selector);
+  if (!el) return null;
+  return el.getBoundingClientRect();
+}
+
+function placeTourCard(rect) {
+  var card = document.getElementById('tourCard');
+  var cardW = 300, cardH = card.offsetHeight || 190;
+  var margin = 18;
+  var vw = window.innerWidth, vh = window.innerHeight;
+
+  // try placements in order of preference: right, below, above, left
+  var placements = [
+    { top: rect.top, left: rect.right + 20 },                          // right of target
+    { top: rect.bottom + 18, left: rect.left },                        // below target
+    { top: rect.top - cardH - 18, left: rect.left },                   // above target
+    { top: rect.top, left: rect.left - cardW - 20 }                    // left of target
+  ];
+
+  var chosen = null;
+  for (var i = 0; i < placements.length; i++) {
+    var p = placements[i];
+    var fitsH = p.left >= margin && (p.left + cardW) <= (vw - margin);
+    var fitsV = p.top >= margin && (p.top + cardH) <= (vh - margin);
+    if (fitsH && fitsV) { chosen = p; break; }
+  }
+  if (!chosen) chosen = placements[1]; // fallback: below, then clamp
+
+  var top = Math.min(Math.max(chosen.top, margin), vh - cardH - margin);
+  var left = Math.min(Math.max(chosen.left, margin), vw - cardW - margin);
+
+  // never let the card sit in the bottom-right corner where the tour launcher lives
+  var launcherZoneTop = vh - 90, launcherZoneLeft = vw - 220;
+  if (top + cardH > launcherZoneTop && left + cardW > launcherZoneLeft) {
+    top = launcherZoneTop - cardH - 16;
+  }
+
+  card.style.top = top + 'px';
+  card.style.left = left + 'px';
+}
+
+function renderTourStep(retryCount) {
+  retryCount = retryCount || 0;
+  var step = tourSteps[tourIndex];
+  var rect = getTourTargetRect(step);
+
+  if (!rect) {
+    // target not in DOM yet (page transition still settling) — retry briefly before giving up
+    if (retryCount < 6) {
+      setTimeout(function () { renderTourStep(retryCount + 1); }, 120);
+    } else {
+      // genuinely missing on this build — skip just this one step, don't kill the whole tour
+      tourIndex++;
+      if (tourIndex >= tourSteps.length) { endTour(true); return; }
+      goToTourStep(tourIndex);
+    }
+    return;
+  }
+
+  var pad = 8;
+  var spotlight = document.getElementById('tourSpotlight');
+  spotlight.style.top = (rect.top - pad) + 'px';
+  spotlight.style.left = (rect.left - pad) + 'px';
+  spotlight.style.width = (rect.width + pad * 2) + 'px';
+  spotlight.style.height = (rect.height + pad * 2) + 'px';
+  spotlight.classList.add('active');
+
+  var card = document.getElementById('tourCard');
+  card.classList.add('active');
+  placeTourCard(rect);
+
+  document.getElementById('tourStepLabel').textContent = 'Step ' + (tourIndex + 1) + ' of ' + tourSteps.length;
+  document.getElementById('tourTitle').textContent = step.title;
+  document.getElementById('tourDesc').textContent = step.desc;
+  document.getElementById('tourNextBtn').textContent = (tourIndex === tourSteps.length - 1) ? 'Finish' : 'Next';
+
+  var dotsWrap = document.getElementById('tourDots');
+  dotsWrap.innerHTML = '';
+  tourSteps.forEach(function (s, i) {
+    var d = document.createElement('div');
+    d.className = 'tour-dot' + (i === tourIndex ? ' on' : '');
+    dotsWrap.appendChild(d);
+  });
+
+  // re-place once more after layout settles (web fonts, page transition, etc.)
+  setTimeout(function () { placeTourCard(getTourTargetRect(step) || rect); }, 120);
+}
+
+function goToTourStep(index) {
+  var step = tourSteps[index];
+  var needsNav = currentPageId !== step.page;
+  if (needsNav) {
+    showPage(step.page);
+    setTimeout(function () { renderTourStep(0); }, 160);
+  } else {
+    renderTourStep(0);
+  }
+}
+
+function startTour() {
+  tourIndex = 0;
+  document.getElementById('tourVeil').classList.add('active');
+  document.getElementById('tourLauncher').style.display = 'none';
+  goToTourStep(0);
+  window.addEventListener('resize', renderTourStepIfActive);
+}
+
+function renderTourStepIfActive() {
+  if (document.getElementById('tourVeil').classList.contains('active')) renderTourStep(0);
+}
+
+function nextTourStep() {
+  tourIndex++;
+  if (tourIndex >= tourSteps.length) { endTour(true); return; }
+  document.getElementById('tourSpotlight').classList.remove('active');
+  document.getElementById('tourCard').classList.remove('active');
+  goToTourStep(tourIndex);
+}
+
+function endTour(completed) {
+  document.getElementById('tourVeil').classList.remove('active');
+  document.getElementById('tourSpotlight').classList.remove('active');
+  document.getElementById('tourCard').classList.remove('active');
+  document.getElementById('tourLauncher').style.display = 'flex';
+  // mark dismissed for the rest of this session only — a fresh page load/refresh
+  // will always offer the tour again, regardless of this flag.
+  if (completed) {
+    tourDismissedThisSession = true;
+  }
+}
+
+// Auto-launch the tour on every fresh page load/refresh.
+// Persistent localStorage was unreliable here (file:// pages, leftover flags
+// from earlier sessions, etc.) so instead we just always show it once per
+// load, and respect Skip/Finish only for the remainder of that same session.
+setTimeout(function () {
+  if (!tourDismissedThisSession) startTour();
+}, 1100);
+</script>
+
+</body>
+</html>

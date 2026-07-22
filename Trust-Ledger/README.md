@@ -1,4 +1,4 @@
-# Trust Ledger Architecture
+# Trust Ledger Architecture for Hackathon
 
 This document defines the overall architecture, network topology, ledger model, APIs, database schema, and end-to-end transaction flow for the **Trust Ledger** reusable KYC platform built using **Hyperledger Fabric**.
 

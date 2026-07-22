@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trust Ledger — Presentation Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    background: #f8f9fa;
+    color: #1a1a2e;
+    line-height: 1.7;
+    font-size: 14px;
+  }
+
+  .page {
+    max-width: 900px;
+    margin: 40px auto;
+    background: white;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.12);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  /* ── Cover ── */
+  .cover {
+    background: linear-gradient(135deg, #024731 0%, #036b49 50%, #04a86e 100%);
+    padding: 60px 60px 50px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .cover-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 16px;
+  }
+  .cover h1 {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .cover-sub {
+    font-size: 18px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 32px;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .cover-pill {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: white;
+  }
+
+  /* ── Body ── */
+  .body { padding: 50px 60px; }
+
+  /* ── Score Table ── */
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 24px 0 40px;
+  }
+  .score-card {
+    border-radius: 10px;
+    padding: 20px 16px;
+    text-align: center;
+  }
+  .score-card.green  { background: #e8f5e9; border: 1.5px solid #a5d6a7; }
+  .score-card.blue   { background: #e3f2fd; border: 1.5px solid #90caf9; }
+  .score-card.purple { background: #f3e5f5; border: 1.5px solid #ce93d8; }
+  .score-card.amber  { background: #fff8e1; border: 1.5px solid #ffe082; }
+  .score-pct {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .score-card.green  .score-pct { color: #2e7d32; }
+  .score-card.blue   .score-pct { color: #1565c0; }
+  .score-card.purple .score-pct { color: #6a1b9a; }
+  .score-card.amber  .score-pct { color: #e65100; }
+  .score-label { font-size: 11px; font-weight: 600; color: #555; line-height: 1.3; }
+
+  /* ── Section headers ── */
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #024731;
+    margin: 40px 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 2.5px solid #e8f5e9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 28px 0 10px;
+  }
+
+  /* ── Hook box ── */
+  .hook-box {
+    background: #024731;
+    color: white;
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 20px 0 32px;
+    font-size: 16px;
+    line-height: 1.8;
+    font-style: italic;
+    position: relative;
+  }
+  .hook-box::before {
+    content: '"';
+    font-size: 80px;
+    color: rgba(255,255,255,0.15);
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    line-height: 1;
+    font-style: normal;
+  }
+  .hook-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 12px;
+    font-style: normal;
+  }
+
+  /* ── Stop cards ── */
+  .stop-card {
+    border: 1.5px solid #e0e0e0;
+    border-radius: 12px;
+    margin: 20px 0;
+    overflow: hidden;
+  }
+  .stop-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    background: #f9f9f9;
+    border-bottom: 1.5px solid #e0e0e0;
+  }
+  .stop-number {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #024731;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .stop-title {
+    flex: 1;
+  }
+  .stop-title strong {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a2e;
+    display: block;
+  }
+  .stop-title span {
+    font-size: 12px;
+    color: #777;
+  }
+  .stop-time {
+    background: #024731;
+    color: white;
+    border-radius: 12px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .stop-body { padding: 20px 24px; }
+  .stop-body ul {
+    list-style: none;
+    margin-bottom: 16px;
+  }
+  .stop-body ul li {
+    padding: 5px 0 5px 20px;
+    position: relative;
+    color: #444;
+    font-size: 13.5px;
+  }
+  .stop-body ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: #024731;
+    font-weight: 700;
+  }
+  .key-line {
+    background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+    border-left: 4px solid #024731;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-style: italic;
+    color: #1a3a2a;
+    margin-top: 12px;
+  }
+  .key-line strong {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #024731;
+    display: block;
+    margin-bottom: 4px;
+    font-style: normal;
+  }
+
+  .score-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  .badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 8px;
+  }
+  .badge.idea   { background: #e8f5e9; color: #2e7d32; }
+  .badge.arch   { background: #e3f2fd; color: #1565c0; }
+  .badge.design { background: #f3e5f5; color: #6a1b9a; }
+  .badge.agile  { background: #fff8e1; color: #e65100; }
+
+  /* ── Time table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13.5px;
+  }
+  th {
+    background: #024731;
+    color: white;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  th:first-child { border-radius: 0; }
+  td {
+    padding: 11px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #333;
+  }
+  tr:hover td { background: #f9fbf9; }
+  tr:last-child td { border-bottom: none; }
+  .td-time { font-weight: 700; color: #024731; }
+  .td-total td { background: #e8f5e9 !important; font-weight: 700; }
+
+  /* ── Tips ── */
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .tip-card {
+    background: #f9fbf9;
+    border: 1.5px solid #c8e6c9;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .tip-num {
+    width: 28px; height: 28px;
+    background: #024731;
+    color: white;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+  .tip-card p { font-size: 13px; color: #444; }
+
+  /* ── Phrases ── */
+  .phrase-list { list-style: none; margin: 16px 0; }
+  .phrase-list li {
+    background: #f0f7f4;
+    border-left: 3px solid #024731;
+    padding: 10px 16px;
+    margin-bottom: 8px;
+    border-radius: 0 6px 6px 0;
+    font-size: 13.5px;
+    color: #1a3a2a;
+    font-style: italic;
+  }
+
+  /* ── Closing ── */
+  .closing {
+    background: linear-gradient(135deg, #024731, #036b49);
+    color: white;
+    border-radius: 12px;
+    padding: 32px;
+    margin: 32px 0 0;
+    text-align: center;
+  }
+  .closing .label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 12px;
+  }
+  .closing blockquote {
+    font-size: 17px;
+    font-style: italic;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.92);
+  }
+
+  /* ── Footer ── */
+  .footer {
+    background: #f4f4f4;
+    padding: 16px 60px;
+    font-size: 11px;
+    color: #999;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  @media print {
+    body { background: white; }
+    .page { box-shadow: none; margin: 0; border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Cover -->
+  <div class="cover">
+    <div class="cover-label">LBG Reboot Hackathon 2026</div>
+    <h1>Trust Ledger</h1>
+    <div class="cover-sub">Presentation Guide & Demo Strategy</div>
+    <div class="cover-meta">
+      <span class="cover-pill">📅 July 22, 2026</span>
+      <span class="cover-pill">⏱ 8-Minute Demo</span>
+      <span class="cover-pill">🏆 Win Strategy</span>
+      <span class="cover-pill">Hyperledger Fabric · NestJS · React</span>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- Scoring -->
+    <h2>📊 Scoring Breakdown</h2>
+    <div class="score-grid">
+      <div class="score-card green">
+        <div class="score-pct">35%</div>
+        <div class="score-label">Idea &amp; Potential Development</div>
+      </div>
+      <div class="score-card blue">
+        <div class="score-pct">35%</div>
+        <div class="score-label">Architecture &amp; Use of Technology</div>
+      </div>
+      <div class="score-card purple">
+        <div class="score-pct">20%</div>
+        <div class="score-label">Design</div>
+      </div>
+      <div class="score-card amber">
+        <div class="score-pct">10%</div>
+        <div class="score-label">Agility</div>
+      </div>
+    </div>
+
+    <!-- Hook -->
+    <h2>🎯 Opening Hook — Before You Touch the Laptop</h2>
+    <div class="hook-box">
+      <div class="hook-label">Say this out loud — no screen, no slides</div>
+      "Rohan opens a Lloyds account today. Tomorrow he wants a Halifax mortgage.
+      He has to prove who he is — again. Passport, bills, bank statements — again.
+      We built the platform that makes that 'again' disappear — forever."
+    </div>
+
+    <!-- Stops -->
+    <h2>📍 The 8 Demo Stops</h2>
+
+    <!-- Stop 1 -->
+    <div class="stop-card">
+      <div class="stop-header">
+        <div class="stop-number">1</div>
+        <div class="stop-title">
+          <strong>Fluid Overview Page</strong>
+          <div class="score-badges">
+            <span class="badge idea">Idea 35%</span>
+            <span class="badge design">Design 20%</span>
+          </div>
+        </div>
+        <div class="stop-time">60 sec</div>
+      </div>
+      <div class="stop-body">
+        <ul>
+          <li>Open this page FIRST — not the Dashboard</li>
+          <li>Let the scroll-driven thread animation play as you narrate</li>
+          <li>Scroll slowly — show the flame, stem rows lighting up, future web section</li>
+          <li>Judges see: polished, animated, this team knows design</li>
+        </ul>
+        <div class="key-line">
+          <strong>Key Line</strong>
+          "Every other team will show you a database. We'll show you a network."
+        </div>
+      </div>
+    </div>
+
+    <!-- Stop 2 -->
+    <div class="stop-card">
+      <div class="stop-header">
+        <div class="stop-number">2</div>
+        <div class="stop-title">
+          <strong>Dashboard</strong>
+          <div class="score-badges">
+            <span class="badge arch">Architecture 35%</span>
+          </div>
+        </div>
+        <div class="stop-time">45 sec</div>
+      </div>
+      <div class="stop-body">
+        <ul>
+          <li>Network topology SVG is visible immediately — point to the 5 nodes</li>
+          <li>Lloyds hub · Halifax · Bank of Scotland · Credit Bureau · Regulator Observer</li>
+          <li>Point to animated pulses travelling between nodes</li>
+          <li>Show stat cards: credentials issued, verifications today, active banks</li>
+        </ul>
+        <div class="key-line">
+          <strong>Key Line</strong>
+          "The regulator node can observe every transaction — but cannot write. That's permissioned by design, not policy."
+        </div>
+      </div>
+    </div>
+
+    <!-- Stop 3 -->
+    <div class="stop-card">
+      <div class="stop-header">
+        <div class="stop-number">3</div>
+        <div class="stop-title">
+          <strong>New Customer Upload — LIVE DEMO</strong>
+          <div class="score-badges">
+            <span class="badge idea">Idea 35%</span>
+            <span class="badge design">Design 20%</span>
+          </div>
+        </div>
+        <div class="stop-time">90 sec</div>
+      </div>
+      <div class="stop-body">
+        <ul>
+          <li>Say: "Rohan is a new customer. He does this exactly once."</li>
+          <li>Fill the form live: Name, Email, Phone, DOB, Address</li>
+          <li>Walk through document cards — Passport ✅, Utility Bill ✅, pending docs</li>
+          <li>Click Submit → toast fires with txHash on screen</li>
+          <li>Point to the txHash: "This is the fingerprint — not the document"</li>
+        </ul>
+        <div class="key-line">
+          <strong>Key Line</strong>
+          "We're not storing your passport on a blockchain. We're storing the fingerprint of your passport."
+        </div>
+      </div>
+    </div>
+
+    <!-- Stop 4 -->
+    <div class="stop-card">
+      <div class="stop-header">
+        <div class="stop-number">4</div>
+        <div class="stop-title">
+          <strong>KYC Registry + Consent Toggle</strong>
+          <div class="score-badges">
+            <span class="badge arch">Architecture 35%</span>
+            <span class="badge idea">Idea 35%</span>
+          </div>
+        </div>
+        <div class="stop-time">60 sec</div>
+      </div>
+      <div class="stop-body">
+        <ul>
+          <li>Show the registry table — Rohan's new row is now here</li>
+          <li>Point to: credential ref, txHash, issuer (Lloyds), status, sharedWith column</li>
+          <li>Click "Share with Halifax" → toast fires, bank chip appears</li>
+          <li>Click "Revoke Halifax" → chip disappears, revocation toast fires</li>
+          <li>Say: "That's a write to the blockchain — Halifax's next verify call returns false"</li>
+        </ul>
+        <div class="key-line">
+          <strong>Key Line</strong>
+          "This is GDPR by architecture. There is nothing for Halifax to delete — they never had the data."
+        </div>
+      </div>
+    </div>
+
+    <!-- Stop 5 -->
+    <div class="stop-card">
+      <div class="stop-header">
+        <div class="stop-number">5</div>
+        <div class="stop-title">
+          <strong>Loan Decision — Smart Contract Verdict</strong>
+          <div class="score-badges">
+            <span class="badge arch">Architecture 35%</span>
+            <span class="badge design">Design 20%</span>
+          </div>
+        </div>
+        <div class="stop-time">90 sec</div>
+      </div>
+      <div class="stop-body">
+        <ul>
+          <li>Green KYC verified banner at top — credential ref visible</li>
+          <li>Walk the Smart Contract Verdict Trace: IssueKYC → VerifyKYC → Active → Auto-Approve</li>
+          <li>Point to credit score gauge (782)</li>
+          <li>Click Grant Loan → button state changes, toast fires with loanTxHash</li>
+        </ul>
+        <div class="key-line">
+          <strong>Key Line</strong>
+          "Halifax didn't verify Rohan. The blockchain did. Halifax just asked the question."
+        </div>
+      </div>
+    </div>
+
+    <!-- Stop 6 -->
+    <div class="stop-card">
+      <div class="stop-header">
+        <div class="stop-number">6</div>
+        <div class="stop-title">
+          <strong>Ledger Explorer — Immutable Audit Trail</strong>
+          <div class="score-badges">
+            <span class="badge arch">Architecture 35%</span>
+          </div>
+        </div>
+        <div class="stop-time">60 sec</div>
+      </div>
+      <div class="stop-body">
+        <ul>
+          <li>Say: "Every action we just took — every click — is here."</li>
+          <li>Show trail: IssueKYC → ConsentGranted → VerifyKYC → LoanGranted</li>
+          <li>Point to: block number, timestamp, txHash, actor for each row</li>
+          <li>Say: "I cannot edit this. No admin can. Not even Lloyds."</li>
+        </ul>
+        <div class="key-line">
+          <strong>Key Line</strong>
+          "The audit trail isn't generated on request. It's always existed. Every transaction wrote itself here."
+        </div>
+      </div>
+    </div>
+
+    <!-- Stop 7 -->
+    <div class="stop-card">
+      <div class="stop-header">
+        <div class="stop-number">7</div>
+        <div class="stop-title">
+          <strong>Admin Control Center</strong>
+          <div class="score-badges">
+            <span class="badge design">Design 20%</span>
+            <span class="badge arch">Architecture 35%</span>
+          </div>
+        </div>
+        <div class="stop-time">45 sec</div>
+      </div>
+      <div class="stop-body">
+        <ul>
+          <li>Show role cards: Loan Officer · Senior Admin · Compliance · Regulator</li>
+          <li>Point to permission matrix — show what each role can/cannot do</li>
+          <li>Show policy rules: auto-approve threshold, document expiry window</li>
+        </ul>
+        <div class="key-line">
+          <strong>Key Line</strong>
+          "We didn't build role-based access. We built role-based trust — enforced by the blockchain, not a config file."
+        </div>
+      </div>
+    </div>
+
+    <!-- Stop 8 -->
+    <div class="stop-card">
+      <div class="stop-header">
+        <div class="stop-number">8</div>
+        <div class="stop-title">
+          <strong>Roadmap — Fluid Overview Future Section</strong>
+          <div class="score-badges">
+            <span class="badge idea">Idea 35%</span>
+          </div>
+        </div>
+        <div class="stop-time">30 sec</div>
+      </div>
+      <div class="stop-body">
+        <ul>
+          <li>Scroll to Future section of Fluid Overview</li>
+          <li>Phase 2: Open Banking API — any FCA-regulated lender can plug in</li>
+          <li>Phase 3: Biometric KYC</li>
+          <li>Phase 4: Industry-wide standard beyond LBG</li>
+        </ul>
+        <div class="key-line">
+          <strong>Key Line</strong>
+          "We built this as infrastructure, not a product."
+        </div>
+      </div>
+    </div>
+
+    <!-- Time Table -->
+    <h2>⏱ Time Breakdown</h2>
+    <table>
+      <thead>
+        <tr><th>Stop</th><th>Page</th><th>Time</th><th>Score Target</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Hook</td><td>Spoken — no screen</td><td class="td-time">20s</td><td>Sets tone</td></tr>
+        <tr><td>1</td><td>Fluid Overview</td><td class="td-time">60s</td><td>Design + Idea</td></tr>
+        <tr><td>2</td><td>Dashboard</td><td class="td-time">45s</td><td>Architecture</td></tr>
+        <tr><td>3</td><td>New Customer Upload</td><td class="td-time">90s</td><td>Idea + Design</td></tr>
+        <tr><td>4</td><td>KYC Registry</td><td class="td-time">60s</td><td>Architecture + Idea</td></tr>
+        <tr><td>5</td><td>Loan Decision</td><td class="td-time">90s</td><td>Architecture + Design</td></tr>
+        <tr><td>6</td><td>Ledger Explorer</td><td class="td-time">60s</td><td>Architecture</td></tr>
+        <tr><td>7</td><td>Admin Control Center</td><td class="td-time">45s</td><td>Design + Architecture</td></tr>
+        <tr><td>8</td><td>Roadmap</td><td class="td-time">30s</td><td>Idea</td></tr>
+        <tr class="td-total"><td colspan="2">Total</td><td class="td-time">~8 min</td><td>Full coverage</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Tips -->
+    <h2>🔑 3 Things That Make You Stand Out</h2>
+    <div class="tips-grid">
+      <div class="tip-card">
+        <div class="tip-num">1</div>
+        <p><strong>Own your section.</strong> Each person presents 2–3 stops confidently. No nervously passing the laptop.</p>
+      </div>
+      <div class="tip-card">
+        <div class="tip-num">2</div>
+        <p><strong>Say "on-chain" after every action.</strong> Judges score architecture — remind them constantly.</p>
+      </div>
+      <div class="tip-card">
+        <div class="tip-num">3</div>
+        <p><strong>Ledger Explorer is your trump card.</strong> Most teams have no audit trail. Yours is immutable. Make a big deal.</p>
+      </div>
+    </div>
+
+    <!-- Phrases -->
+    <h2>💬 Key Phrases to Use</h2>
+    <ul class="phrase-list">
+      <li>KYC once, verify everywhere — within the Lloyds ecosystem.</li>
+      <li>Documents never leave the customer's bank. Only cryptographic proofs travel.</li>
+      <li>This is GDPR by design, not by policy.</li>
+      <li>The ledger is the truth. Every action is immutable.</li>
+      <li>We didn't just build a demo — we built the architecture a real bank could deploy.</li>
+      <li>Halifax didn't verify Rohan. The blockchain did. Halifax just asked the question.</li>
+    </ul>
+
+    <!-- Closing -->
+    <div class="closing">
+      <div class="label">Final Closing Line</div>
+      <blockquote>
+        "Every team here is solving KYC.<br>
+        We're solving KYC forever —<br>
+        once per customer, trusted everywhere,<br>
+        owned by no one and verified by everyone."
+      </blockquote>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <span>Trust Ledger · LBG Reboot Hackathon 2026</span>
+    <span>Confidential — Internal Use Only</span>
+    <span>July 22, 2026</span>
+  </div>
+
+</div>
+</body>
+</html>
