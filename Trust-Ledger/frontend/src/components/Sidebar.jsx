@@ -1,3 +1,5 @@
+import lloydHorse from '../assets/lloyds-horse.gif';
+
 export default function Sidebar({ currentPage, onNavigate }) {
   const link = (page, label, badge, icon) => (
     <button
@@ -16,7 +18,9 @@ export default function Sidebar({ currentPage, onNavigate }) {
   return (
     <aside className={`sidebar${currentPage === 'fluid_overview' ? ' hidden-for-fluid' : ''}`}>
       <div className="sb-brand" onClick={() => onNavigate('dashboard')}>
-        <div className="sb-mark">L</div>
+        <div className="sb-mark" style={{ background: 'transparent', padding: 0, overflow: 'hidden' }}>
+          <img src={lloydHorse} alt="Lloyds" style={{ width: '30px', height: '30px', objectFit: 'contain', borderRadius: '7px' }} />
+        </div>
         <span className="sb-name">LLOYDS</span>
       </div>
       <div className="sb-tagline">DLT lending &amp; reusable KYC platform</div>
