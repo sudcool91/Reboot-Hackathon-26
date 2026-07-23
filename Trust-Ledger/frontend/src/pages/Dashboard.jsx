@@ -1,10 +1,21 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
+import { useStore } from '../store';
+import { getDashboardSummary, getDashboardActivity } from '../services/api';
 
 const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
 
 export default function Dashboard({ onNavigate }) {
+  const { pushToast } = useStore();
+  const [summary, setSummary] = useState(null);
+  const [activity, setActivity] = useState([]);
+
+  useEffect(() => {
+    getDashboardSummary().then(d => { if (d) setSummary(d); });
+    getDashboardActivity().then(d => { if (d) setActivity(d.activities || d || []); });
+  }, []);
   return (
     <div className="main">
       <Navbar crumb="Dashboard" onFluid={() => onNavigate('fluid_overview')} />
@@ -46,10 +57,10 @@ export default function Dashboard({ onNavigate }) {
           </div>
           <motion.div className="stat-grid" initial="hidden" animate="show" variants={container}>
             {[
-              { label: 'Applications received', value: '47', foot: '↑ 12% vs yesterday', cls: 'up' },
-              { label: 'Fast-tracked via on-chain KYC', value: '31', bar: 66, foot: '66% of total volume', cls: 'flat' },
-              { label: 'Avg. time to decision', value: '4.2 min', foot: '↓ from 48 hrs baseline', cls: 'up' },
-              { label: 'Credentials live on ledger', value: '12,884', foot: 'across 3 institutions', cls: 'flat' },
+              { label: 'Applications received', value: summary?.totalApplications ?? '47', foot: '↑ 12% vs yesterday', cls: 'up' },
+              { label: 'Fast-tracked via on-chain KYC', value: summary?.fastTracked ?? '31', bar: summary?.fastTrackedPct ?? 66, foot: `${summary?.fastTrackedPct ?? 66}% of total volume`, cls: 'flat' },
+              { label: 'Avg. time to decision', value: summary?.avgDecisionTime ?? '4.2 min', foot: '↓ from 48 hrs baseline', cls: 'up' },
+              { label: 'Credentials live on ledger', value: summary?.credentialsOnLedger ?? '12,884', foot: 'across 3 institutions', cls: 'flat' },
             ].map((s, i) => (
               <motion.div key={i} className="stat dash-stat" variants={fadeUp}>
                 <div className="stat-label">{s.label}</div>

@@ -1,9 +1,35 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
+import { getLedgerExplorer } from '../services/api';
 
 const fadeUp = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } };
 
+const ACTION_ICONS = {
+  IssueKYC: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B5C3F" strokeWidth="2"><path d="M12 1l3 6 6 .75-4.5 4.5L18 19l-6-3-6 3 1.5-6.75L3 7.75 9 7z"/></svg>,
+  ConsentGranted: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B5C3F" strokeWidth="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h6"/></svg>,
+  ConsentRevoked: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>,
+  VerifyKYC: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B5C3F" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>,
+  LoanGranted: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B5C3F" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>,
+  LoanRejected: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>,
+};
+
+const SEED_TRAIL = [
+  { action: 'IssueKYC', timestamp: '2026-06-12T10:14:00Z', txHash: '0x4a7f...e21b', blockNumber: 44102, actor: 'Lloyds validator', description: 'Credential hash committed to ledger by Lloyds validator after in-branch identity verification' },
+  { action: 'ConsentGranted', timestamp: '2026-06-12T10:15:00Z', txHash: '0x2b81...77ac', blockNumber: 44103, actor: 'Customer consent service', description: 'Customer consented to share this credential with the lending platform and connected partners' },
+  { action: 'VerifyKYC', timestamp: '2026-06-23T09:02:00Z', txHash: '0x7e21...4bcd', blockNumber: 48221, actor: 'Halifax loan engine', description: 'Queried by the lending platform during application LN20458 — returned valid: true' },
+];
+
 export default function LedgerExplorer({ onNavigate }) {
+  const [trail, setTrail] = useState(SEED_TRAIL);
+
+  useEffect(() => {
+    getLedgerExplorer('KYC-RS-88213').then(data => {
+      if (data && Array.isArray(data.events) && data.events.length > 0) setTrail(data.events);
+      else if (Array.isArray(data) && data.length > 0) setTrail(data);
+    });
+  }, []);
+
   return (
     <div className="main">
       <Navbar crumb="Credential audit trail" onFluid={() => onNavigate('fluid_overview')} variant="ledger" />
@@ -37,47 +63,32 @@ export default function LedgerExplorer({ onNavigate }) {
         <section className="block">
           <div className="block-head"><div className="block-title"><span className="block-num">01</span>On-chain event history</div></div>
           <motion.div className="trail" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0.15}}>
-            {[
-              {
-                icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B5C3F" strokeWidth="2"><path d="M12 1l3 6 6 .75-4.5 4.5L18 19l-6-3-6 3 1.5-6.75L3 7.75 9 7z"/></svg>,
-                fn: 'issueKYC()', time: '12 Jun 2026, 10:14 AM',
-                desc: 'Credential hash committed to ledger by Lloyds validator after in-branch identity verification',
-                tx: 'tx 0x4a7f...e21b · block #44,102 · confirmed 4/4', muted: false
-              },
-              {
-                icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B5C3F" strokeWidth="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h6"/></svg>,
-                fn: 'consentLogged()', time: '12 Jun 2026, 10:15 AM',
-                desc: 'Customer consented to share this credential with the lending platform and connected partners',
-                tx: 'tx 0x2b81...77ac · block #44,103 · confirmed 4/4', muted: false
-              },
-              {
-                icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B5C3F" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>,
-                fn: 'verifyKYC()', time: '23 Jun 2026, 09:02 AM',
-                desc: 'Queried by the lending platform during application LN20458 — returned valid: true',
-                tx: 'tx 0x7e21...4bcd · block #48,221 · confirmed 4/4', muted: false
-              },
-              {
-                icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8C8B7E" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>,
-                fn: 'revokeKYC()', time: 'not triggered',
-                desc: 'No revocation event recorded — credential remains valid across every connected institution',
-                tx: null, muted: true
-              },
-            ].map((row, i) => (
-              <div key={i} className="trail-row">
-                <div className="node-wrap">
-                  <div className={`node-circle${row.muted?' muted':''}`}>{row.icon}</div>
-                  {i < 3 && <div className="node-line"></div>}
-                </div>
-                <div className="trail-content">
-                  <div className="trail-top">
-                    <span className={`trail-fn${row.muted?' muted':''}`}>{row.fn}</span>
-                    <span className="trail-time">{row.time}</span>
+            {trail.map((ev, i) => {
+              const muted = ev.action === 'ConsentRevoked' || ev.action === 'LoanRejected';
+              const fnName = {
+                IssueKYC: 'issueKYC()', ConsentGranted: 'consentLogged()',
+                ConsentRevoked: 'revokeConsent()', VerifyKYC: 'verifyKYC()',
+                LoanGranted: 'loanGranted()', LoanRejected: 'loanRejected()',
+              }[ev.action] || ev.action;
+              const time = ev.timestamp ? new Date(ev.timestamp).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+              const tx = ev.txHash ? `tx ${ev.txHash} · block #${(ev.blockNumber||'').toLocaleString()} · confirmed 4/4` : null;
+              return (
+                <div key={i} className="trail-row">
+                  <div className="node-wrap">
+                    <div className={`node-circle${muted?' muted':''}`}>{ACTION_ICONS[ev.action] || ACTION_ICONS.IssueKYC}</div>
+                    {i < trail.length - 1 && <div className="node-line"></div>}
                   </div>
-                  <div className="trail-desc">{row.desc}</div>
-                  {row.tx && <div className="trail-tx">{row.tx}</div>}
+                  <div className="trail-content">
+                    <div className="trail-top">
+                      <span className={`trail-fn${muted?' muted':''}`}>{fnName}</span>
+                      <span className="trail-time">{time}</span>
+                    </div>
+                    <div className="trail-desc">{ev.description}</div>
+                    {tx && <div className="trail-tx">{tx}</div>}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </motion.div>
         </section>
 

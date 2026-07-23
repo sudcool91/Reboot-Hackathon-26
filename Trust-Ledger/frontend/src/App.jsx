@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './components/Sidebar';
 import Tour from './components/Tour';
+import { ToastContainer } from './components/Toast';
+import { StoreProvider, useStore } from './store';
 import Dashboard from './pages/Dashboard';
 import LoanApplications from './pages/LoanApplications';
 import CreditCards from './pages/CreditCards';
@@ -25,6 +27,15 @@ const PAGES = {
 };
 
 export default function App() {
+  return (
+    <StoreProvider>
+      <AppInner />
+    </StoreProvider>
+  );
+}
+
+function AppInner() {
+  const { toasts, dismissToast } = useStore();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [tourLaunched, setTourLaunched] = useState(false);
 
@@ -60,6 +71,7 @@ export default function App() {
       {tourLaunched && !isFluid && (
         <Tour currentPage={currentPage} onNavigate={navigate} autoStart={true} />
       )}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   );
 }

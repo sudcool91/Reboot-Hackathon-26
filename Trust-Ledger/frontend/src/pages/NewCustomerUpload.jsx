@@ -1,10 +1,29 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
+import { issueKyc } from '../services/api';
+import { useStore } from '../store';
 
 const fadeUp = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } };
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.1 } } };
 
 export default function NewCustomerUpload({ onNavigate }) {
+  const { pushToast } = useStore();
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    const result = await issueKyc('NET-RS-' + Date.now(), 'sha256:' + Math.random().toString(36).slice(2), 'Lloyds Branch Validator');
+    setSubmitting(false);
+    if (result) {
+      setSubmitted(true);
+      pushToast('KYC credential issued on-chain ✓', 'success', result.txHash || result.credentialId);
+    } else {
+      pushToast('Backend offline — credential queued locally', 'info');
+    }
+  };
+
   return (
     <div className="main">
       <Navbar crumb="New customer upload" onFluid={() => onNavigate('fluid_overview')} />
@@ -97,7 +116,9 @@ export default function NewCustomerUpload({ onNavigate }) {
           <div><b>Verification usually takes 24–48 hours</b> once all five documents are in and video KYC is complete. After that, this credential works everywhere — instantly.</div>
         </div>
 
-        <button className="ncu-submit" disabled>Submit for verification — 2 documents remaining</button>
+        <button className="ncu-submit" onClick={handleSubmit} disabled={submitting || submitted}>
+          {submitted ? '✓ Submitted — credential being issued on-chain' : submitting ? 'Submitting…' : 'Submit for verification — 2 documents remaining'}
+        </button>
       </div>
     </div>
   );

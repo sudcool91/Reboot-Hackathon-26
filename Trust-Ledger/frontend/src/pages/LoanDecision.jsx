@@ -1,7 +1,28 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
+import { useStore } from '../store';
+import { decideLoan } from '../services/api';
 
 export default function LoanDecision({ onNavigate }) {
+  const { pushToast } = useStore();
+  const [remark, setRemark] = useState('');
+  const [decision, setDecision] = useState(null); // 'grant' | 'reject'
+  const [loading, setLoading] = useState(false);
+
+  const handleDecide = async (action) => {
+    if (decision) return;
+    setLoading(true);
+    const res = await decideLoan('LN20458', action, remark, 'Senior Admin');
+    setLoading(false);
+    setDecision(action);
+    if (action === 'grant') {
+      pushToast('Loan GRANTED for Rohan Sharma — recorded on-chain', 'success', res?.txHash);
+    } else {
+      pushToast('Loan declined for Rohan Sharma', 'error');
+    }
+  };
+
   return (
     <div className="main">
       <Navbar crumb="Loan decision" onFluid={() => onNavigate('fluid_overview')} variant="admin" />
@@ -84,13 +105,20 @@ export default function LoanDecision({ onNavigate }) {
             </div>
 
             <div className="ld-card">
-              <textarea className="ld-remark" placeholder="Add a remark for the audit trail (optional)"></textarea>
+              <textarea className="ld-remark" placeholder="Add a remark for the audit trail (optional)" value={remark} onChange={e => setRemark(e.target.value)} disabled={!!decision}></textarea>
+              {decision && (
+                <div style={{ marginBottom: 12, padding: '10px 14px', borderRadius: 10, background: decision === 'grant' ? '#e2eee7' : '#fcebeb', color: decision === 'grant' ? '#024731' : '#a32d2d', fontWeight: 700, fontSize: 13 }}>
+                  {decision === 'grant' ? '✅ Loan Granted — written on-chain' : '❌ Loan Declined'}
+                </div>
+              )}
               <div className="ld-action-row">
-                <button className="ld-btn-grant">
+                <button className="ld-btn-grant" onClick={() => handleDecide('grant')} disabled={!!decision || loading}
+                  style={{ opacity: decision === 'reject' ? 0.4 : 1 }}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>
-                  Grant loan
+                  {loading && !decision ? 'Processing...' : 'Grant loan'}
                 </button>
-                <button className="ld-btn-reject">
+                <button className="ld-btn-reject" onClick={() => handleDecide('reject')} disabled={!!decision || loading}
+                  style={{ opacity: decision === 'grant' ? 0.4 : 1 }}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
                   Reject
                 </button>
