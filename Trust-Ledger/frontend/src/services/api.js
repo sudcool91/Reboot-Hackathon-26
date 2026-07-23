@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:3000';
+const BASE = 'http://localhost:3001';
 
 async function req(method, path, body) {
   try {
@@ -27,6 +27,7 @@ export const updateConsent        = (credentialId, bank, action) =>
 
 // ── Loan Applications ──────────────────────────────────────────────────────
 export const getLoanApplications  = () => req('GET', '/api/v1/loan-applications');
+export const submitApplication    = (data) => req('POST', '/api/v1/loan-applications', data);
 
 // ── Loan Decision ──────────────────────────────────────────────────────────
 export const getLoanDecision      = (applicationId) => req('GET', `/api/v1/loan-applications/${applicationId}/decision`);
@@ -40,11 +41,27 @@ export const getLedgerExplorer    = (credentialId) => req('GET', `/api/v1/ledger
 export const getAdminControlCenter = () => req('GET', '/api/v1/admin-control-center');
 
 // ── KYC core ──────────────────────────────────────────────────────────────
-export const issueKyc   = (networkIdentityId, documentHash, issuer) =>
-  req('POST', '/api/v1/kyc/issue', { networkIdentityId, documentHash, issuer });
+export const issueKyc   = (networkIdentityId, documentHash, issuer, extra = {}) =>
+  req('POST', '/api/v1/kyc/issue', { networkIdentityId, documentHash, issuer, ...extra });
 export const verifyKyc  = (credentialId) =>
   req('POST', '/api/v1/kyc/verify', { credentialId });
 export const revokeKyc  = (credentialId, reason) =>
   req('POST', '/api/v1/kyc/revoke', { credentialId, reason });
 export const getKycHistory = (credentialId) =>
   req('GET', `/api/v1/kyc/history/${credentialId}`);
+
+// ── File Upload ────────────────────────────────────────────────────────────
+export const uploadDocument = async (file, docType, customerId) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('docType', docType);
+    formData.append('customerId', customerId || 'guest');
+    const res = await fetch(`${BASE}/api/v1/uploads`, { method: 'POST', body: formData });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (e) {
+    console.warn('[API] upload failed:', e.message);
+    return null;
+  }
+};

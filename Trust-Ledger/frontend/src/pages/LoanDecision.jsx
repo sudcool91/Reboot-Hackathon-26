@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import { useStore } from '../store';
 import { decideLoan } from '../services/api';
 
-export default function LoanDecision({ onNavigate }) {
+export default function LoanDecision({ onNavigate, notifications = [] }) {
   const { pushToast } = useStore();
   const [remark, setRemark] = useState('');
   const [decision, setDecision] = useState(null); // 'grant' | 'reject'
@@ -25,7 +25,7 @@ export default function LoanDecision({ onNavigate }) {
 
   return (
     <div className="main">
-      <Navbar crumb="Loan decision" onFluid={() => onNavigate('fluid_overview')} variant="admin" />
+      <Navbar crumb="Loan decision" onFluid={() => onNavigate('fluid_overview')} variant="admin" notifications={notifications} />
       <div className="ld-content">
         <div className="ld-title-row">
           <div>

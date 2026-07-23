@@ -7,6 +7,7 @@ import { CustomersModule } from './customers/customers.module';
 import { KycModule } from './kyc/kyc.module';
 import { FabricModule } from './fabric/fabric.module';
 import { PresentationApiModule } from './presentation-api/presentation-api.module';
+import { UploadsModule } from './uploads/uploads.module';
 import { KycCredential } from './database/entities/kyc-credential.entity';
 import { LoanApplication } from './database/entities/loan-application.entity';
 import { LedgerEvent } from './database/entities/ledger-event.entity';
@@ -33,6 +34,7 @@ import { LedgerEvent } from './database/entities/ledger-event.entity';
     FabricModule,
     KycModule,
     PresentationApiModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

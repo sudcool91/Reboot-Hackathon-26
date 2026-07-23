@@ -13,6 +13,7 @@ import LedgerExplorer from './pages/LedgerExplorer';
 import NewCustomerUpload from './pages/NewCustomerUpload';
 import LoanDecision from './pages/LoanDecision';
 import FluidOverview from './pages/FluidOverview';
+import CustomerApplication from './pages/CustomerApplication';
 
 const PAGES = {
   dashboard: Dashboard,
@@ -24,6 +25,7 @@ const PAGES = {
   new_customer_upload: NewCustomerUpload,
   loan_decision: LoanDecision,
   fluid_overview: FluidOverview,
+  customer_application: CustomerApplication,
 };
 
 export default function App() {
@@ -36,13 +38,34 @@ export default function App() {
 
 function AppInner() {
   const { toasts, dismissToast } = useStore();
-  const [currentPage, setCurrentPage] = useState('dashboard');
-  const [tourLaunched, setTourLaunched] = useState(false);
 
-  const navigate = (page) => {
+  const [currentPage, setCurrentPage] = useState(() => {
+    try { return localStorage.getItem('tl_page') || 'dashboard'; } catch { return 'dashboard'; }
+  });
+  const [pageParams, setPageParams] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('tl_params') || '{}'); } catch { return {}; }
+  });
+  const [tourLaunched, setTourLaunched] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+
+  const navigate = (page, params = {}) => {
     setCurrentPage(page);
+    setPageParams(params);
+    try { localStorage.setItem('tl_page', page); localStorage.setItem('tl_params', JSON.stringify(params)); } catch {}
     window.scrollTo(0, 0);
   };
+
+  // Global activity polling every 15s — feeds notification bell + dashboard
+  useEffect(() => {
+    const poll = async () => {
+      const { getDashboardActivity } = await import('./services/api');
+      const data = await getDashboardActivity();
+      if (data) setNotifications(data.activities || data || []);
+    };
+    poll();
+    const id = setInterval(poll, 15000);
+    return () => clearInterval(id);
+  }, []);
 
   // Auto-launch tour after 1.1s on first load
   useEffect(() => {
@@ -65,7 +88,7 @@ function AppInner() {
           exit={{ opacity: 0 }}
           transition={{ duration: isFluid ? 0.5 : 0.28 }}
         >
-          <PageComponent onNavigate={navigate} />
+          <PageComponent onNavigate={navigate} params={pageParams} notifications={notifications} />
         </motion.div>
       </AnimatePresence>
       {tourLaunched && !isFluid && (

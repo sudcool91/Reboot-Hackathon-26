@@ -7,10 +7,10 @@ const container = { hidden: {}, show: { transition: { staggerChildren: 0.09 } } 
 const Check = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>;
 const Dash = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14"/></svg>;
 
-export default function AdminControlCenter({ onNavigate }) {
+export default function AdminControlCenter({ onNavigate, notifications = [] }) {
   return (
     <div className="main">
-      <Navbar crumb="Admin control center" onFluid={() => onNavigate('fluid_overview')} variant="admin" />
+      <Navbar crumb="Admin control center" onFluid={() => onNavigate('fluid_overview')} variant="admin" notifications={notifications} />
       <div className="content">
         <div className="page-title">Admin control center</div>
         <div className="page-sub">Who can see what, decide what, and write to the ledger — and the rules the policy engine runs automatically before any human looks at a file.</div>

@@ -1,24 +1,64 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../components/Navbar';
-import { useStore } from '../store';
-import { getDashboardSummary, getDashboardActivity } from '../services/api';
+import { getDashboardSummary, getDashboardActivity, getLoanApplications, getKycRegistry } from '../services/api';
 
 const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
 
-export default function Dashboard({ onNavigate }) {
-  const { pushToast } = useStore();
-  const [summary, setSummary] = useState(null);
-  const [activity, setActivity] = useState([]);
+const STATUS_CLS = {
+  'Auto-eligible': 'tag-go', 'Approved': 'tag-go',
+  'Manual review': 'tag-warn', 'Pending docs': 'tag-warn',
+  'Rejected': 'tag-bad', 'Revoked': 'tag-bad',
+};
 
-  useEffect(() => {
-    getDashboardSummary().then(d => { if (d) setSummary(d); });
-    getDashboardActivity().then(d => { if (d) setActivity(d.activities || d || []); });
+const ACTION_ICON = {
+  IssueKYC:       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0E6E4B" strokeWidth="2.3"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg>,
+  ConsentGranted: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0E6E4B" strokeWidth="2.3"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h6"/></svg>,
+  ConsentRevoked: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#854F0B" strokeWidth="2.3"><path d="M18 6L6 18M6 6l12 12"/></svg>,
+  VerifyKYC:      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0E6E4B" strokeWidth="2.3"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>,
+  LoanGranted:    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0E6E4B" strokeWidth="2.3"><path d="M20 6L9 17l-5-5"/></svg>,
+  LoanRejected:   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" strokeWidth="2.3"><path d="M18 6L6 18M6 6l12 12"/></svg>,
+};
+const DEFAULT_ICON = <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4A4A40" strokeWidth="2.3"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>;
+
+export default function Dashboard({ onNavigate, notifications = [] }) {
+  const [summary, setSummary]         = useState(null);
+  const [activity, setActivity]       = useState([]);
+  const [loans, setLoans]             = useState([]);
+  const [lastRefresh, setLastRefresh] = useState(null);
+  const [refreshing, setRefreshing]   = useState(false);
+
+  const fetchAll = useCallback(async (showSpinner = false) => {
+    if (showSpinner) setRefreshing(true);
+    try {
+      const [s, a, l] = await Promise.all([
+        getDashboardSummary(),
+        getDashboardActivity(),
+        getLoanApplications(),
+      ]);
+      if (s) setSummary(s);
+      if (a) setActivity(a.activities || a || []);
+      if (l) {
+        const arr = l.applications || l || [];
+        setLoans([...arr].reverse()); // newest first
+      }
+      setLastRefresh(new Date());
+    } finally {
+      if (showSpinner) setRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => { fetchAll(true); }, [fetchAll]);
+  useEffect(() => {
+    const id = setInterval(() => fetchAll(false), 15000);
+    return () => clearInterval(id);
+  }, [fetchAll]);
+
+  const recentLoans = loans.slice(0, 5);
   return (
     <div className="main">
-      <Navbar crumb="Dashboard" onFluid={() => onNavigate('fluid_overview')} />
+      <Navbar crumb="Dashboard" onFluid={() => onNavigate('fluid_overview')} notifications={notifications} />
       <div className="content">
 
         {/* Hero */}
@@ -33,7 +73,14 @@ export default function Dashboard({ onNavigate }) {
             </motion.div>
             <motion.div variants={fadeUp} className="hero-btns">
               <button className="hbtn hbtn-l" onClick={() => onNavigate('loan_applications')}>Walk through an application →</button>
-              <button className="hbtn hbtn-o" onClick={() => onNavigate('ledger_explorer')}>Inspect the ledger</button>
+              <button className="hbtn hbtn-o" onClick={async () => {
+                const data = await getKycRegistry();
+                const list = Array.isArray(data) ? data : [];
+                const latest = list[list.length - 1];
+                onNavigate('ledger_explorer', latest?.credentialId
+                  ? { credentialId: latest.credentialId, customerName: latest.customerName }
+                  : {});
+              }}>Inspect the ledger</button>
             </motion.div>
           </div>
           <div className="hero-r">
@@ -44,7 +91,9 @@ export default function Dashboard({ onNavigate }) {
             </div>
             <div className="ticker">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8FCBAE" strokeWidth="2"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
-              <span><b style={{color:'#8FCBAE'}}>31 of 47</b> applications skipped re-upload today</span>
+              <span>
+                <b style={{color:'#8FCBAE'}}>{summary?.fastTracked ?? '—'} of {summary?.totalApplications ?? '—'}</b> applications skipped re-upload today
+              </span>
             </div>
           </div>
         </motion.div>
@@ -53,19 +102,23 @@ export default function Dashboard({ onNavigate }) {
         <section className="block">
           <div className="block-head">
             <div className="block-title"><span className="block-num">01</span>Today across all products</div>
-            <div className="block-note">Auto-refreshes every 30 seconds</div>
+            <div className="block-note" style={{display:'flex',alignItems:'center',gap:8}}>
+              {refreshing && <span style={{width:8,height:8,borderRadius:'50%',background:'#0E6E4B',display:'inline-block'}}/>}
+              Auto-refreshes every 15s
+              {lastRefresh && <span style={{opacity:0.5,fontSize:11}}>· {lastRefresh.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>}
+            </div>
           </div>
           <motion.div className="stat-grid" initial="hidden" animate="show" variants={container}>
             {[
-              { label: 'Applications received', value: summary?.totalApplications ?? '47', foot: '↑ 12% vs yesterday', cls: 'up' },
-              { label: 'Fast-tracked via on-chain KYC', value: summary?.fastTracked ?? '31', bar: summary?.fastTrackedPct ?? 66, foot: `${summary?.fastTrackedPct ?? 66}% of total volume`, cls: 'flat' },
-              { label: 'Avg. time to decision', value: summary?.avgDecisionTime ?? '4.2 min', foot: '↓ from 48 hrs baseline', cls: 'up' },
-              { label: 'Credentials live on ledger', value: summary?.credentialsOnLedger ?? '12,884', foot: 'across 3 institutions', cls: 'flat' },
+              { label: 'Applications received',         value: summary?.totalApplications   ?? '—', foot: 'Total in system',                                                             cls: 'flat' },
+              { label: 'Fast-tracked via on-chain KYC', value: summary?.fastTracked          ?? '—', bar: summary?.fastTrackedPct, foot: `${summary?.fastTrackedPct ?? 0}% of total`,   cls: 'up' },
+              { label: 'Avg. time to decision',         value: summary?.avgDecisionTime      ?? '—', foot: '↓ from 48 hrs baseline',                                                     cls: 'up' },
+              { label: 'Credentials live on ledger',    value: summary?.credentialsOnLedger  ?? '—', foot: `${summary?.activeCredentials ?? 0} active · block #${summary?.blockHeight ?? '—'}`, cls: 'flat' },
             ].map((s, i) => (
               <motion.div key={i} className="stat dash-stat" variants={fadeUp}>
                 <div className="stat-label">{s.label}</div>
                 <div className="stat-value">{s.value}</div>
-                {s.bar && <div className="ptrack"><div className="pfill" style={{width:`${s.bar}%`}}></div></div>}
+                {s.bar != null && <div className="ptrack"><div className="pfill" style={{width:`${s.bar}%`}}></div></div>}
                 <div className={`stat-foot ${s.cls}`}>{s.foot}</div>
               </motion.div>
             ))}
@@ -113,13 +166,13 @@ export default function Dashboard({ onNavigate }) {
             </div>
             <div className="net-foot">
               <span className="mono-sm">Consensus: RAFT</span>
-              <span className="mono-sm">Block #48,221</span>
-              <span style={{color:'#0B5C3F',fontWeight:700}}>4/4 in sync</span>
+              <span className="mono-sm">Block #{summary?.blockHeight ?? '48,221'}</span>
+              <span style={{color:'#0B5C3F',fontWeight:700}}>{summary?.validatorSync ?? '4/4'} in sync</span>
             </div>
           </div>
         </section>
 
-        {/* Recent activity table */}
+        {/* Recent applications — LIVE */}
         <section className="block">
           <div className="block-head">
             <div className="block-title"><span className="block-num">03</span>Recent activity across products</div>
@@ -129,45 +182,57 @@ export default function Dashboard({ onNavigate }) {
             <table>
               <thead><tr><th>Applicant</th><th>Product</th><th>Amount</th><th>KYC source</th><th>Status</th><th></th></tr></thead>
               <tbody>
-                <tr>
-                  <td><div className="person"><div className="av">RS</div>Rohan Sharma</div></td>
-                  <td>Personal loan</td><td>£300,000</td>
-                  <td><span className="chain-ref"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88"/></svg>On-chain</span></td>
-                  <td><span className="tag tag-go">Auto-eligible</span></td>
-                  <td><span className="block-link" onClick={() => onNavigate('loan_applications')}>Review →</span></td>
-                </tr>
-                <tr>
-                  <td><div className="person"><div className="av">PN</div>Priya Nair</div></td>
-                  <td>Credit card</td><td>£20,000 limit</td>
-                  <td><span className="chain-ref"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88"/></svg>On-chain</span></td>
-                  <td><span className="tag tag-go">Auto-eligible</span></td>
-                  <td><span className="block-link" onClick={() => onNavigate('credit_cards')}>Review →</span></td>
-                </tr>
-                <tr>
-                  <td><div className="person"><div className="av">VD</div>Vikram Desai</div></td>
-                  <td>Home loan</td><td>£450,000</td>
-                  <td><span className="mono-sm">New · uploading</span></td>
-                  <td><span className="tag tag-warn">Pending docs</span></td>
-                  <td><span className="mono-sm">awaiting</span></td>
-                </tr>
+                {recentLoans.length === 0 && (
+                  <tr><td colSpan={6} style={{textAlign:'center',opacity:0.4,padding:'20px 0'}}>Loading…</td></tr>
+                )}
+                {recentLoans.map((r, i) => (
+                  <tr key={i}>
+                    <td><div className="person"><div className="av">{r.avatar || (r.applicantName||'?').slice(0,2)}</div>{r.applicantName}</div></td>
+                    <td>{r.product}</td>
+                    <td>{(r.amount||'').replace('GBP','£')}</td>
+                    <td>
+                      {(r.kycSource||'').includes('chain')
+                        ? <span className="chain-ref"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88"/></svg>{r.kycSource}</span>
+                        : <span className="mono-sm">{r.kycSource}</span>}
+                    </td>
+                    <td><span className={`tag ${STATUS_CLS[r.status] || 'tag-warn'}`}>{r.status}</span></td>
+                    <td>{r.credentialId ? <span className="block-link" onClick={() => onNavigate('loan_applications')}>Review →</span> : <span className="mono-sm">awaiting</span>}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </section>
 
-        {/* Live Activity */}
+        {/* Live activity feed — LIVE from ledger_events */}
         <section className="block" style={{marginBottom:0}}>
-          <div className="block-head"><div className="block-title"><span className="block-num">04</span>Live activity</div></div>
+          <div className="block-head">
+            <div className="block-title"><span className="block-num">04</span>Live activity</div>
+            <div className="block-note">Real-time ledger events</div>
+          </div>
           <div className="card card-pad">
-            {[
-              { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0E6E4B" strokeWidth="2.3"><path d="M20 6L9 17l-5-5"/></svg>, text: <><b>Anita accepted LN20458</b> for Rohan Sharma — <span className="mono-sm">2 min ago</span></> },
-              { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#854F0B" strokeWidth="2.3"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>, text: <><b>Compliance flagged</b> credential KYC-VD-19042 — <span className="mono-sm">38 min ago</span></> },
-              { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0E6E4B" strokeWidth="2.3"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg>, text: <><b>New credential issued</b> for Meera Iyer · block #48,201 — <span className="mono-sm">1 hr ago</span></> },
-              { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4A4A40" strokeWidth="2.3"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>, text: <><b>Partner bank verified</b> a credential via verifyKYC() — <span className="mono-sm">3 hrs ago</span></> },
-              { icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4A4A40" strokeWidth="2.3"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>, text: <><b>Regulator node synced</b> to block #48,221 — <span className="mono-sm">3 hrs ago</span></> },
-            ].map((a, i) => (
-              <div key={i} className="activity-row">{a.icon}<div>{a.text}</div></div>
-            ))}
+            <AnimatePresence initial={false}>
+              {activity.length === 0 && (
+                <div style={{opacity:0.4,fontSize:13,padding:'8px 0'}}>No activity yet — issue a credential or make a loan decision to see events here.</div>
+              )}
+              {activity.map((a, i) => (
+                <motion.div
+                  key={`${a.credentialId}-${a.timestamp}-${i}`}
+                  className="activity-row"
+                  initial={{opacity:0, x:-8}}
+                  animate={{opacity:1, x:0}}
+                  transition={{delay: i * 0.04}}
+                >
+                  {ACTION_ICON[a.type] || DEFAULT_ICON}
+                  <div>
+                    <b>{a.text}</b>
+                    {a.blockNumber && <span className="mono-sm" style={{marginLeft:6}}>· block #{a.blockNumber}</span>}
+                    {a.at && <span className="mono-sm" style={{marginLeft:6}}>— {a.at}</span>}
+                    {a.description && <div style={{fontSize:12,opacity:0.55,marginTop:2}}>{a.description}</div>}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         </section>
       </div>

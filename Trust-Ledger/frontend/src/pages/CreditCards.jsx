@@ -4,10 +4,10 @@ import Navbar from '../components/Navbar';
 const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.09 } } };
 
-export default function CreditCards({ onNavigate }) {
+export default function CreditCards({ onNavigate, notifications = [] }) {
   return (
     <div className="main">
-      <Navbar crumb="Credit cards" onFluid={() => onNavigate('fluid_overview')} />
+      <Navbar crumb="Credit cards" onFluid={() => onNavigate('fluid_overview')} notifications={notifications} />
       <div className="content">
         <div className="page-title">Credit cards</div>
         <div className="page-sub">Card applications and limit decisioning, powered by the same on-chain KYC credential used across every Lloyds product.</div>

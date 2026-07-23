@@ -23,7 +23,7 @@ function statusCls(s) {
   return 'tag-stop';
 }
 
-export default function KycRegistry({ onNavigate }) {
+export default function KycRegistry({ onNavigate, notifications = [] }) {
   const { pushToast } = useStore();
   const [rows, setRows] = useState(STATUS_SEED);
   const [shareOpen, setShareOpen] = useState(null); // credentialId of open dropdown
@@ -57,7 +57,7 @@ export default function KycRegistry({ onNavigate }) {
 
   return (
     <div className="main">
-      <Navbar crumb="KYC registry" onFluid={() => onNavigate('fluid_overview')} />
+      <Navbar crumb="KYC registry" onFluid={() => onNavigate('fluid_overview')} notifications={notifications} />
       <div className="content">
         <div className="page-title">KYC registry</div>
         <div className="page-sub">Every customer's on-chain identity credential, where it was issued, and which products it has been used to unlock — one record, reused everywhere.</div>
@@ -124,7 +124,7 @@ export default function KycRegistry({ onNavigate }) {
                   </td>
                   <td>{r.expiresOn || r.expires}</td>
                   <td><span className={`tag ${statusCls(r.status)}`}>{r.status}</span></td>
-                  <td><span className="row-link" onClick={() => onNavigate('ledger_explorer')}>View trail →</span></td>
+                  <td><span className="row-link" onClick={() => onNavigate('ledger_explorer', { credentialId: r.credentialId, customerName: r.customerName || r.name })}>View trail →</span></td>
                 </tr>
               ))}
             </tbody>

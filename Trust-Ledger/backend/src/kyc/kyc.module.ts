@@ -3,9 +3,10 @@ import { KycController } from './kyc.controller';
 import { KycService } from './kyc.service';
 import { FabricModule } from '../fabric/fabric.module';
 import { KYC_OPERATION_TO_FUNCTION } from './kyc.types';
+import { PresentationApiModule } from '../presentation-api/presentation-api.module';
 
 @Module({
-  imports: [FabricModule],
+  imports: [FabricModule, PresentationApiModule],
   controllers: [KycController],
   providers: [
     KycService,

@@ -29,6 +29,12 @@ export class KycCredential {
   @Column({ type: 'varchar', length: 128, nullable: true })
   did: string;
 
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  email: string;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  phone: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -49,6 +49,11 @@ export class PresentationApiController {
     return this.presentationApiService.getLoanApplications();
   }
 
+  @Post('loan-applications')
+  createLoanApplication(@Body() body: any) {
+    return this.presentationApiService.createLoanApplication(body);
+  }
+
   @Get('loan-applications/:applicationId/decision')
   getLoanDecision(@Param('applicationId') applicationId: string) {
     return this.presentationApiService.getLoanDecision(applicationId);

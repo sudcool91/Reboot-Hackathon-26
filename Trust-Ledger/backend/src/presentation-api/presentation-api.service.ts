@@ -11,25 +11,60 @@ export class PresentationApiService {
   async getDashboardSummary() {
     const applications = await this.data.getApplications();
     const registry = await this.data.getRegistry();
+    const fastTracked = applications.filter(a => a.status === 'Auto-eligible' || a.status === 'Approved').length;
+    const fastTrackedPct = applications.length ? Math.round((fastTracked / applications.length) * 100) : 0;
     return {
-      applicationsReceived: applications.length,
-      fastTrackedViaOnChainKyc: applications.filter(a => a.status === 'Auto-eligible').length,
-      pendingDocuments: applications.filter(a => a.status === 'Pending docs').length,
+      totalApplications: applications.length,
+      fastTracked,
+      fastTrackedPct,
+      avgDecisionTime: '4.2 min',
+      credentialsOnLedger: registry.length,
       activeCredentials: registry.filter(r => r.status === 'Active').length,
-      credentialsIssued: registry.length,
-      averageDecisionTime: '4.2 min',
+      pendingDocuments: applications.filter(a => a.status === 'Pending docs').length,
       blockHeight: this.data.getBlockHeight(),
       validatorSync: '4/4',
     };
   }
 
-  getDashboardActivity() {
-    return [
-      { type: 'loan',       text: 'Anita accepted LN20458 for Rohan Sharma',                    at: '2 min ago' },
-      { type: 'compliance', text: 'Compliance flagged credential KYC-VD-19042',                  at: '38 min ago' },
-      { type: 'ledger',     text: 'New credential issued for Meera Iyer at block #48,201',       at: '1 hr ago' },
-      { type: 'network',    text: 'Partner bank queried verifyKYC()',                             at: '3 hrs ago' },
-    ];
+  async getDashboardActivity() {
+    const events = await this.data.getAllRecentEvents(10);
+    const applications = await this.data.getApplications();
+    const appMap = new Map(applications.map(a => [a.credentialId, a]));
+
+    const ACTION_LABEL: Record<string, string> = {
+      IssueKYC: 'New credential issued',
+      ConsentGranted: 'Consent granted',
+      ConsentRevoked: 'Consent revoked',
+      VerifyKYC: 'Credential verified',
+      LoanGranted: 'Loan granted',
+      LoanRejected: 'Loan rejected',
+    };
+
+    return events.map(e => {
+      const app = appMap.get(e.credentialId);
+      const name = app?.applicantName || e.credentialId;
+      const label = ACTION_LABEL[e.action] || e.action;
+      const ago = e.timestamp ? this.timeAgo(new Date(e.timestamp)) : '';
+      return {
+        type: e.action,
+        credentialId: e.credentialId,
+        actor: e.actor,
+        text: `${label} — ${name}`,
+        description: e.description,
+        blockNumber: e.blockNumber,
+        txHash: e.txHash,
+        at: ago,
+        timestamp: e.timestamp,
+      };
+    });
+  }
+
+  private timeAgo(date: Date): string {
+    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+    return `${Math.floor(diff / 86400)} days ago`;
   }
 
   getNetworkTopology() {
@@ -71,6 +106,34 @@ export class PresentationApiService {
 
   async getLoanApplications() {
     return this.data.getApplications();
+  }
+
+  async createLoanApplication(body: any) {
+    // Generate unique application ID
+    const count = await this.data.getApplications();
+    const nextNum = 20458 + count.length + 1;
+    const applicationId = `LN${nextNum}`;
+
+    const newApp = await this.data.saveApplication({
+      applicationId,
+      avatar: body.avatar || (body.applicantName || 'XX').slice(0, 2).toUpperCase(),
+      applicantName: body.applicantName,
+      product: body.product,
+      amount: body.amount,
+      kycSource: body.kycSource || 'New · customer portal',
+      status: 'Pending docs',
+      creditScore: body.creditScoreSelf ? parseInt(body.creditScoreSelf) : null,
+    });
+
+    // Push a ledger event for tracking
+    await this.data.pushLedgerEvent(
+      applicationId,
+      'IssueKYC',
+      `New application submitted by ${body.applicantName} for ${body.product}`,
+      'Customer portal',
+    );
+
+    return { ...newApp, message: 'Application received and queued for review' };
   }
 
   async getLoanDecision(applicationId: string) {

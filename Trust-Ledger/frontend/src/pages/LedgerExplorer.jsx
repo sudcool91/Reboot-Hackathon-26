@@ -20,33 +20,37 @@ const SEED_TRAIL = [
   { action: 'VerifyKYC', timestamp: '2026-06-23T09:02:00Z', txHash: '0x7e21...4bcd', blockNumber: 48221, actor: 'Halifax loan engine', description: 'Queried by the lending platform during application LN20458 — returned valid: true' },
 ];
 
-export default function LedgerExplorer({ onNavigate }) {
+export default function LedgerExplorer({ onNavigate, params, notifications = [] }) {
   const [trail, setTrail] = useState(SEED_TRAIL);
+  const [credential, setCredential] = useState(null);
 
+  const credId = params?.credentialId || 'KYC-RS-88213';
+  const customerName = params?.customerName || null;
   useEffect(() => {
-    getLedgerExplorer('KYC-RS-88213').then(data => {
+    getLedgerExplorer(credId).then(data => {
       if (data && Array.isArray(data.events) && data.events.length > 0) setTrail(data.events);
       else if (Array.isArray(data) && data.length > 0) setTrail(data);
+      if (data && data.credential) setCredential(data.credential);
     });
-  }, []);
+  }, [credId]);
 
   return (
     <div className="main">
-      <Navbar crumb="Credential audit trail" onFluid={() => onNavigate('fluid_overview')} variant="ledger" />
+      <Navbar crumb="Credential audit trail" onFluid={() => onNavigate('fluid_overview')} variant="ledger" notifications={notifications} />
       <div className="content">
         <div className="page-title-row">
           <div>
             <div className="page-title">Credential audit trail</div>
             <div className="page-sub">Every smart contract call this credential has ever triggered — issuance, consent, verification, and (if it ever happens) revocation.</div>
           </div>
-          <span className="pill-dark-inline">Credential ID: KYC-RS-88213</span>
+          <span className="pill-dark-inline">Credential ID: {credId}</span>
         </div>
 
         <motion.div className="id-row" initial="hidden" animate="show" variants={{ hidden:{}, show:{ transition:{staggerChildren:0.08} } }}>
           <motion.div className="id-card" variants={fadeUp}>
             <div className="id-label">Subject</div>
-            <div className="id-value">Rohan Sharma</div>
-            <div className="id-sub">DID: did:lloyds:0x88213a..</div>
+            <div className="id-value">{credential?.subjectName || customerName || credId}</div>
+            <div className="id-sub">DID: {credential?.did || `did:lloyds:0x${credId.replace('KYC-','').toLowerCase()}..`}</div>
           </motion.div>
           <motion.div className="id-card" variants={fadeUp}>
             <div className="id-label">Issuer</div>

@@ -112,6 +112,10 @@ export class PresentationDataService implements OnModuleInit {
     return this.eventRepo.find({ where: { credentialId }, order: { timestamp: 'ASC' } });
   }
 
+  async getAllRecentEvents(limit = 10): Promise<LedgerEvent[]> {
+    return this.eventRepo.find({ order: { timestamp: 'DESC' }, take: limit });
+  }
+
   async pushLedgerEvent(credentialId: string, action: LedgerAction, description: string, actor: string): Promise<LedgerEvent> {
     this.blockHeight += 1;
     return this.eventRepo.save(this.eventRepo.create({

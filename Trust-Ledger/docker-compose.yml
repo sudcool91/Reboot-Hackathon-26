@@ -31,7 +31,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@trustledger.local
+      PGADMIN_DEFAULT_EMAIL: admin@trustledger.com
       PGADMIN_DEFAULT_PASSWORD: admin123
       PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
