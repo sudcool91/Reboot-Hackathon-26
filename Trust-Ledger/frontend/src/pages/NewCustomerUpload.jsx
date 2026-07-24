@@ -78,8 +78,9 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
   const { pushToast } = useStore();
   const [step, setStep]             = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [txHash, setTxHash]         = useState('');
-  const [credId, setCredId]         = useState('');
+  const [txHash, setTxHash] = useState('');
+  const [credentialId, setCredentialId] = useState('');
+  const [customerId, setCustomerId] = useState('');
   const [form, setForm] = useState({ fullName: '', email: '', phone: '', dob: '', nationality: 'British', address: '' });
   const [uploads, setUploads] = useState({});
   const fileRefs = useRef({});
@@ -141,6 +142,7 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
 
   const handleSubmit = async () => {
     setSubmitting(true);
+    
     pushToast('Submitting KYC request to admin\u2026', 'info');
     const docKeys = Object.keys(uploads).filter(k => uploads[k]?.status === 'done').join(',');
     const result = await submitKycRequest({
@@ -161,6 +163,30 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
   const resetForm = () => {
     setStep(0); setUploads({}); setKycChecked(false); setExistingKyc(null); setShowErrors(false);
     setForm({ fullName: '', email: '', phone: '', dob: '', nationality: 'British', address: '' });
+
+//     pushToast('Submitting to Hyperledger Fabric...', 'info');
+//     const docHash = 'sha256:' + Array.from({ length: 16 }, () =>
+//       Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');
+//     const networkId = `NET-${form.fullName.replace(/\s+/g, '').toUpperCase().slice(0, 6)}-${Date.now()}`;
+//     const result = await issueKyc(
+//       networkId,
+//       docHash,
+//       'Lloyds Branch Validator',
+//       // extra fields passed through
+//       {
+//         customerName: form.fullName,
+//         email: form.email,
+//         phone: form.phone,
+//         dateOfBirth: form.dob,
+//         address: form.address,
+//       },
+//     );
+//     setSubmitting(false);
+//     const tx = result?.txHash || `0x${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 6)}`;
+//     const cid = result?.credentialId || `KYC-${form.fullName.split(' ').map(w => w[0]).join('')}-${Math.floor(Math.random() * 90000 + 10000)}`;
+//     setTxHash(tx); setCredentialId(cid); setCustomerId(result?.customerId || ''); setStep(3);
+//     pushToast(`🔒 KYC credential issued — ${cid}`, 'success', tx);
+
   };
 
   return (
@@ -405,6 +431,30 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
                 <button className="btn-primary" onClick={() => onNavigate('admin_control_center')}>View in Admin Control Center →</button>
                 <button className="btn-ghost" onClick={resetForm}>Submit another request</button>
+
+//               <div style={{ fontSize: 14, color: '#4A4A40', marginBottom: 24 }}>
+//                 Welcome to Lloyds, <b>{form.fullName}</b>. Your identity is verified once — reused everywhere.
+//               </div>
+//               <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 8, textAlign: 'left', background: '#F2F0E6', borderRadius: 12, padding: '16px 24px', marginBottom: 28 }}>
+//                 {customerId && (
+//                   <>
+//                     <div style={{ fontSize: 11, color: '#9A9A8A' }}>Customer ID</div>
+//                     <div style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 700, color: '#024731' }}>{customerId}</div>
+//                   </>
+//                 )}
+//                 <div style={{ fontSize: 11, color: '#9A9A8A' }}>Credential ID</div>
+//                 <div style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 700, color: '#024731' }}>{credentialId}</div>
+//                 <div style={{ fontSize: 11, color: '#9A9A8A', marginTop: 4 }}>Transaction Hash</div>
+//                 <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#4A4A40' }}>{txHash}</div>
+//               </div>
+//               <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+//                 <button className="btn-primary" onClick={() => onNavigate('kyc_registry')}>View KYC Registry →</button>
+//                 <button className="btn-ghost" onClick={() => {
+//                   setStep(0); setUploads({});
+//                   setCustomerId('');
+//                   setForm({ fullName: '', email: '', phone: '', dob: '', nationality: 'British', address: '' });
+//                 }}>Add another customer</button>
+// >>>>>>> fabric
               </div>
             </motion.div>
           )}

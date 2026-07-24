@@ -16,6 +16,7 @@ import NewCustomerUpload from './pages/NewCustomerUpload';
 import LoanDecision from './pages/LoanDecision';
 import FluidOverview from './pages/FluidOverview';
 import CustomerApplication from './pages/CustomerApplication';
+import FabricTest from './pages/FabricTest';
 
 // Pages accessible to admin
 const ADMIN_PAGES = {
@@ -29,6 +30,7 @@ const ADMIN_PAGES = {
   loan_decision: LoanDecision,
   fluid_overview: FluidOverview,
   customer_application: CustomerApplication,
+  fabric_test: FabricTest,
 };
 
 // Pages accessible to customer
