@@ -14,6 +14,7 @@ import NewCustomerUpload from './pages/NewCustomerUpload';
 import LoanDecision from './pages/LoanDecision';
 import FluidOverview from './pages/FluidOverview';
 import CustomerApplication from './pages/CustomerApplication';
+import FabricTest from './pages/FabricTest';
 
 const PAGES = {
   dashboard: Dashboard,
@@ -26,6 +27,7 @@ const PAGES = {
   loan_decision: LoanDecision,
   fluid_overview: FluidOverview,
   customer_application: CustomerApplication,
+  fabric_test: FabricTest,
 };
 
 export default function App() {

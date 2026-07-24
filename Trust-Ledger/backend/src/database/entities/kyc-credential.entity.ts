@@ -5,6 +5,9 @@ export class KycCredential {
   @PrimaryColumn({ type: 'varchar', length: 64 })
   credentialId: string;
 
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  customerId: string;
+
   @Column({ type: 'varchar', length: 8 })
   avatar: string;
 
