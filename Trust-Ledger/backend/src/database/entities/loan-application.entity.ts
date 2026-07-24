@@ -26,6 +26,15 @@ export class LoanApplication {
   @Column({ type: 'varchar', length: 64, nullable: true })
   credentialId: string;
 
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  email: string;
+
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  targetBank: string;
+
+  @Column({ type: 'boolean', default: false, nullable: true })
+  shareConsent: boolean;
+
   @Column({ type: 'varchar', length: 32, default: 'Pending docs' })
   status: string;
 

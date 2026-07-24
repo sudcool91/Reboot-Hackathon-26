@@ -2,12 +2,12 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
 import { useStore } from "../store";
-import { getKycRegistry, getLoanApplications, getKycRequestsByEmail, getShareRequestsByEmail, submitShareRequest } from "../services/api";
+import { getKycRegistry, getLoanApplications, getKycRequestsByEmail, getShareRequestsByEmail, submitShareRequest, decideShareRequest } from "../services/api";
 
 const fadeUp = { hidden:{opacity:0,y:14}, show:{opacity:1,y:0} };
 const container = { hidden:{}, show:{transition:{staggerChildren:0.08}} };
 
-const BANKS = ["Barclays","HSBC","NatWest","Santander","Halifax","Nationwide","TSB","Metro Bank","Monzo","Starling Bank","First Direct","Co-operative Bank"];
+const BANKS = ["Lloyds Bank","Halifax","Bank of Scotland","Scottish Widows","MBNA","Black Horse","Lex Autolease","Lloyds Wealth","Lloyds Technology Centre"];
 
 function ShareModal({ kycRecord, customerUser, onClose, onSubmitted }) {
   const [selected, setSelected] = useState("");
@@ -84,13 +84,14 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
   const [shareRequests, setShareRequests] = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [shareOpen,     setShareOpen]     = useState(false);
+  const [shareDeciding, setShareDeciding] = useState({});
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [kycData, loanData, kycReqData, shareReqData] = await Promise.all([
         getKycRegistry(),
-        getLoanApplications(),
+        currentUser?.email ? getLoanApplications(currentUser.email) : getLoanApplications(),
         currentUser?.email ? getKycRequestsByEmail(currentUser.email) : Promise.resolve([]),
         currentUser?.email ? getShareRequestsByEmail(currentUser.email) : Promise.resolve([]),
       ]);
@@ -103,9 +104,11 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
       setKycRecord(myKyc || null);
 
       const loanList = Array.isArray(loanData) ? loanData : (loanData?.applications || []);
+      // Already filtered by email from API, but also keep name fallback for legacy data
       const myLoans = loanList.filter(a =>
-        a.applicantName?.toLowerCase() === currentUser?.name?.toLowerCase() ||
-        a.email?.toLowerCase() === currentUser?.email?.toLowerCase()
+        !currentUser?.email ||
+        a.email?.toLowerCase() === currentUser.email.toLowerCase() ||
+        a.applicantName?.toLowerCase() === currentUser.name?.toLowerCase()
       );
       // Latest first
       setApplications(myLoans.sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0)));
@@ -121,6 +124,12 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Auto-poll every 15s to catch admin decisions without manual refresh
+  useEffect(() => {
+    const id = setInterval(() => fetchData(), 15000);
+    return () => clearInterval(id);
+  }, [fetchData]);
+
   const kycActive = kycRecord?.status === "Active";
   const pendingApps = applications.filter(a => ["Pending docs","Manual review","Pending"].includes(a.status)).length;
   const approvedApps = applications.filter(a => a.status === "Approved").length;
@@ -128,6 +137,21 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
   // Latest KYC request for onboarding banner
   const latestKycReq = kycRequests[0] || null;
   const hasApprovedKyc = kycActive || latestKycReq?.status === "approved";
+
+  // Admin-initiated share requests — customer must approve/reject
+  const adminShareRequests = shareRequests.filter(r => r.requestedBy === 'admin' && r.status === 'pending');
+
+  const handleShareDecide = async (req, decision) => {
+    setShareDeciding(d => ({...d, [req.id]: decision}));
+    try {
+      const remark = decision === 'approved'
+        ? 'Customer approved credential share with ' + req.targetBank
+        : 'Customer declined credential share with ' + req.targetBank;
+      await decideShareRequest(req.id, decision, remark, currentUser?.name || 'Customer');
+      await fetchData();
+    } catch { /* silent */ }
+    setShareDeciding(d => { const n = {...d}; delete n[req.id]; return n; });
+  };
 
   const STATUS_COLOR = {
     "Auto-eligible": {bg:"#E2EEE7",color:"#024731"},
@@ -154,8 +178,11 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
             <div style={{fontSize:26,fontWeight:800,marginBottom:8}}>{currentUser?.name||"Customer"}</div>
             <div style={{fontSize:13,color:"#BFD8CC",maxWidth:480}}>Your personal lending &amp; identity dashboard. Check your KYC status, track applications, and apply for new products.</div>
           </div>
-          <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+          <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
             <button className="btn-primary" style={{background:"#F2F0E6",color:"#024731",fontSize:13}} onClick={()=>onNavigate("customer_application")}>+ Apply for product</button>
+            <button onClick={fetchData} style={{padding:"10px 18px",borderRadius:10,background:"rgba(255,255,255,0.12)",color:"#F2F0E6",border:"1px solid rgba(255,255,255,0.25)",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
+              {loading ? "⏳" : "↻ Refresh"}
+            </button>
             {!hasApprovedKyc && (
               <button style={{padding:"10px 18px",borderRadius:10,background:"#F0C040",color:"#1A1A14",border:"none",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}
                 onClick={()=>onNavigate("new_customer_upload")}>
@@ -165,45 +192,67 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
           </div>
         </motion.div>
 
-        {/* ── KYC REQUEST NOTIFICATIONS ── */}
+        {/* ── KYC STATUS BANNERS ── */}
         <AnimatePresence>
           {kycRequests.map(req => {
             if (req.status==="pending") return (
-              <motion.div key={req.id} initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0}}
-                style={{background:"#FFF7E6",border:"1px solid #F0D060",borderRadius:12,padding:"14px 18px",marginBottom:14,display:"flex",gap:12,alignItems:"flex-start"}}>
-                <span style={{fontSize:22,flexShrink:0}}>⏳</span>
+              <motion.div key={req.id} initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} exit={{opacity:0}}
+                style={{background:"linear-gradient(135deg,#FFF8E6 0%,#FFFBF0 100%)",border:"2px solid #F0D060",borderRadius:16,padding:"20px 24px",marginBottom:16,display:"flex",gap:16,alignItems:"flex-start",boxShadow:"0 4px 20px rgba(240,208,96,0.2)"}}>
+                <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#F0C040,#E8A020)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⏳</div>
                 <div style={{flex:1}}>
-                  <div style={{fontWeight:700,color:"#7A5A00",marginBottom:3}}>KYC verification pending</div>
-                  <div style={{fontSize:12,color:"#4A4A40"}}>Your documents submitted on <b>{new Date(req.createdAt).toLocaleDateString()}</b> are under admin review. You will be notified once a decision is made.</div>
+                  <div style={{fontWeight:800,color:"#7A5A00",marginBottom:4,fontSize:15}}>KYC Verification In Progress</div>
+                  <div style={{fontSize:13,color:"#4A4A40",marginBottom:8,lineHeight:1.5}}>
+                    Your documents were submitted on <b>{new Date(req.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</b> and are currently under admin review.
+                    <br/>You'll be notified here and can hit Refresh to check for updates.
+                  </div>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <span style={{fontSize:11,background:"#FFF0C0",border:"1px solid #F0D060",padding:"3px 10px",borderRadius:20,fontWeight:700,color:"#7A5A00"}}>⏳ Pending review</span>
+                    <span style={{fontSize:11,color:"#9A9A8A"}}>ID: #{req.id}</span>
+                  </div>
                 </div>
               </motion.div>
             );
             if (req.status==="approved") return (
-              <motion.div key={req.id} initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0}}
-                style={{background:"#F0FAF4",border:"1px solid #B8E0C8",borderRadius:12,padding:"14px 18px",marginBottom:14,display:"flex",gap:12,alignItems:"flex-start"}}>
-                <span style={{fontSize:22,flexShrink:0}}>🔐</span>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700,color:"#024731",marginBottom:3}}>✅ KYC credential issued!</div>
-                  <div style={{fontSize:12,color:"#4A4A40",marginBottom:8}}>
-                    Approved by <b>{req.decidedBy||"Lloyds Admin"}</b> on {req.decidedAt?new Date(req.decidedAt).toLocaleDateString():"—"}.
-                  </div>
-                  <div style={{display:"inline-flex",gap:16,background:"#E2EEE7",borderRadius:8,padding:"8px 14px",fontSize:12}}>
-                    <span><span style={{color:"#9A9A8A"}}>Credential ID: </span><b style={{fontFamily:"monospace",color:"#024731"}}>{req.credentialId}</b></span>
-                    {req.txHash&&<span><span style={{color:"#9A9A8A"}}>Tx: </span><span style={{fontFamily:"monospace",fontSize:11}}>{req.txHash.slice(0,18)}…</span></span>}
+              <motion.div key={req.id} initial={{opacity:0,y:-10,scale:0.98}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0}}
+                style={{background:"linear-gradient(135deg,#E8F7EF 0%,#F0FAF5 100%)",border:"2px solid #4CAF50",borderRadius:16,padding:"20px 24px",marginBottom:16,boxShadow:"0 4px 24px rgba(76,175,80,0.15)"}}>
+                <div style={{display:"flex",gap:16,alignItems:"flex-start"}}>
+                  <motion.div animate={{rotate:[0,8,-8,0]}} transition={{delay:0.3,duration:0.6}}
+                    style={{width:52,height:52,borderRadius:14,background:"linear-gradient(135deg,#024731,#0B5C3F)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0,boxShadow:"0 4px 16px rgba(2,71,49,0.3)"}}>
+                    🔐
+                  </motion.div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:800,color:"#024731",marginBottom:4,fontSize:15}}>✅ KYC Credential Issued!</div>
+                    <div style={{fontSize:13,color:"#4A4A40",marginBottom:12,lineHeight:1.5}}>
+                      Your identity has been verified. A reusable KYC credential has been issued to your account.
+                      Approved by <b>{req.decidedBy||"Lloyds Admin"}</b> on <b>{req.decidedAt?new Date(req.decidedAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):"—"}</b>.
+                    </div>
+                    <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                      <div style={{background:"#024731",borderRadius:10,padding:"10px 16px",fontSize:12,color:"#fff",display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{opacity:0.7,fontSize:10}}>CREDENTIAL ID</span>
+                        <b style={{fontFamily:"monospace",fontSize:13,letterSpacing:"0.05em"}}>{req.credentialId}</b>
+                      </div>
+                      {req.txHash && (
+                        <div style={{background:"#F0FAF4",border:"1px solid #C6E8D4",borderRadius:10,padding:"10px 16px",fontSize:11,color:"#024731"}}>
+                          <span style={{opacity:0.7}}>Tx: </span>
+                          <span style={{fontFamily:"monospace"}}>{req.txHash.slice(0,20)}…</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>
             );
             if (req.status==="rejected") return (
-              <motion.div key={req.id} initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0}}
-                style={{background:"#FCEBEB",border:"1px solid #F0C0C0",borderRadius:12,padding:"14px 18px",marginBottom:14,display:"flex",gap:12,alignItems:"flex-start"}}>
-                <span style={{fontSize:22,flexShrink:0}}>❌</span>
+              <motion.div key={req.id} initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} exit={{opacity:0}}
+                style={{background:"linear-gradient(135deg,#FEF0F0 0%,#FFF5F5 100%)",border:"2px solid #F0A0A0",borderRadius:16,padding:"20px 24px",marginBottom:16,display:"flex",gap:16,alignItems:"flex-start"}}>
+                <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#A32D2D,#C44444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>❌</div>
                 <div style={{flex:1}}>
-                  <div style={{fontWeight:700,color:"#A32D2D",marginBottom:3}}>KYC request rejected</div>
-                  <div style={{fontSize:12,color:"#4A4A40",marginBottom:6}}>
-                    Submitted {new Date(req.createdAt).toLocaleDateString()}.{req.adminRemark&&<span> Reason: <b>{req.adminRemark}</b></span>}
+                  <div style={{fontWeight:800,color:"#A32D2D",marginBottom:4,fontSize:15}}>KYC Request Rejected</div>
+                  <div style={{fontSize:13,color:"#4A4A40",marginBottom:10,lineHeight:1.5}}>
+                    Submitted {new Date(req.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'long'})}.
+                    {req.adminRemark&&<span> Reason: <b>{req.adminRemark}</b></span>}
                   </div>
-                  <button className="btn-ghost" style={{fontSize:12}} onClick={()=>onNavigate("new_customer_upload")}>Resubmit documents →</button>
+                  <button className="btn-ghost" style={{fontSize:12}} onClick={()=>onNavigate("new_customer_upload")}>📋 Resubmit documents →</button>
                 </div>
               </motion.div>
             );
@@ -211,9 +260,38 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
           })}
         </AnimatePresence>
 
-        {/* ── CREDENTIAL SHARE NOTIFICATIONS ── */}
+        {/* ── ADMIN-INITIATED SHARE REQUESTS — customer must approve/reject ── */}
         <AnimatePresence>
-          {shareRequests.map(req => {
+          {adminShareRequests.map(req => (
+            <motion.div key={req.id} initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0}}
+              style={{background:"#EBF0FF",border:"1px solid #B3C6FF",borderRadius:12,padding:"14px 18px",marginBottom:12,display:"flex",gap:12,alignItems:"flex-start"}}>
+              <span style={{fontSize:22,flexShrink:0}}>🏦</span>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,color:"#2B3A8A",marginBottom:3}}>Credential share request from Lloyds Admin</div>
+                <div style={{fontSize:12,color:"#4A4A40",marginBottom:10}}>
+                  Lloyds admin is requesting to share your KYC credential (<b style={{fontFamily:'monospace',fontSize:11}}>{req.credentialId}</b>) with <b>{req.targetBank}</b>.<br/>
+                  Please approve or decline this request.
+                </div>
+                <div style={{display:'flex',gap:8}}>
+                  <button disabled={!!shareDeciding[req.id]}
+                    onClick={() => handleShareDecide(req,'approved')}
+                    style={{padding:'7px 16px',borderRadius:8,background:'#024731',color:'#fff',border:'none',fontWeight:700,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>
+                    {shareDeciding[req.id]==='approved'?'⏳':'✔ Approve'}
+                  </button>
+                  <button disabled={!!shareDeciding[req.id]}
+                    onClick={() => handleShareDecide(req,'rejected')}
+                    style={{padding:'7px 16px',borderRadius:8,background:'#FCEBEB',color:'#A32D2D',border:'1px solid #F0C0C0',fontWeight:700,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>
+                    {shareDeciding[req.id]==='rejected'?'⏳':'✘ Decline'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
+        {/* ── CREDENTIAL SHARE STATUS NOTIFICATIONS ── */}
+        <AnimatePresence>
+          {shareRequests.filter(r => r.requestedBy !== 'admin' || r.status !== 'pending').map(req => {
             const color = req.status==="approved"?"#024731":req.status==="rejected"?"#A32D2D":"#7A5A00";
             const bg    = req.status==="approved"?"#F0FAF4":req.status==="rejected"?"#FCEBEB":"#FFF7E6";
             const icon  = req.status==="approved"?"✅":req.status==="rejected"?"❌":"⏳";
@@ -276,13 +354,14 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
                 </div>
               ) : (
                 <table>
-                  <thead><tr><th>Product</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+                  <thead><tr><th>Product</th><th>Bank</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
                   <tbody>
                     {applications.map((a,i) => {
                       const sc = STATUS_COLOR[a.status]||{bg:"#F0EFE6",color:"#4A4A40"};
                       return (
                         <tr key={i}>
                           <td><div style={{fontWeight:600,fontSize:13}}>{a.product||a.productType||a.loanType||"—"}</div><div style={{fontSize:11,color:"#9A9A8A"}}>{a.applicationId||a.id||""}</div></td>
+                          <td style={{fontSize:12,color:"#4A4A40"}}>{a.targetBank||"—"}</td>
                           <td style={{fontWeight:600}}>{(a.amount||"").toString().replace("GBP","£")}</td>
                           <td><span style={{...sc,padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>{a.status||a.applicationStatus}</span></td>
                           <td style={{fontSize:11,color:"#9A9A8A"}}>{a.createdAt?new Date(a.createdAt).toLocaleDateString():"—"}</td>
@@ -357,13 +436,14 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
                 <div className="block-head"><div className="block-title"><span className="block-num">03</span>Credential share requests</div></div>
                 <div className="card">
                   <table>
-                    <thead><tr><th>Bank</th><th>Status</th><th>Date</th></tr></thead>
+                    <thead><tr><th>Bank</th><th>Source</th><th>Status</th><th>Date</th></tr></thead>
                     <tbody>
                       {shareRequests.map((r,i)=>{
                         const sc=r.status==="approved"?{bg:"#E2EEE7",color:"#024731"}:r.status==="rejected"?{bg:"#FCEBEB",color:"#A32D2D"}:{bg:"#FFF7E6",color:"#854F0B"};
                         return(
                           <tr key={i}>
                             <td style={{fontWeight:600}}>{r.targetBank}</td>
+                            <td style={{fontSize:11,color:"#6A6A5A"}}>{r.source==="product_application"?"Product app":"Manual"}</td>
                             <td><span style={{...sc,padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>{r.status}</span></td>
                             <td style={{fontSize:11,color:"#9A9A8A"}}>{new Date(r.createdAt).toLocaleDateString()}</td>
                           </tr>

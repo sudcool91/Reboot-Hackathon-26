@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useStore, DEMO_USERS } from '../store';
+import { useStore, DEMO_USERS, getCustomUsers } from '../store';
 import { loginUser } from '../services/api';
 import lloydHorse from '../assets/lloyds-horse.gif';
 
@@ -12,31 +12,30 @@ export default function Login() {
   const [showPw, setShowPw]     = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+  const [tick, setTick]         = useState(0); // force re-render when custom users change
 
-  const demoFor = (r) => DEMO_USERS.find(u => u.role === r);
+  const allUsers   = [...DEMO_USERS, ...getCustomUsers()];
+  const demoFor    = (r) => allUsers.find(u => u.role === r);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      // Try DB auth first
       const res = await loginUser(username.trim(), password);
-      if (res?.success && res.user) {
-        login(res.user);
-        return;
-      }
+      if (res?.success && res.user) { login(res.user); return; }
     } catch {}
-    // Fallback: match against DEMO_USERS
-    const match = DEMO_USERS.find(
-      u => u.role === role &&
-           u.username.toLowerCase() === username.trim().toLowerCase() &&
-           u.password === password
+    // Check both DEMO_USERS and custom users
+    const all = [...DEMO_USERS, ...getCustomUsers()];
+    const match = all.find(
+      u => u.username.toLowerCase() === username.trim().toLowerCase() &&
+           u.password === password &&
+           (role === 'admin' ? u.role === 'admin' : u.role === 'customer')
     );
     if (match) {
       login(match);
     } else {
-      setError('Invalid username or password. Use the demo credentials below.');
+      setError('Invalid username or password.');
     }
     setLoading(false);
   };
@@ -46,7 +45,6 @@ export default function Login() {
     setUsername(demo.username);
     setPassword(demo.password);
     setError('');
-    // Try DB first, then use demo object
     try {
       const res = await loginUser(demo.username, demo.password);
       if (res?.success && res.user) { login(res.user); return; }
@@ -206,16 +204,19 @@ export default function Login() {
               Demo credentials
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {DEMO_USERS.map(u => (
-                <div key={u.username} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', borderRadius: 9, padding: '8px 12px', border: '1px solid #E2E0D2' }}>
+              {allUsers.map(u => (
+                <div key={u.username} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', borderRadius: 9, padding: '8px 12px', border: `1px solid ${u._custom ? '#C6E8D4' : '#E2E0D2'}` }}>
                   <div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#1A1A14', textTransform: 'capitalize' }}>{u.role}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: u._custom ? '#024731' : '#1A1A14', textTransform: 'capitalize' }}>
+                      {u._custom ? '🆕 ' : ''}{u.role}
+                    </span>
+                    <span style={{ fontSize: 11, color: '#6A6A5A', marginLeft: 6 }}>{u.name}</span>
                     <span style={{ fontSize: 11, color: '#9A9A8A', marginLeft: 8, fontFamily: 'monospace' }}>{u.username} / {u.password}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => quickLogin(u)}
-                    style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, background: '#E2EEE7', color: '#024731', border: 'none', cursor: 'pointer', fontWeight: 700, fontFamily: 'inherit' }}
+                    style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, background: u._custom ? '#E2EEE7' : '#F2F0E6', color: '#024731', border: 'none', cursor: 'pointer', fontWeight: 700, fontFamily: 'inherit' }}
                   >
                     Use
                   </button>

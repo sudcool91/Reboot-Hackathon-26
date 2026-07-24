@@ -10,6 +10,21 @@
 #
 set -Eeuo pipefail
 
+# WSL + Docker Desktop: auto-detect docker socket and context
+unset DOCKER_HOST 2>/dev/null || true
+docker context use desktop-linux >/dev/null 2>&1 || true
+# Add user to docker group if not already
+if ! groups | grep -q docker; then
+  sudo usermod -aG docker "$USER" 2>/dev/null || true
+fi
+# Try known socket paths
+for sock in /run/docker.sock /var/run/docker.sock /mnt/wsl/docker-desktop-bind-mounts/Ubuntu/docker.sock; do
+  if [ -S "$sock" ]; then
+    export DOCKER_HOST=unix://$sock
+    break
+  fi
+done
+
 FABRIC_VERSION="2.5.12"
 CA_VERSION="1.5.15"
 
@@ -109,10 +124,20 @@ done
 # 4. Docker Check
 # ============================================
 info "Checking Docker daemon..."
+# In WSL with Docker Desktop, try multiple socket paths
 if ! docker info >/dev/null 2>&1; then
-  err "Docker daemon is not running. Start Docker Desktop and try again."
+  if DOCKER_HOST=unix:///var/run/docker.sock docker info >/dev/null 2>&1; then
+    export DOCKER_HOST=unix:///var/run/docker.sock
+    ok "Docker daemon is running (via /var/run/docker.sock)."
+  elif DOCKER_HOST=unix:///run/docker.sock docker info >/dev/null 2>&1; then
+    export DOCKER_HOST=unix:///run/docker.sock
+    ok "Docker daemon is running (via /run/docker.sock)."
+  else
+    err "Docker daemon is not running. Start Docker Desktop and try again."
+  fi
+else
+  ok "Docker daemon is running."
 fi
-ok "Docker daemon is running."
 
 # ============================================
 # 5. Validate Project Structure

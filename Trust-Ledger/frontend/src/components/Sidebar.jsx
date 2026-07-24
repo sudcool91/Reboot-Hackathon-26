@@ -102,11 +102,6 @@ export default function Sidebar({ currentPage, onNavigate }) {
               <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M12 8v8"/>
             </svg>
           )}
-          {link('kyc_registry', 'My KYC status', null,
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/>
-            </svg>
-          )}
           {link('new_customer_upload', 'Upload KYC documents', null,
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>

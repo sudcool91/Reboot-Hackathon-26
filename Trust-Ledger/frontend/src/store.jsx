@@ -26,6 +26,19 @@ export const DEMO_USERS = [
   },
 ];
 
+// ── Custom users (created by admin, stored in localStorage) ──────────────────
+export function getCustomUsers() {
+  try { return JSON.parse(localStorage.getItem('tl_custom_users') || '[]'); } catch { return []; }
+}
+
+export function saveCustomUsers(users) {
+  try { localStorage.setItem('tl_custom_users', JSON.stringify(users)); } catch {}
+}
+
+export function getAllUsers() {
+  return [...DEMO_USERS, ...getCustomUsers()];
+}
+
 function loadUser() {
   try { return JSON.parse(localStorage.getItem('tl_user') || 'null'); } catch { return null; }
 }

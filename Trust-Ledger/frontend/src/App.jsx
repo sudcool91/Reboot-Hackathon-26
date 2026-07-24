@@ -138,12 +138,31 @@ function AppInner() {
     return () => clearInterval(id);
   }, [currentUser]);
 
-  // Auto-launch tour after 1.1s on first load (admin only)
+  // Auto-launch tour after 1.1s on first login (admin only) — once per session
   useEffect(() => {
     if (!isAdmin) return;
-    const timer = setTimeout(() => setTourLaunched(true), 1100);
+    const sessionKey = `tl_tour_done_${currentUser?.username}`;
+    const done = sessionStorage.getItem(sessionKey);
+    if (done) return; // already ran this session
+    const timer = setTimeout(() => {
+      setTourLaunched(true);
+      sessionStorage.setItem(sessionKey, '1');
+    }, 1100);
     return () => clearTimeout(timer);
-  }, [isAdmin]);
+  }, [isAdmin, currentUser?.username]);
+
+  // Customer tour - once per session
+  useEffect(() => {
+    if (!isCustomer) return;
+    const sessionKey = `tl_ctour_done_${currentUser?.username}`;
+    const done = sessionStorage.getItem(sessionKey);
+    if (done) return;
+    const timer = setTimeout(() => {
+      setTourLaunched(true);
+      sessionStorage.setItem(sessionKey, '1');
+    }, 1100);
+    return () => clearTimeout(timer);
+  }, [isCustomer, currentUser?.username]);
 
   // Not logged in — show login
   if (!currentUser) {
@@ -173,8 +192,8 @@ function AppInner() {
           <PageComponent onNavigate={navigate} params={pageParams} notifications={notifications} />
         </motion.div>
       </AnimatePresence>
-      {tourLaunched && !isFluid && isAdmin && (
-        <Tour currentPage={currentPage} onNavigate={navigate} autoStart={true} />
+      {!isFluid && (isAdmin || isCustomer) && (
+        <Tour currentPage={currentPage} onNavigate={navigate} autoStart={tourLaunched} role={currentUser?.role} />
       )}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>

@@ -123,6 +123,9 @@ export class PresentationApiService {
       kycSource: body.kycSource || 'New · customer portal',
       status: 'Pending docs',
       creditScore: body.creditScoreSelf ? parseInt(body.creditScoreSelf) : null,
+      email: body.email || null,
+      targetBank: body.targetBank || null,
+      shareConsent: !!body.shareConsent,
     });
 
     // Push a ledger event for tracking

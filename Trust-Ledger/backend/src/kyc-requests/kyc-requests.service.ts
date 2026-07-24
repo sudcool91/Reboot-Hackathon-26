@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { KycRequest } from '../database/entities/kyc-request.entity';
+import { KycCredential } from '../database/entities/kyc-credential.entity';
 
 @Injectable()
 export class KycRequestsService {
   constructor(
     @InjectRepository(KycRequest)
     private readonly repo: Repository<KycRequest>,
+    @InjectRepository(KycCredential)
+    private readonly credRepo: Repository<KycCredential>,
   ) {}
 
   async create(data: Partial<KycRequest>) {
@@ -48,6 +51,39 @@ export class KycRequestsService {
       req.txHash = '0x' + Array.from({ length: 16 }, () =>
         Math.floor(Math.random() * 256).toString(16).padStart(2, '0'),
       ).join('');
+
+      // Auto-create or update kyc_credentials (registry) entry
+      const expiresDate = new Date();
+      expiresDate.setFullYear(expiresDate.getFullYear() + 2);
+      const expiresOn = expiresDate.toISOString().split('T')[0];
+
+      const existing = req.email
+        ? await this.credRepo.findOne({ where: { email: req.email } })
+        : null;
+
+      if (existing) {
+        existing.credentialId = req.credentialId;
+        existing.status = 'Active';
+        existing.txHash = req.txHash;
+        existing.expiresOn = expiresOn;
+        await this.credRepo.save(existing);
+      } else {
+        const initials2 = req.customerName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+        const cred = this.credRepo.create({
+          credentialId: req.credentialId,
+          customerId: req.email || String(req.id),
+          avatar: initials2,
+          customerName: req.customerName,
+          email: req.email,
+          phone: req.phone,
+          issuer: 'Lloyds',
+          expiresOn,
+          status: 'Active',
+          sharedWith: [],
+          txHash: req.txHash,
+        });
+        await this.credRepo.save(cred);
+      }
     }
 
     return this.repo.save(req);

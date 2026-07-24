@@ -21,6 +21,10 @@ export class CredentialShareRequest {
   @Column({ type: 'varchar', length: 16, default: 'pending' })
   status: string;
 
+  // 'manual' | 'product_application'
+  @Column({ type: 'varchar', length: 32, default: 'manual', nullable: true })
+  source: string;
+
   @Column({ type: 'text', nullable: true })
   adminRemark: string;
 

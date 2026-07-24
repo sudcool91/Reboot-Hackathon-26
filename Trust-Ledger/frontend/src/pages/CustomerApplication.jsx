@@ -1,27 +1,32 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import { useStore } from '../store';
-import { submitApplication, getKycRegistry } from '../services/api';
+import { submitApplication, getKycRegistry, getShareRequestsByEmail, submitShareRequest, getKycRequestsByEmail } from '../services/api';
 
 const fadeUp = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } };
 
 const PRODUCTS = [
-  { id: 'personal_loan', label: 'Personal Loan',  icon: '\uD83D\uDCB3', desc: 'Flexible personal finance up to \u00A3250,000',   maxAmount: 250000  },
-  { id: 'home_loan',     label: 'Home Loan',       icon: '\uD83C\uDFE0', desc: 'Mortgage & remortgage products',                  maxAmount: 2000000 },
-  { id: 'vehicle_loan',  label: 'Vehicle Loan',    icon: '\uD83D\uDE97', desc: 'Car & vehicle finance up to \u00A3100,000',       maxAmount: 100000  },
-  { id: 'business_loan', label: 'Business Loan',   icon: '\uD83C\uDFE2', desc: 'SME & commercial finance up to \u00A3500,000',   maxAmount: 500000  },
-  { id: 'credit_card',   label: 'Credit Card',     icon: '\uD83D\uDCB0', desc: 'Rewards & cashback credit cards',                maxAmount: 50000   },
+  { id: 'personal_loan', label: 'Personal Loan',  icon: '💳', desc: 'Flexible personal finance up to £250,000',   maxAmount: 250000  },
+  { id: 'home_loan',     label: 'Home Loan',       icon: '🏠', desc: 'Mortgage & remortgage products',              maxAmount: 2000000 },
+  { id: 'vehicle_loan',  label: 'Vehicle Loan',    icon: '🚗', desc: 'Car & vehicle finance up to £100,000',        maxAmount: 100000  },
+  { id: 'business_loan', label: 'Business Loan',   icon: '🏢', desc: 'SME & commercial finance up to £500,000',    maxAmount: 500000  },
+  { id: 'credit_card',   label: 'Credit Card',     icon: '💰', desc: 'Rewards & cashback credit cards',             maxAmount: 50000   },
 ];
 
-const STEPS = ['Product', 'Details', 'KYC check', 'Finances', 'Review'];
+const LBG_BANKS = [
+  'Lloyds Bank', 'Halifax', 'Bank of Scotland', 'Scottish Widows',
+  'MBNA', 'Black Horse', 'Lex Autolease', 'Lloyds Wealth', 'Lloyds Technology Centre',
+];
 
-/* Fallback static registry for demo — real lookup hits the API first */
+const STEPS = ['Product', 'Bank & consent', 'Details', 'KYC check', 'Finances', 'Review'];
+
+/* Fallback static registry for demo */
 const STATIC_KYC = {
-  'rohan.sharma@email.com': { name: 'Rohan Sharma', credentialId: 'KYC-RS-88213', status: 'Active',        issuer: 'Lloyds',       expires: '12 Jun 2027', score: 782 },
-  'priya.nair@email.com':   { name: 'Priya Nair',   credentialId: 'KYC-PN-44021', status: 'Active',        issuer: 'Partner bank', expires: '03 Apr 2027', score: 801 },
-  'sara.thomas@email.com':  { name: 'Sara Thomas',  credentialId: 'KYC-ST-30187', status: 'Expiring soon', issuer: 'Lloyds',       expires: '19 Aug 2026', score: 688 },
-  'meera.iyer@email.com':   { name: 'Meera Iyer',   credentialId: 'KYC-MI-55301', status: 'Active',        issuer: 'Lloyds',       expires: '15 Jan 2028', score: 741 },
+  'rohan.sharma@email.com': { name: 'Rohan Sharma', credentialId: 'KYC-RS-88213', status: 'Active', issuer: 'Lloyds', expires: '12 Jun 2027', score: 782 },
+  'priya.nair@email.com':   { name: 'Priya Nair',   credentialId: 'KYC-PN-44021', status: 'Active', issuer: 'Partner bank', expires: '03 Apr 2027', score: 801 },
+  'sara.thomas@email.com':  { name: 'Sara Thomas',  credentialId: 'KYC-ST-30187', status: 'Expiring soon', issuer: 'Lloyds', expires: '19 Aug 2026', score: 688 },
+  'meera.iyer@email.com':   { name: 'Meera Iyer',   credentialId: 'KYC-MI-55301', status: 'Active', issuer: 'Lloyds', expires: '15 Jan 2028', score: 741 },
 };
 
 async function lookupKyc(email) {
@@ -45,41 +50,86 @@ async function lookupKyc(email) {
         score: match.creditScore || null,
       };
     }
-  } catch { /* fall through to static */ }
+  } catch { /* fall through */ }
   return STATIC_KYC[key] || null;
 }
 
 const EMPTY = {
-  product: '', firstName: '', lastName: '', email: '', phone: '', dob: '',
+  product: '', bank: '', shareConsent: false,
+  firstName: '', lastName: '', email: '', phone: '', dob: '',
   address: '', postcode: '', employmentStatus: '', annualIncome: '',
   loanAmount: '', loanTerm: '', purpose: '', existingDebts: '', agreeTerms: false,
 };
 
 export default function CustomerApplication({ onNavigate, notifications = [] }) {
-  const { pushToast } = useStore();
+  const { pushToast, currentUser } = useStore();
   const [step, setStep]             = useState(0);
   const [form, setForm]             = useState(EMPTY);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted]   = useState(null);
   const [errors, setErrors]         = useState({});
   const [kycRecord, setKycRecord]   = useState(null);
-  // 'idle' | 'checking' | 'found' | 'notfound'
-  const [kycStatus, setKycStatus]   = useState('idle');
+  const [kycStatus, setKycStatus]   = useState('idle'); // 'idle' | 'checking' | 'found' | 'notfound'
+  const [existingShares, setExistingShares] = useState([]); // share requests from DB
   const debounceRef = useRef(null);
+
+  // Gate: check if current user has an approved KYC credential from DB
+  const [kycGateStatus, setKycGateStatus] = useState('checking'); // 'checking' | 'verified' | 'pending' | 'none'
+  const [gateCred, setGateCred] = useState(null);
+
+  useEffect(() => {
+    // Admin always bypasses the KYC gate — they can apply on behalf of any customer
+    if (currentUser?.role === 'admin') {
+      setKycGateStatus('verified');
+      setGateCred({ credentialId: 'ADMIN-BYPASS', issuer: 'Lloyds Admin' });
+      return;
+    }
+    // Instant check from currentUser object first
+    if (currentUser?.credentialId) {
+      setKycGateStatus('verified');
+      setGateCred({ credentialId: currentUser.credentialId, issuer: 'Lloyds' });
+      return;
+    }
+    // Then check DB
+    const email = currentUser?.email;
+    if (!email) { setKycGateStatus('none'); return; }
+    lookupKyc(email).then(match => {
+      if (match && match.status === 'Active') {
+        setKycGateStatus('verified');
+        setGateCred(match);
+      } else {
+        getKycRequestsByEmail(email).then(reqs => {
+          const arr = Array.isArray(reqs) ? reqs : [];
+          const approved = arr.find(r => r.status === 'approved');
+          const pending  = arr.find(r => r.status === 'pending');
+          if (approved) { setKycGateStatus('verified'); setGateCred({ credentialId: approved.credentialId, issuer: 'Lloyds' }); }
+          else if (pending) setKycGateStatus('pending');
+          else setKycGateStatus('none');
+        }).catch(() => setKycGateStatus('none'));
+      }
+    }).catch(() => setKycGateStatus('none'));
+  }, [currentUser]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const err = (k) => errors[k] && (
     <div style={{ color: '#A32D2D', fontSize: 11, marginTop: 3 }}>{errors[k]}</div>
   );
 
-  /* ── Auto-check KYC as user types email on step 1 ─────────────── */
+  /* â”€â”€ Load existing share requests for current user â”€â”€ */
   useEffect(() => {
-    if (step !== 1) return;
+    const email = currentUser?.email || form.email;
+    if (!email || !email.includes('@')) return;
+    getShareRequestsByEmail(email).then(data => {
+      setExistingShares(Array.isArray(data) ? data : []);
+    }).catch(() => {});
+  }, [currentUser?.email, form.email]);
+
+  /* â”€â”€ Auto-check KYC as user types email on step 2 â”€â”€ */
+  useEffect(() => {
+    if (step !== 2) return;
     const email = form.email.trim();
     if (!email.includes('@') || email.length < 6) {
-      setKycStatus('idle');
-      setKycRecord(null);
-      return;
+      setKycStatus('idle'); setKycRecord(null); return;
     }
     setKycStatus('checking');
     clearTimeout(debounceRef.current);
@@ -91,10 +141,29 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
     return () => clearTimeout(debounceRef.current);
   }, [form.email, step]);
 
+  /* â”€â”€ Pre-fill email from logged-in user â”€â”€ */
+  useEffect(() => {
+    if (currentUser?.email && !form.email) {
+      set('email', currentUser.email);
+      if (currentUser.name) {
+        const parts = currentUser.name.split(' ');
+        set('firstName', parts[0] || '');
+        set('lastName', parts.slice(1).join(' ') || '');
+      }
+    }
+  }, [currentUser]);
+
+  const alreadySharedWithBank = (bank) =>
+    existingShares.some(r =>
+      r.targetBank === bank &&
+      (r.status === 'approved' || r.status === 'pending')
+    );
+
   const validate = () => {
     const e = {};
     if (step === 0 && !form.product) e.product = 'Please select a product';
-    if (step === 1) {
+    if (step === 1 && !form.bank) e.bank = 'Please select a bank';
+    if (step === 2) {
       if (!form.firstName)  e.firstName = 'Required';
       if (!form.lastName)   e.lastName  = 'Required';
       if (!form.email || !form.email.includes('@')) e.email = 'Valid email required';
@@ -103,13 +172,13 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
       if (!form.address)    e.address   = 'Required';
       if (!form.postcode)   e.postcode  = 'Required';
     }
-    if (step === 3) {
+    if (step === 4) {
       if (!form.annualIncome || isNaN(form.annualIncome))   e.annualIncome     = 'Enter a valid number';
       if (!form.loanAmount   || isNaN(form.loanAmount))     e.loanAmount       = 'Enter a valid amount';
       if (!form.purpose)                                    e.purpose          = 'Required';
       if (!form.employmentStatus)                           e.employmentStatus = 'Required';
     }
-    if (step === 4 && !form.agreeTerms) e.agreeTerms = 'You must agree to proceed';
+    if (step === 5 && !form.agreeTerms) e.agreeTerms = 'You must agree to proceed';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -117,10 +186,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
   const detailsComplete = !!(form.firstName && form.lastName && form.email?.includes('@') &&
     form.phone && form.dob && form.address && form.postcode);
 
-  const next = () => {
-    if (!validate()) return;
-    setStep(s => Math.min(s + 1, 4));
-  };
+  const next = () => { if (!validate()) return; setStep(s => Math.min(s + 1, 5)); };
   const back = () => { setStep(s => Math.max(s - 1, 0)); setErrors({}); };
 
   const submit = async () => {
@@ -129,12 +195,27 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
     try {
       const productLabel = PRODUCTS.find(p => p.id === form.product)?.label || form.product;
       const applicantName = kycRecord?.name || `${form.firstName} ${form.lastName}`;
+
+      // If share consent given and not already shared â†’ auto-create share request
+      if (form.shareConsent && form.bank && !alreadySharedWithBank(form.bank)) {
+        const kycForShare = kycRecord || { credentialId: `KYC-${form.firstName[0]}${form.lastName[0]}-PENDING` };
+        await submitShareRequest({
+          credentialId:  kycForShare.credentialId,
+          customerName:  applicantName,
+          customerEmail: form.email,
+          targetBank:    form.bank,
+          status:        'pending',
+          source:        'product_application',
+        });
+        pushToast(`📤 Credential share request sent to ${form.bank}`, 'info');
+      }
+
       const payload = {
         applicantName,
         avatar:           `${form.firstName[0]}${form.lastName[0]}`.toUpperCase(),
         product:          productLabel,
         amount:           `GBP ${parseInt(form.loanAmount).toLocaleString()}`,
-        kycSource:        kycRecord ? `On-chain \u00B7 ${kycRecord.issuer}` : 'New \u00B7 customer portal',
+        kycSource:        kycRecord ? `On-chain Â· ${kycRecord.issuer}` : 'New Â· customer portal',
         credentialId:     kycRecord?.credentialId || null,
         creditScore:      kycRecord?.score || null,
         status:           kycRecord?.status === 'Active' ? 'Auto-eligible' : 'Pending docs',
@@ -147,18 +228,20 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
         existingDebts:    form.existingDebts,
         dob:              form.dob,
         address:          `${form.address}, ${form.postcode}`,
+        targetBank:       form.bank,
+        shareConsent:     form.shareConsent,
       };
       const data = await submitApplication(payload);
       setSubmitted(data || payload);
-      pushToast(`\u2705 Application submitted! Ref: ${data?.applicationId || 'pending'}`);
+      pushToast(`âœ… Application submitted! Ref: ${data?.applicationId || 'pending'}`);
     } catch {
-      pushToast('Submission failed \u2014 please try again', 'error');
+      pushToast('Submission failed — please try again', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  /* ── Success screen ─────────────────────────────────────────────── */
+  /* â”€â”€ Success screen â”€â”€ */
   if (submitted) {
     return (
       <div className="main">
@@ -167,24 +250,30 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
           <motion.div initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 260, damping: 20 }}
             style={{ textAlign: 'center', padding: '48px 32px', background: '#FAFAF7', borderRadius: 20, border: '1px solid #E2E0D2', marginTop: 32 }}>
-            <div style={{ fontSize: 56, marginBottom: 16 }}>{'\u2705'}</div>
+            <div style={{ fontSize: 56, marginBottom: 16 }}>âœ…</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#1A1A14', marginBottom: 8 }}>Application submitted!</div>
             <div style={{ fontSize: 14, color: '#4A4A40', marginBottom: 24 }}>
               {kycRecord
-                ? 'Your on-chain KYC credential was matched \u2014 your application has been fast-tracked for review.'
+                ? 'Your on-chain KYC credential was matched — your application has been fast-tracked for review.'
                 : 'Your application has been received and is now in the queue for review by a Lloyds loan officer.'}
             </div>
             {submitted.applicationId && (
-              <div style={{ background: '#E2EEE7', borderRadius: 10, padding: '12px 20px', marginBottom: 24, display: 'inline-block' }}>
+              <div style={{ background: '#E2EEE7', borderRadius: 10, padding: '12px 20px', marginBottom: 12, display: 'inline-block' }}>
                 <div style={{ fontSize: 11, color: '#4A4A40' }}>Reference number</div>
                 <div style={{ fontSize: 18, fontWeight: 800, color: '#024731', fontFamily: 'monospace' }}>{submitted.applicationId}</div>
+              </div>
+            )}
+            {form.bank && (
+              <div style={{ background: '#F0FAF4', border: '1px solid #C6E8D4', borderRadius: 10, padding: '10px 20px', marginBottom: 24, fontSize: 13, color: '#024731' }}>
+                🏦 Applied via <b>{form.bank}</b>
+                {form.shareConsent && <span> Â· Credential share request sent</span>}
               </div>
             )}
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
               <button className="btn-primary" onClick={() => { setSubmitted(null); setForm(EMPTY); setStep(0); setKycRecord(null); setKycStatus('idle'); }}>
                 Submit another
               </button>
-              <button className="btn-ghost" onClick={() => onNavigate('loan_applications')}>View loan queue {'\u2192'}</button>
+              <button className="btn-ghost" onClick={() => onNavigate('customer_dashboard')}>My Dashboard â†’</button>
             </div>
           </motion.div>
         </div>
@@ -194,30 +283,98 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
 
   const selectedProduct = PRODUCTS.find(p => p.id === form.product);
 
-  /* ── Main form ──────────────────────────────────────────────────── */
+  // ── KYC Gate Screen ──────────────────────────────────────────────────────
+  if (kycGateStatus === 'checking') {
+    return (
+      <div className="main">
+        <Navbar crumb="Apply for product" onFluid={() => onNavigate('fluid_overview')} notifications={notifications} />
+        <div className="content" style={{ maxWidth: 480, margin: '60px auto', textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#1A1A14' }}>Verifying your identity…</div>
+          <div style={{ fontSize: 13, color: '#6A6A5A', marginTop: 8 }}>Checking our KYC registry</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (kycGateStatus === 'pending') {
+    return (
+      <div className="main">
+        <Navbar crumb="Apply for product" onFluid={() => onNavigate('fluid_overview')} notifications={notifications} />
+        <div className="content" style={{ maxWidth: 540, margin: '60px auto' }}>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            style={{ background: '#FFF7E6', border: '1.5px solid #F0D060', borderRadius: 20, padding: '36px 40px', textAlign: 'center' }}>
+            <div style={{ fontSize: 52, marginBottom: 16 }}>⏳</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#7A5A00', marginBottom: 10 }}>KYC Verification Pending</div>
+            <div style={{ fontSize: 14, color: '#4A4A40', lineHeight: 1.7, marginBottom: 24 }}>
+              Your KYC documents have been submitted and are currently under admin review.<br/>
+              You can apply for products once your identity is verified and a credential is issued.
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button className="btn-ghost" onClick={() => onNavigate('customer_dashboard')}>← Back to dashboard</button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  if (kycGateStatus === 'none') {
+    return (
+      <div className="main">
+        <Navbar crumb="Apply for product" onFluid={() => onNavigate('fluid_overview')} notifications={notifications} />
+        <div className="content" style={{ maxWidth: 540, margin: '60px auto' }}>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            style={{ background: 'linear-gradient(135deg,#024731 0%,#0B5C3F 100%)', borderRadius: 20, padding: '36px 40px', textAlign: 'center', color: '#fff' }}>
+            <div style={{ fontSize: 52, marginBottom: 16 }}>🔐</div>
+            <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 10 }}>KYC Verification Required</div>
+            <div style={{ fontSize: 14, color: '#BFD8CC', lineHeight: 1.7, marginBottom: 24 }}>
+              To apply for any product across the Lloyds Banking Group network, you first need to verify your identity.<br/>
+              Upload your documents once — your credential will be reused across all LBG products automatically.
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button style={{ padding: '12px 24px', borderRadius: 12, background: '#F2F0E6', color: '#024731', border: 'none', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
+                onClick={() => onNavigate('new_customer_upload')}>
+                📋 Upload KYC documents →
+              </button>
+              <button className="btn-ghost" style={{ color: '#F2F0E6', borderColor: 'rgba(255,255,255,0.3)' }} onClick={() => onNavigate('customer_dashboard')}>← Dashboard</button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="main">
       <Navbar crumb="Customer application" onFluid={() => onNavigate('fluid_overview')} notifications={notifications} />
       <div className="content" style={{ maxWidth: 720, margin: '0 auto', paddingBottom: 48 }}>
 
+        {/* KYC verified banner */}
+        {gateCred && (
+          <div style={{ background: '#F0FAF4', border: '1px solid #C6E8D4', borderRadius: 12, padding: '10px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}>
+            <span style={{ fontSize: 18 }}>✅</span>
+            <div>
+              <b style={{ color: '#024731' }}>KYC Verified</b>
+              <span style={{ color: '#4A4A40', marginLeft: 8 }}>Credential: <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{gateCred.credentialId}</span></span>
+              <span style={{ color: '#9A9A8A', marginLeft: 8 }}>· Issued by {gateCred.issuer || 'Lloyds'}</span>
+            </div>
+          </div>
+        )}
+
         <div className="page-title-row" style={{ marginBottom: 24 }}>
           <div>
-            <div className="page-title"> Multi Bank Product Marketplace</div>
+            <div className="page-title">Multi Bank Product Marketplace</div>
             <div className="page-sub">
-              Apply for a loan, mortgage, or credit card. Your identity is checked against our on-chain KYC network \u2014 no re-submission needed.
+              Apply for a loan, mortgage, or credit card across the Lloyds Banking Group network.
             </div>
           </div>
         </div>
 
-        {/* ── Stepper ── */}
-        <div style={{
-          display: 'flex', alignItems: 'center',
-          background: '#fff', border: '1px solid #E2E0D2', borderRadius: 14,
-          padding: '12px 16px', marginBottom: 28, overflowX: 'auto', gap: 0,
-        }}>
+        {/* â”€â”€ Stepper â”€â”€ */}
+        <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1px solid #E2E0D2', borderRadius: 14, padding: '12px 16px', marginBottom: 28, overflowX: 'auto', gap: 0 }}>
           {STEPS.map((s, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : '0 0 auto', minWidth: 0 }}>
-              {/* circle */}
               <div style={{
                 width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -226,24 +383,15 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                 color:      i < step ? '#fff'    : i === step ? '#024731' : '#9A9A8A',
                 border:     i === step ? '2px solid #0B5C3F' : '2px solid transparent',
               }}>
-                {i < step ? '\u2713' : i + 1}
+                {i < step ? 'âœ“' : i + 1}
               </div>
-              {/* label — only visible for active or completed steps */}
               {(i === step || i < step) && (
-                <div style={{
-                  fontSize: 11, fontWeight: 700, marginLeft: 6,
-                  color: i < step ? '#024731' : '#1A1A14', whiteSpace: 'nowrap',
-                }}>
+                <div style={{ fontSize: 11, fontWeight: 700, marginLeft: 6, color: i < step ? '#024731' : '#1A1A14', whiteSpace: 'nowrap' }}>
                   {s}
                 </div>
               )}
-              {/* connector line */}
               {i < STEPS.length - 1 && (
-                <div style={{
-                  flex: 1, height: 2, minWidth: 10, margin: '0 6px',
-                  background: i < step ? '#0B5C3F' : '#E2E0D2', borderRadius: 2,
-                  transition: 'background 0.3s',
-                }} />
+                <div style={{ flex: 1, height: 2, minWidth: 10, margin: '0 6px', background: i < step ? '#0B5C3F' : '#E2E0D2', borderRadius: 2, transition: 'background 0.3s' }} />
               )}
             </div>
           ))}
@@ -253,7 +401,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
           <motion.div key={step} initial="hidden" animate="show" exit={{ opacity: 0 }}
             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}>
 
-            {/* ── STEP 0: Product selection ─────────────────────────────── */}
+            {/* â”€â”€ STEP 0: Product selection â”€â”€ */}
             {step === 0 && (
               <motion.div variants={fadeUp}>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: '#1A1A14' }}>
@@ -277,12 +425,94 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
               </motion.div>
             )}
 
-            {/* ── STEP 1: Personal details ──────────────────────────────── */}
+            {/* â”€â”€ STEP 1: Bank selection + KYC consent â”€â”€ */}
             {step === 1 && (
+              <motion.div variants={fadeUp}>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Select bank & consent</div>
+                <div style={{ fontSize: 13, color: '#6A6A5A', marginBottom: 20 }}>
+                  Choose which Lloyds Banking Group entity to apply through. You can also consent to share your KYC credential with them.
+                </div>
+
+                {/* Product reminder */}
+                <div style={{ background: '#E2EEE7', borderRadius: 10, padding: '10px 14px', marginBottom: 20, fontSize: 12, color: '#024731', display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span>{selectedProduct?.icon}</span>
+                  <span><b>{selectedProduct?.label}</b> — max £{selectedProduct?.maxAmount?.toLocaleString()}</span>
+                </div>
+
+                {/* Bank grid */}
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#4A4A40', marginBottom: 10 }}>Select a Lloyds Group bank</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10, marginBottom: 20 }}>
+                  {LBG_BANKS.map(b => {
+                    const shared = alreadySharedWithBank(b);
+                    const isSelected = form.bank === b;
+                    return (
+                      <div key={b} onClick={() => set('bank', b)} style={{
+                        padding: '14px 12px', borderRadius: 12, cursor: 'pointer', transition: 'all 0.15s', position: 'relative',
+                        border: `2px solid ${isSelected ? '#0B5C3F' : '#E2E0D2'}`,
+                        background: isSelected ? '#E2EEE7' : '#FAFAF7',
+                        boxShadow: isSelected ? '0 0 0 3px rgba(11,92,63,0.1)' : 'none',
+                      }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, color: isSelected ? '#024731' : '#1A1A14' }}>🏦 {b}</div>
+                        {shared && (
+                          <div style={{ fontSize: 10, color: '#059669', marginTop: 4, fontWeight: 600 }}>
+                            âœ… Credential already shared
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {err('bank')}
+
+                {/* Credential share consent */}
+                {form.bank && (
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    style={{ background: alreadySharedWithBank(form.bank) ? '#F0FAF4' : '#FFFBEB',
+                      border: `1px solid ${alreadySharedWithBank(form.bank) ? '#C6E8D4' : '#D97706'}`,
+                      borderRadius: 14, padding: '18px 20px', marginTop: 4 }}>
+
+                    {alreadySharedWithBank(form.bank) ? (
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <span style={{ fontSize: 22 }}>âœ…</span>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 13, color: '#065F46' }}>Credential already shared with {form.bank}</div>
+                          <div style={{ fontSize: 12, color: '#047857', marginTop: 2 }}>
+                            Your KYC credential is already shared with this bank. Your application will be fast-tracked automatically.
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ fontWeight: 700, fontSize: 13, color: '#92400E', marginBottom: 10 }}>
+                          📤 Share KYC credential with {form.bank}?
+                        </div>
+                        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontSize: 13, color: '#4A4A40', lineHeight: 1.5 }}>
+                          <input type="checkbox" checked={form.shareConsent}
+                            onChange={e => set('shareConsent', e.target.checked)}
+                            style={{ marginTop: 2, accentColor: '#024731', width: 16, height: 16, flexShrink: 0 }} />
+                          <span>
+                            <b>Share my KYC credential with {form.bank} for identity verification purposes.</b>
+                            {' '}I confirm I consent to my verified identity credential being shared with this bank to process my application. This request will be reviewed by a Lloyds admin.
+                          </span>
+                        </label>
+                        {form.shareConsent && (
+                          <div style={{ marginTop: 10, padding: '8px 12px', background: '#E2EEE7', borderRadius: 8, fontSize: 11, color: '#024731' }}>
+                            🔐 A credential share request will be automatically created when you submit this application.
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+
+            {/* â”€â”€ STEP 2: Personal details â”€â”€ */}
+            {step === 2 && (
               <motion.div variants={fadeUp}>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Your personal details</div>
                 <div style={{ fontSize: 13, color: '#6A6A5A', marginBottom: 20 }}>
-                  Fill in your details \u2014 we check our KYC network <b>live as you type your email</b>, so you know instantly if you need documents.
+                  Fill in your details — we check our KYC network <b>live as you type your email</b>.
                 </div>
                 <div className="ncu-form-grid">
                   {[
@@ -299,8 +529,6 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                       {err(f.key)}
                     </div>
                   ))}
-
-                  {/* Email — full width with inline KYC status pill */}
                   <div className="ncu-field" style={{ gridColumn: '1/-1' }}>
                     <label className="ncu-label">Email address</label>
                     <div style={{ position: 'relative' }}>
@@ -310,20 +538,18 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                       {kycStatus !== 'idle' && (
                         <div style={{
                           position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-                          fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-                          pointerEvents: 'none',
+                          fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, pointerEvents: 'none',
                           background: kycStatus === 'checking' ? '#F0EFE6' : kycStatus === 'found' ? '#E2EEE7' : '#FFF7E6',
                           color:      kycStatus === 'checking' ? '#6A6A5A' : kycStatus === 'found' ? '#024731' : '#854F0B',
                           border:     kycStatus === 'checking' ? '1px solid #E2E0D2' : kycStatus === 'found' ? '1px solid #C6E8D4' : '1px solid #F0C040',
                           whiteSpace: 'nowrap',
                         }}>
-                          {kycStatus === 'checking' ? '\uD83D\uDD0D Checking\u2026' : kycStatus === 'found' ? '\u2705 KYC found' : '\uD83D\uDCCB Not on-chain'}
+                          {kycStatus === 'checking' ? '🔐 Checking…' : kycStatus === 'found' ? 'âœ… KYC found' : '📋 Not on-chain'}
                         </div>
                       )}
                     </div>
                     {err('email')}
                   </div>
-
                   <div className="ncu-field" style={{ gridColumn: '1/-1' }}>
                     <label className="ncu-label">Home address</label>
                     <input className="ncu-input" type="text" placeholder="123 High Street, London"
@@ -331,56 +557,48 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                     {err('address')}
                   </div>
                 </div>
-
-                {/* Live KYC result banner */}
                 <AnimatePresence>
                   {kycStatus === 'found' && kycRecord && (
                     <motion.div key="found" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                       style={{ marginTop: 16, padding: '16px 20px', borderRadius: 12,
-                               background: 'linear-gradient(135deg,#024731,#0B5C3F)', color: '#fff',
-                               display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: 26, flexShrink: 0 }}>{'\u2705'}</span>
+                        background: 'linear-gradient(135deg,#024731,#0B5C3F)', color: '#fff',
+                        display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: 26, flexShrink: 0 }}>âœ…</span>
                       <div>
                         <div style={{ fontWeight: 800, fontSize: 14 }}>KYC credential found on-chain!</div>
                         <div style={{ fontSize: 12, opacity: 0.85, marginTop: 3 }}>
-                          <b>{kycRecord.name}</b> {'\u00B7'} {kycRecord.credentialId} {'\u00B7'} {kycRecord.issuer} {'\u00B7'} expires {kycRecord.expires}
-                          {kycRecord.score && <span> {'\u00B7'} credit score <b>{kycRecord.score}</b></span>}
+                          <b>{kycRecord.name}</b> Â· {kycRecord.credentialId} Â· {kycRecord.issuer} Â· expires {kycRecord.expires}
+                          {kycRecord.score && <span> Â· credit score <b>{kycRecord.score}</b></span>}
                         </div>
-                        <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>
-                          No document uploads needed \u2014 identity already verified {'\u26A1'}
-                        </div>
+                        <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>No document uploads needed — identity already verified âš¡</div>
                       </div>
                     </motion.div>
                   )}
                   {kycStatus === 'notfound' && (
                     <motion.div key="notfound" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                       style={{ marginTop: 16, padding: '12px 16px', borderRadius: 12,
-                               background: '#FFF7E6', border: '1px solid #F0C040',
-                               fontSize: 12, color: '#854F0B', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: 18, flexShrink: 0 }}>{'\uD83D\uDCCB'}</span>
-                      <span>No on-chain KYC found for this email. Your application will proceed \u2014 a Lloyds officer will verify your identity manually.</span>
+                        background: '#FFF7E6', border: '1px solid #F0C040',
+                        fontSize: 12, color: '#854F0B', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: 18, flexShrink: 0 }}>📋</span>
+                      <span>No on-chain KYC found for this email. Your application will proceed — a Lloyds officer will verify your identity manually.</span>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </motion.div>
             )}
 
-            {/* ── STEP 2: KYC verification result ──────────────────────── */}
-            {step === 2 && (
+            {/* â”€â”€ STEP 3: KYC result â”€â”€ */}
+            {step === 3 && (
               <motion.div variants={fadeUp}>
                 {kycRecord ? (
                   <div>
                     <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
                       style={{ background: 'linear-gradient(135deg,#024731 0%,#0B5C3F 100%)', borderRadius: 16, padding: '28px 24px', marginBottom: 24, color: '#fff' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                        <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>
-                          {'\u2705'}
-                        </div>
+                        <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>âœ…</div>
                         <div>
                           <div style={{ fontSize: 18, fontWeight: 800 }}>Identity already verified!</div>
-                          <div style={{ fontSize: 13, opacity: 0.85, marginTop: 2 }}>
-                            Your KYC credential was found on our network \u2014 no documents needed
-                          </div>
+                          <div style={{ fontSize: 13, opacity: 0.85, marginTop: 2 }}>Your KYC credential was found — no documents needed</div>
                         </div>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -392,135 +610,80 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                         ))}
                       </div>
                     </motion.div>
-
                     {kycRecord.score && (
                       <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-                        style={{ background: '#F0FAF4', border: '1px solid #C6E8D4', borderRadius: 14, padding: '16px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
+                        style={{ background: '#F0FAF4', border: '1px solid #C6E8D4', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
                         <div style={{ textAlign: 'center', minWidth: 64 }}>
-                          <div style={{ fontSize: 28, fontWeight: 900, color: kycRecord.score >= 750 ? '#024731' : kycRecord.score >= 650 ? '#854F0B' : '#A32D2D' }}>
-                            {kycRecord.score}
-                          </div>
+                          <div style={{ fontSize: 28, fontWeight: 900, color: kycRecord.score >= 750 ? '#024731' : kycRecord.score >= 650 ? '#854F0B' : '#A32D2D' }}>{kycRecord.score}</div>
                           <div style={{ fontSize: 10, color: '#4A4A40' }}>credit score</div>
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: 13, color: '#1A1A14' }}>
-                            {kycRecord.score >= 750
-                              ? `${'\uD83C\uDFC6'} Excellent \u2014 likely eligible for best rates`
-                              : kycRecord.score >= 650
-                              ? `${'\uD83D\uDC4D'} Good \u2014 eligible for most products`
-                              : `${'\u26A0\uFE0F'} Fair \u2014 some products may require manual review`}
+                            {kycRecord.score >= 750 ? '🏠 Excellent — likely eligible for best rates' : kycRecord.score >= 650 ? '📝 Good — eligible for most products' : 'âš ï¸ Fair — some products may require manual review'}
                           </div>
-                          <div style={{ fontSize: 11, color: '#6A6A5A', marginTop: 3 }}>
-                            Matched from your on-chain credential \u2014 no credit search performed yet
-                          </div>
+                          <div style={{ fontSize: 11, color: '#6A6A5A', marginTop: 3 }}>Matched from your on-chain credential — no credit search performed yet</div>
                         </div>
                       </motion.div>
                     )}
-
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-                      style={{ background: '#FAFAF7', border: '1px solid #E2E0D2', borderRadius: 14, padding: '16px 20px' }}>
-                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12 }}>What this means for you</div>
-                      {[
-                        ['\u26A1', 'Fast-tracked application',  'Your identity is pre-verified \u2014 no document uploads required'],
-                        ['\uD83D\uDD12', 'Privacy preserved',   'Only a cryptographic hash is stored on-chain \u2014 never your documents'],
-                        ['\uD83C\uDFE6', 'Cross-bank acceptance', `Your credential (issued by ${kycRecord.issuer}) is trusted across the Lloyds DLT network`],
-                      ].map(([icon, title, desc]) => (
-                        <div key={title} style={{ display: 'flex', gap: 12, marginBottom: 10 }}>
-                          <span style={{ fontSize: 18 }}>{icon}</span>
-                          <div>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: '#1A1A14' }}>{title}</div>
-                            <div style={{ fontSize: 11, color: '#6A6A5A', marginTop: 1 }}>{desc}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </motion.div>
                   </div>
                 ) : (
-                  <div>
-                    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-                      style={{ background: '#FFF7E6', border: '1px solid #F0C040', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
-                      <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                        <span style={{ fontSize: 32 }}>{'\uD83D\uDCCB'}</span>
-                        <div>
-                          <div style={{ fontWeight: 800, fontSize: 16, color: '#1A1A14', marginBottom: 6 }}>No existing KYC found</div>
-                          <div style={{ fontSize: 13, color: '#4A4A40', lineHeight: 1.6 }}>
-                            No verified identity credential was found for <b>{form.email}</b>. Your application will proceed \u2014 a Lloyds officer will verify your identity manually.
-                          </div>
+                  <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                    style={{ background: '#FFF7E6', border: '1px solid #F0C040', borderRadius: 16, padding: '24px 20px' }}>
+                    <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: 32 }}>📋</span>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: 16, color: '#1A1A14', marginBottom: 6 }}>No existing KYC found</div>
+                        <div style={{ fontSize: 13, color: '#4A4A40', lineHeight: 1.6 }}>
+                          No verified identity credential was found for <b>{form.email}</b>. Your application will proceed — a Lloyds officer will verify your identity manually.
                         </div>
                       </div>
-                    </motion.div>
-                    <div style={{ background: '#FAFAF7', border: '1px solid #E2E0D2', borderRadius: 14, padding: '16px 20px' }}>
-                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>What happens next</div>
-                      {[
-                        ['\uD83D\uDCDD', 'Complete this application', 'Fill in your financial details and submit'],
-                        ['\uD83D\uDD0E', 'Upload documents',           'A Lloyds officer will request ID and proof of address'],
-                        ['\uD83D\uDEE1\uFE0F', 'KYC issued on-chain', 'Once verified, your credential is minted \u2014 future applications are instant'],
-                      ].map(([icon, title, desc]) => (
-                        <div key={title} style={{ display: 'flex', gap: 12, marginBottom: 10 }}>
-                          <span style={{ fontSize: 18 }}>{icon}</span>
-                          <div>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: '#1A1A14' }}>{title}</div>
-                            <div style={{ fontSize: 11, color: '#6A6A5A', marginTop: 1 }}>{desc}</div>
-                          </div>
-                        </div>
-                      ))}
                     </div>
-                  </div>
+                  </motion.div>
                 )}
               </motion.div>
             )}
 
-            {/* ── STEP 3: Financial info ────────────────────────────────── */}
-            {step === 3 && (
+            {/* â”€â”€ STEP 4: Finances â”€â”€ */}
+            {step === 4 && (
               <motion.div variants={fadeUp}>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Financial information</div>
                 <div style={{ fontSize: 13, color: '#6A6A5A', marginBottom: 20 }}>
                   Tell us about your finances for the <b>{selectedProduct?.label}</b>
-                  {form.loanAmount && ` of \u00A3${parseInt(form.loanAmount).toLocaleString()}`}.
+                  {form.loanAmount && ` of £${parseInt(form.loanAmount).toLocaleString()}`}.
                 </div>
-
                 {kycRecord && (
                   <div style={{ background: '#E2EEE7', borderRadius: 10, padding: '8px 14px', marginBottom: 20, fontSize: 12, color: '#024731', display: 'flex', gap: 8, alignItems: 'center' }}>
-                    {'\u2705'} <span><b>KYC verified</b> {'\u00B7'} {kycRecord.credentialId} {'\u00B7'} Credit score {kycRecord.score}</span>
+                    âœ… <span><b>KYC verified</b> Â· {kycRecord.credentialId} Â· Credit score {kycRecord.score}</span>
                   </div>
                 )}
-
                 <div className="ncu-form-grid">
                   <div className="ncu-field">
                     <label className="ncu-label">Employment status</label>
                     <select className="ncu-input" value={form.employmentStatus} onChange={e => set('employmentStatus', e.target.value)}>
-                      <option value="">Select{'\u2026'}</option>
-                      {['Full-time employed', 'Part-time employed', 'Self-employed', 'Director / Business owner', 'Retired', 'Student', 'Unemployed'].map(o => (
-                        <option key={o}>{o}</option>
-                      ))}
+                      <option value="">Select…</option>
+                      {['Full-time employed', 'Part-time employed', 'Self-employed', 'Director / Business owner', 'Retired', 'Student', 'Unemployed'].map(o => <option key={o}>{o}</option>)}
                     </select>
                     {err('employmentStatus')}
                   </div>
                   <div className="ncu-field">
-                    <label className="ncu-label">Annual income (\u00A3)</label>
+                    <label className="ncu-label">Annual income (£)</label>
                     <input className="ncu-input" type="number" placeholder="45000"
                       value={form.annualIncome} onChange={e => set('annualIncome', e.target.value)} />
                     {err('annualIncome')}
                   </div>
                   <div className="ncu-field">
-                    <label className="ncu-label">
-                      {form.product === 'credit_card' ? 'Desired credit limit (\u00A3)' : 'Loan amount (\u00A3)'}
-                    </label>
+                    <label className="ncu-label">{form.product === 'credit_card' ? 'Desired credit limit (£)' : 'Loan amount (£)'}</label>
                     <input className="ncu-input" type="number"
                       placeholder={selectedProduct ? String(Math.round(selectedProduct.maxAmount * 0.1)) : '25000'}
                       value={form.loanAmount} onChange={e => set('loanAmount', e.target.value)} />
-                    {selectedProduct && (
-                      <div style={{ fontSize: 10, color: '#9A9A8A', marginTop: 3 }}>
-                        Max: \u00A3{selectedProduct.maxAmount.toLocaleString()}
-                      </div>
-                    )}
+                    {selectedProduct && <div style={{ fontSize: 10, color: '#9A9A8A', marginTop: 3 }}>Max: £{selectedProduct.maxAmount.toLocaleString()}</div>}
                     {err('loanAmount')}
                   </div>
                   {form.product !== 'credit_card' && (
                     <div className="ncu-field">
                       <label className="ncu-label">Loan term</label>
                       <select className="ncu-input" value={form.loanTerm} onChange={e => set('loanTerm', e.target.value)}>
-                        <option value="">Select{'\u2026'}</option>
+                        <option value="">Select…</option>
                         {[12, 24, 36, 48, 60, 84, 120, 180, 240, 300, 360].map(o => (
                           <option key={o} value={o}>{o} months ({Math.round(o / 12)} yr{o > 12 ? 's' : ''})</option>
                         ))}
@@ -530,13 +693,13 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                   <div className="ncu-field" style={{ gridColumn: '1/-1' }}>
                     <label className="ncu-label">Purpose / reason</label>
                     <textarea className="ncu-input" rows={3}
-                      placeholder={`e.g. Home renovation, debt consolidation, new vehicle\u2026`}
+                      placeholder="e.g. Home renovation, debt consolidation, new vehicle…"
                       value={form.purpose} onChange={e => set('purpose', e.target.value)}
                       style={{ resize: 'vertical' }} />
                     {err('purpose')}
                   </div>
                   <div className="ncu-field">
-                    <label className="ncu-label">Existing monthly debt repayments (\u00A3, optional)</label>
+                    <label className="ncu-label">Existing monthly debt repayments (£, optional)</label>
                     <input className="ncu-input" type="number" placeholder="500"
                       value={form.existingDebts} onChange={e => set('existingDebts', e.target.value)} />
                   </div>
@@ -544,44 +707,59 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
               </motion.div>
             )}
 
-            {/* ── STEP 4: Review & submit ───────────────────────────────── */}
-            {step === 4 && (
+            {/* â”€â”€ STEP 5: Review & submit â”€â”€ */}
+            {step === 5 && (
               <motion.div variants={fadeUp}>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Review your application</div>
 
-                <div style={{
-                  padding: '14px 18px', borderRadius: 12, marginBottom: 16,
+                {/* KYC status banner */}
+                <div style={{ padding: '14px 18px', borderRadius: 12, marginBottom: 16,
                   background: kycRecord ? '#E2EEE7' : '#FFF7E6',
                   border: `1px solid ${kycRecord ? '#C6E8D4' : '#F0C040'}`,
-                  display: 'flex', gap: 12, alignItems: 'center',
-                }}>
-                  <span style={{ fontSize: 22 }}>{kycRecord ? '\uD83D\uDEE1\uFE0F' : '\uD83D\uDCCB'}</span>
+                  display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <span style={{ fontSize: 22 }}>{kycRecord ? '🛡️ï¸' : '📋'}</span>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 13, color: '#1A1A14' }}>
-                      {kycRecord
-                        ? `KYC verified \u00B7 ${kycRecord.credentialId}`
-                        : 'KYC pending \u2014 manual verification required'}
+                      {kycRecord ? `KYC verified Â· ${kycRecord.credentialId}` : 'KYC pending — manual verification required'}
                     </div>
                     <div style={{ fontSize: 11, color: '#4A4A40', marginTop: 2 }}>
-                      {kycRecord
-                        ? `Issued by ${kycRecord.issuer} \u00B7 expires ${kycRecord.expires} \u00B7 this application will be fast-tracked`
-                        : 'A Lloyds officer will contact you to complete identity verification'}
+                      {kycRecord ? `Issued by ${kycRecord.issuer} Â· expires ${kycRecord.expires}` : 'A Lloyds officer will contact you'}
                     </div>
                   </div>
                 </div>
 
+                {/* Bank + consent banner */}
+                {form.bank && (
+                  <div style={{ padding: '14px 18px', borderRadius: 12, marginBottom: 16,
+                    background: '#F0FAF4', border: '1px solid #C6E8D4', display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <span style={{ fontSize: 22 }}>🏦</span>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: '#065F46' }}>Applying via {form.bank}</div>
+                      <div style={{ fontSize: 11, color: '#047857', marginTop: 2 }}>
+                        {alreadySharedWithBank(form.bank)
+                          ? 'Credential already shared with this bank âœ…'
+                          : form.shareConsent
+                          ? '📤 Consent given — share request will be created on submit'
+                          : 'No credential share consent given'}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Summary table */}
                 <div style={{ background: '#F2F0E6', borderRadius: 14, padding: '16px 20px', marginBottom: 20 }}>
                   {[
                     ['Product',       PRODUCTS.find(p => p.id === form.product)?.label],
+                    ['Bank',          form.bank],
                     ['Full name',     kycRecord?.name || `${form.firstName} ${form.lastName}`],
                     ['Email',         form.email],
                     ['Phone',         form.phone],
                     ['Date of birth', form.dob],
                     ['Address',       `${form.address}, ${form.postcode}`],
                     ['Employment',    form.employmentStatus],
-                    ['Annual income', form.annualIncome ? `\u00A3${parseInt(form.annualIncome).toLocaleString()}` : '\u2014'],
+                    ['Annual income', form.annualIncome ? `£${parseInt(form.annualIncome).toLocaleString()}` : '—'],
                     [form.product === 'credit_card' ? 'Credit limit' : 'Loan amount',
-                      form.loanAmount ? `\u00A3${parseInt(form.loanAmount).toLocaleString()}` : '\u2014'],
+                      form.loanAmount ? `£${parseInt(form.loanAmount).toLocaleString()}` : '—'],
                     form.loanTerm ? ['Loan term', `${form.loanTerm} months`] : null,
                     ['Purpose', form.purpose],
                   ].filter(Boolean).map(([label, value]) => (
@@ -594,7 +772,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
 
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontSize: 12, color: '#4A4A40' }}>
                   <input type="checkbox" checked={form.agreeTerms} onChange={e => set('agreeTerms', e.target.checked)} style={{ marginTop: 2 }} />
-                  I confirm all information is accurate and agree to Lloyds Banking Group&apos;s Terms &amp; Conditions and Privacy Policy.
+                  I confirm all information is accurate and agree to Lloyds Banking Group's Terms & Conditions and Privacy Policy.
                 </label>
                 {err('agreeTerms')}
               </motion.div>
@@ -603,37 +781,32 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
           </motion.div>
         </AnimatePresence>
 
-        {/* ── Navigation buttons ── */}
+        {/* â”€â”€ Navigation buttons â”€â”€ */}
         <div className="ncu-actions" style={{ marginTop: 32 }}>
-          {step > 0 && (
-            <button className="btn-ghost" onClick={back}>{'\u2190'} Back</button>
-          )}
-          {step < 4 ? (
+          {step > 0 && <button className="btn-ghost" onClick={back}>â† Back</button>}
+          {step < 5 ? (
             <button
               className="btn-primary"
               onClick={next}
               disabled={
                 (step === 0 && !form.product) ||
-                (step === 1 && (!detailsComplete || kycStatus === 'checking'))
+                (step === 1 && !form.bank) ||
+                (step === 2 && (!detailsComplete || kycStatus === 'checking'))
               }
               title={
-                step === 1 && kycStatus === 'checking' ? 'Waiting for KYC check\u2026' :
-                step === 1 && !detailsComplete ? 'Please fill all required fields' : ''
+                step === 2 && kycStatus === 'checking' ? 'Waiting for KYC check…' :
+                step === 2 && !detailsComplete ? 'Please fill all required fields' : ''
               }
             >
-              {step === 1 && kycStatus === 'checking'
-                ? `${'\uD83D\uDD0D'} Checking KYC\u2026`
-                : step === 1 && kycStatus === 'found'
-                ? `${'\u2705'} KYC found \u2014 Continue ${'\u2192'}`
-                : `Continue ${'\u2192'}`}
+              {step === 2 && kycStatus === 'checking'
+                ? '🔐 Checking KYC…'
+                : step === 2 && kycStatus === 'found'
+                ? 'âœ… KYC found — Continue â†’'
+                : 'Continue â†’'}
             </button>
           ) : (
             <button className="btn-primary" onClick={submit} disabled={submitting || !form.agreeTerms}>
-              {submitting
-                ? `Submitting\u2026`
-                : kycRecord
-                ? `${'\u26A1'} Submit (fast-tracked)`
-                : 'Submit application'}
+              {submitting ? 'Submitting…' : kycRecord ? 'âš¡ Submit (fast-tracked)' : 'Submit application'}
             </button>
           )}
         </div>

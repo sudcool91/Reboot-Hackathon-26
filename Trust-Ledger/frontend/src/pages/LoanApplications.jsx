@@ -6,21 +6,13 @@ import { getLoanApplications } from '../services/api';
 const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
 
-const SEED = [
-  { id: 'LN20458', avatar: 'RS', applicantName: 'Rohan Sharma',  product: 'Personal loan',  amount: '£300,000', creditScore: 782, kycSource: 'On-chain · Lloyds',    status: 'Auto-eligible' },
-  { id: 'LN20459', avatar: 'VD', applicantName: 'Vikram Desai',  product: 'Home loan',       amount: '£450,000', creditScore: null, kycSource: 'New · uploading docs', status: 'Pending docs' },
-  { id: 'LN20460', avatar: 'ST', applicantName: 'Sara Thomas',   product: 'Vehicle loan',    amount: '£85,000',  creditScore: 688, kycSource: 'On-chain · Lloyds',    status: 'Manual review' },
-  { id: 'LN20461', avatar: 'PN', applicantName: 'Priya Nair',    product: 'Personal loan',   amount: '£55,000',  creditScore: 801, kycSource: 'On-chain · Partner',   status: 'Auto-eligible' },
-  { id: 'LN20462', avatar: 'AS', applicantName: 'Aditya Singh',  product: 'Business loan',   amount: '£120,000', creditScore: 738, kycSource: 'On-chain · Lloyds',    status: 'Manual review' },
-];
-
 const STATUS_TAG = {
   'Auto-eligible': 'tag-go', 'Approved': 'tag-go',
   'Manual review': 'tag-stop', 'Pending docs': 'tag-warn',
   'Rejected': 'tag-bad',
 };
 
-const PRODUCT_TABS = ['All products', 'Personal loan', 'Home loan', 'Vehicle loan', 'Business loan', 'Credit Card'];
+const PRODUCT_TABS = ['All products', 'Personal loan', 'Home loan', 'Vehicle loan', 'Business loan'];
 const STATUS_FILTERS = ['All statuses', 'Auto-eligible', 'Manual review', 'Pending docs', 'Approved', 'Rejected'];
 
 const ChainIcon = () => (
@@ -30,16 +22,18 @@ const ChainIcon = () => (
 );
 
 export default function LoanApplications({ onNavigate, notifications = [] }) {
-  const [allRows, setAllRows] = useState(SEED);
+  const [allRows, setAllRows] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [productTab, setProductTab] = useState('All products');
   const [statusFilter, setStatusFilter] = useState('All statuses');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
+    setLoading(true);
     getLoanApplications().then(data => {
       const arr = Array.isArray(data) ? data : data?.applications || [];
-      if (arr.length > 0) setAllRows([...arr].reverse());
-    });
+      setAllRows([...arr].reverse());
+    }).finally(() => setLoading(false));
   }, []);
 
   // Derived filtered rows
@@ -138,6 +132,9 @@ export default function LoanApplications({ onNavigate, notifications = [] }) {
 
         {/* Table */}
         <motion.div className="card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          {loading ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#9A9A8A', fontSize: 13 }}>⏳ Loading applications...</div>
+          ) : (
           <table>
             <thead>
               <tr>
@@ -147,8 +144,8 @@ export default function LoanApplications({ onNavigate, notifications = [] }) {
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={7} style={{ textAlign: 'center', opacity: 0.4, padding: '24px 0' }}>
-                  No applications match the current filters.
+                <tr><td colSpan={7} style={{ textAlign: 'center', opacity: 0.4, padding: '40px 0' }}>
+                  {allRows.length === 0 ? '📋 No applications yet — submit one from the customer portal.' : 'No applications match the current filters.'}
                 </td></tr>
               )}
               {filtered.map((row, i) => {
@@ -194,6 +191,7 @@ export default function LoanApplications({ onNavigate, notifications = [] }) {
               })}
             </tbody>
           </table>
+          )}
         </motion.div>
 
         {filtered.length > 0 && (
