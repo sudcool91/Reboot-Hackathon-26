@@ -202,7 +202,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
 
         <div className="page-title-row" style={{ marginBottom: 24 }}>
           <div>
-            <div className="page-title">Customer application</div>
+            <div className="page-title"> Multi Bank Product Marketplace</div>
             <div className="page-sub">
               Apply for a loan, mortgage, or credit card. Your identity is checked against our on-chain KYC network \u2014 no re-submission needed.
             </div>

@@ -67,6 +67,25 @@ export const uploadDocument = async (file, docType, customerId) => {
   }
 };
 
+// <<<<<<< lakshy
+// // ── Auth ───────────────────────────────────────────────────────────────────
+// export const loginUser   = (username, password) => req('POST', '/api/v1/auth/login', { username, password });
+// export const registerUser = (data) => req('POST', '/api/v1/auth/register', data);
+
+// // ── KYC Requests (customer → admin approval flow) ─────────────────────────
+// export const submitKycRequest  = (data) => req('POST', '/api/v1/kyc-requests', data);
+// export const getKycRequests    = (status) => req('GET', `/api/v1/kyc-requests${status ? `?status=${status}` : ''}`);
+// export const getKycRequestsByEmail = (email) => req('GET', `/api/v1/kyc-requests?email=${encodeURIComponent(email)}`);
+// export const decideKycRequest  = (id, decision, remark, decidedBy) =>
+//   req('PATCH', `/api/v1/kyc-requests/${id}/decide`, { decision, remark, decidedBy });
+
+// // ── Credential Share Requests ──────────────────────────────────────────────
+// export const submitShareRequest   = (data) => req('POST', '/api/v1/credential-share-requests', data);
+// export const getShareRequests     = (status) => req('GET', `/api/v1/credential-share-requests${status ? `?status=${status}` : ''}`);
+// export const getShareRequestsByEmail = (email) => req('GET', `/api/v1/credential-share-requests?email=${encodeURIComponent(email)}`);
+// export const decideShareRequest   = (id, decision, remark, decidedBy) =>
+//   req('PATCH', `/api/v1/credential-share-requests/${id}/decide`, { decision, remark, decidedBy });
+// =======
 // ══════════════════════════════════════════════════════════════════════════
 // ── FABRIC SDK API (Direct Blockchain Access) ─────────────────────────────
 // ══════════════════════════════════════════════════════════════════════════
@@ -95,4 +114,5 @@ export const revokeConsentOnChain = (customerID) => req('POST', '/fabric-sdk/con
 
 // ── Utility ────────────────────────────────────────────────────────────────
 export const initLedger = () => req('POST', '/fabric-sdk/init-ledger');
+
 

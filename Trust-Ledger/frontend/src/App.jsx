@@ -4,7 +4,9 @@ import Sidebar from './components/Sidebar';
 import Tour from './components/Tour';
 import { ToastContainer } from './components/Toast';
 import { StoreProvider, useStore } from './store';
+import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import CustomerDashboard from './pages/CustomerDashboard';
 import LoanApplications from './pages/LoanApplications';
 import CreditCards from './pages/CreditCards';
 import KycRegistry from './pages/KycRegistry';
@@ -16,7 +18,8 @@ import FluidOverview from './pages/FluidOverview';
 import CustomerApplication from './pages/CustomerApplication';
 import FabricTest from './pages/FabricTest';
 
-const PAGES = {
+// Pages accessible to admin
+const ADMIN_PAGES = {
   dashboard: Dashboard,
   loan_applications: LoanApplications,
   credit_cards: CreditCards,
@@ -30,6 +33,29 @@ const PAGES = {
   fabric_test: FabricTest,
 };
 
+// Pages accessible to customer
+const CUSTOMER_PAGES = {
+  customer_dashboard: CustomerDashboard,
+  customer_application: CustomerApplication,
+  new_customer_upload: NewCustomerUpload,   // customers self-upload their own docs
+  kyc_registry: KycRegistry,
+  ledger_explorer: LedgerExplorer,
+  loan_decision: LoanDecision,
+  fluid_overview: FluidOverview,
+};
+
+// Hash ↔ page mapping helpers
+function pageToHash(role, page) {
+  if (!role) return '#/login';
+  return `#/${role}/${page}`;
+}
+function hashToPage(hash, role, PAGES, defaultPage) {
+  // expected: #/admin/dashboard  or  #/customer/customer_dashboard
+  const parts = (hash || '').replace('#/', '').split('/');
+  const page = parts.slice(1).join('/') || defaultPage;
+  return PAGES[page] ? page : defaultPage;
+}
+
 export default function App() {
   return (
     <StoreProvider>
@@ -39,10 +65,22 @@ export default function App() {
 }
 
 function AppInner() {
-  const { toasts, dismissToast } = useStore();
+  const { toasts, dismissToast, currentUser } = useStore();
+
+  const isAdmin = currentUser?.role === 'admin';
+  const isCustomer = currentUser?.role === 'customer';
+  const PAGES = isAdmin ? ADMIN_PAGES : CUSTOMER_PAGES;
+  const defaultPage = isAdmin ? 'dashboard' : 'customer_dashboard';
 
   const [currentPage, setCurrentPage] = useState(() => {
-    try { return localStorage.getItem('tl_page') || 'dashboard'; } catch { return 'dashboard'; }
+    if (!currentUser) return defaultPage;
+    const PAGES = isAdmin ? ADMIN_PAGES : CUSTOMER_PAGES;
+    const hash = window.location.hash;
+    if (hash) return hashToPage(hash, currentUser.role, PAGES, defaultPage);
+    try {
+      const saved = localStorage.getItem('tl_page');
+      return (saved && PAGES[saved]) ? saved : defaultPage;
+    } catch { return defaultPage; }
   });
   const [pageParams, setPageParams] = useState(() => {
     try { return JSON.parse(localStorage.getItem('tl_params') || '{}'); } catch { return {}; }
@@ -50,15 +88,46 @@ function AppInner() {
   const [tourLaunched, setTourLaunched] = useState(false);
   const [notifications, setNotifications] = useState([]);
 
+  // Sync URL hash whenever page changes
+  useEffect(() => {
+    if (!currentUser) {
+      window.location.hash = '#/login';
+    } else {
+      window.location.hash = pageToHash(currentUser.role, currentPage);
+    }
+  }, [currentPage, currentUser]);
+
+  // Listen for browser back/forward
+  useEffect(() => {
+    const onHash = () => {
+      if (!currentUser) return;
+      const PAGES = isAdmin ? ADMIN_PAGES : CUSTOMER_PAGES;
+      const page = hashToPage(window.location.hash, currentUser.role, PAGES, defaultPage);
+      setCurrentPage(page);
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, [currentUser, isAdmin, defaultPage]);
+
+  // Reset page when user changes (login/logout)
+  useEffect(() => {
+    const def = isAdmin ? 'dashboard' : 'customer_dashboard';
+    setCurrentPage(def);
+    setPageParams({});
+  }, [currentUser?.username]);
+
   const navigate = (page, params = {}) => {
-    setCurrentPage(page);
+    const allowed = isAdmin ? ADMIN_PAGES : CUSTOMER_PAGES;
+    const target = allowed[page] ? page : defaultPage;
+    setCurrentPage(target);
     setPageParams(params);
-    try { localStorage.setItem('tl_page', page); localStorage.setItem('tl_params', JSON.stringify(params)); } catch {}
+    try { localStorage.setItem('tl_page', target); localStorage.setItem('tl_params', JSON.stringify(params)); } catch {}
     window.scrollTo(0, 0);
   };
 
-  // Global activity polling every 15s — feeds notification bell + dashboard
+  // Global activity polling every 15s
   useEffect(() => {
+    if (!currentUser) return;
     const poll = async () => {
       const { getDashboardActivity } = await import('./services/api');
       const data = await getDashboardActivity();
@@ -67,15 +136,26 @@ function AppInner() {
     poll();
     const id = setInterval(poll, 15000);
     return () => clearInterval(id);
-  }, []);
+  }, [currentUser]);
 
-  // Auto-launch tour after 1.1s on first load
+  // Auto-launch tour after 1.1s on first load (admin only)
   useEffect(() => {
+    if (!isAdmin) return;
     const timer = setTimeout(() => setTourLaunched(true), 1100);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isAdmin]);
 
-  const PageComponent = PAGES[currentPage] || Dashboard;
+  // Not logged in — show login
+  if (!currentUser) {
+    return (
+      <>
+        <Login />
+        <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      </>
+    );
+  }
+
+  const PageComponent = PAGES[currentPage] || (isAdmin ? Dashboard : CustomerDashboard);
   const isFluid = currentPage === 'fluid_overview';
 
   return (
@@ -93,7 +173,7 @@ function AppInner() {
           <PageComponent onNavigate={navigate} params={pageParams} notifications={notifications} />
         </motion.div>
       </AnimatePresence>
-      {tourLaunched && !isFluid && (
+      {tourLaunched && !isFluid && isAdmin && (
         <Tour currentPage={currentPage} onNavigate={navigate} autoStart={true} />
       )}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

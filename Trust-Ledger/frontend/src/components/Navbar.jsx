@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import FluidButton from './FluidButton';
+import { useStore } from '../store';
 
 const ACTION_ICON = {
   IssueKYC:       '🛡️',
@@ -12,8 +13,10 @@ const ACTION_ICON = {
 };
 
 export default function Navbar({ crumb, onFluid, variant = 'default', notifications = [], blockHeight }) {
+  const { currentUser, logout } = useStore();
   const [notifOpen, setNotifOpen] = useState(false);
   const unread = notifications.length;
+  const isAdmin = currentUser?.role === 'admin';
 
   return (
     <div className="navbar">
@@ -119,7 +122,22 @@ export default function Navbar({ crumb, onFluid, variant = 'default', notificati
           </AnimatePresence>
         </div>
 
-        <div className="nav-av">AK</div>
+        <div className="nav-av" style={{ background: isAdmin ? '#024731' : '#2B5EA7', color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'default' }}>
+          {currentUser?.initials || 'U'}
+        </div>
+
+        {/* Logout button */}
+        <button
+          onClick={logout}
+          title="Sign out"
+          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, background: '#FCEBEB', border: '1px solid #F0C0C0', color: '#A32D2D', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Sign out
+        </button>
       </div>
     </div>
   );
