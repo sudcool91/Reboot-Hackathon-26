@@ -1,3 +1,4 @@
+// Backend runs on port 3001 by default
 const BASE = 'http://localhost:3001';
 
 async function req(method, path, body) {
@@ -65,3 +66,33 @@ export const uploadDocument = async (file, docType, customerId) => {
     return null;
   }
 };
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── FABRIC SDK API (Direct Blockchain Access) ─────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+
+// ── Health & Info ──────────────────────────────────────────────────────────
+export const getFabricHealth = () => req('GET', '/fabric-sdk/health');
+export const getFabricInfo = () => req('GET', '/fabric-sdk/info');
+
+// ── Customer Operations (Blockchain) ───────────────────────────────────────
+export const createCustomerOnChain = (customer) => req('POST', '/fabric-sdk/customers', customer);
+export const getAllCustomersFromChain = () => req('GET', '/fabric-sdk/customers');
+export const getCustomerFromChain = (customerID) => req('GET', `/fabric-sdk/customers/${customerID}`);
+export const updateCustomerOnChain = (customerID, updates) => req('PUT', `/fabric-sdk/customers/${customerID}`, updates);
+export const deleteCustomerFromChain = (customerID) => req('DELETE', `/fabric-sdk/customers/${customerID}`);
+export const checkCustomerExists = (customerID) => req('GET', `/fabric-sdk/customers/${customerID}/exists`);
+export const getCustomerHistory = (customerID) => req('GET', `/fabric-sdk/customers/${customerID}/history`);
+
+// ── KYC Operations (Blockchain) ────────────────────────────────────────────
+export const issueKycOnChain = (customerID) => req('POST', `/fabric-sdk/kyc/${customerID}/issue`);
+export const verifyKycOnChain = (customerID, requestingBank) => 
+  req('POST', '/fabric-sdk/kyc/verify', { customerID, requestingBank });
+
+// ── Consent Operations (Blockchain) ────────────────────────────────────────
+export const grantConsentOnChain = (customerID) => req('POST', '/fabric-sdk/consent/grant', { customerID });
+export const revokeConsentOnChain = (customerID) => req('POST', '/fabric-sdk/consent/revoke', { customerID });
+
+// ── Utility ────────────────────────────────────────────────────────────────
+export const initLedger = () => req('POST', '/fabric-sdk/init-ledger');
+

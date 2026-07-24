@@ -138,12 +138,30 @@ fi
 # Make all scripts executable
 find . -type f -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
 
-# Start network and create channel
+# Start network first (idempotent)
 info "Bringing up Fabric network with Certificate Authorities..."
-if ! ./network.sh up createChannel -ca; then
+if ! ./network.sh up -ca; then
   fail "Failed to start Fabric network. Check logs above."
 fi
-ok "Fabric network started successfully."
+ok "Fabric network is up."
+
+# Create/join channel only if needed. On reruns, existing ledgers can make
+# createChannel return non-zero even though the network is healthy.
+info "Ensuring channel 'kycchannel' exists and peers are joined..."
+set +e
+CHANNEL_OUTPUT="$(./network.sh createChannel 2>&1)"
+CHANNEL_EXIT=$?
+set -e
+if [[ $CHANNEL_EXIT -ne 0 ]]; then
+  if echo "$CHANNEL_OUTPUT" | grep -qiE "channel already exists|ledger \[kycchannel\] already exists with state \[ACTIVE\]|cannot join: channel already exists"; then
+    warn "Channel already exists. Continuing with existing channel state."
+  else
+    echo "$CHANNEL_OUTPUT"
+    fail "Failed to create/join channel. Check logs above."
+  fi
+fi
+
+ok "Fabric network and channel are ready."
 
 # Verify channel was created
 cd "$FABRIC_DIR"
@@ -165,13 +183,22 @@ fi
 info "Deploying TrustLedger chaincode..."
 cd "$FABRIC_DIR"
 
-if ! ./network.sh deployCC \
+set +e
+CC_OUTPUT="$(./network.sh deployCC \
   -ccn trustledger \
   -ccp ../chaincode/trustledger \
-  -ccl go; then
-  fail "Failed to deploy chaincode. Check logs above."
+  -ccl go 2>&1)"
+CC_EXIT=$?
+set -e
+if [[ $CC_EXIT -ne 0 ]]; then
+  if echo "$CC_OUTPUT" | grep -qiE "requested sequence .* must be larger|already successfully committed|chaincode definition for .* exists"; then
+    warn "Chaincode definition already committed. Continuing."
+  else
+    echo "$CC_OUTPUT"
+    fail "Failed to deploy chaincode. Check logs above."
+  fi
 fi
-ok "Chaincode 'trustledger' deployed successfully."
+ok "Chaincode 'trustledger' is ready."
 
 # ============================================
 # 7. Start Backend Service
@@ -255,7 +282,7 @@ cat <<EOF
 ====================================================
 
 Services:
-  Backend API   : http://localhost:3000
+  Backend API   : http://localhost:3001
   Frontend UI   : http://localhost:5173
   PostgreSQL    : localhost:5432 (user: trustledger)
   pgAdmin       : http://localhost:5050

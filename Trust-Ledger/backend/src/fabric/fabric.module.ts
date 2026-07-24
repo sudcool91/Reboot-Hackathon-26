@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { FabricController } from './fabric.controller';
+import { FabricSdkController } from './fabric-sdk.controller';
 import { FabricService } from './fabric.service';
 import { FABRIC_GATEWAY } from './fabric.types';
 import { InMemoryFabricGateway } from './gateways/in-memory-fabric.gateway';
 import { SdkFabricGateway } from './gateways/sdk-fabric.gateway';
 
 @Module({
-  controllers: [FabricController],
+  controllers: [FabricController, FabricSdkController],
   providers: [
     FabricService,
     InMemoryFabricGateway,
@@ -23,6 +24,6 @@ import { SdkFabricGateway } from './gateways/sdk-fabric.gateway';
       inject: [InMemoryFabricGateway, SdkFabricGateway],
     },
   ],
-  exports: [FabricService],
+  exports: [FabricService, SdkFabricGateway],
 })
 export class FabricModule {}

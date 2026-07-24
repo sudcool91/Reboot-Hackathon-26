@@ -21,6 +21,7 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
   const [submitting, setSubmitting] = useState(false);
   const [txHash, setTxHash] = useState('');
   const [credentialId, setCredentialId] = useState('');
+  const [customerId, setCustomerId] = useState('');
   const [form, setForm] = useState({ fullName: '', email: '', phone: '', dob: '', nationality: 'British', address: '' });
   const [uploads, setUploads] = useState({});
   const fileRefs = useRef({});
@@ -90,12 +91,18 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
       docHash,
       'Lloyds Branch Validator',
       // extra fields passed through
-      { customerName: form.fullName, email: form.email, phone: form.phone },
+      {
+        customerName: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        dateOfBirth: form.dob,
+        address: form.address,
+      },
     );
     setSubmitting(false);
     const tx = result?.txHash || `0x${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 6)}`;
     const cid = result?.credentialId || `KYC-${form.fullName.split(' ').map(w => w[0]).join('')}-${Math.floor(Math.random() * 90000 + 10000)}`;
-    setTxHash(tx); setCredentialId(cid); setStep(3);
+    setTxHash(tx); setCredentialId(cid); setCustomerId(result?.customerId || ''); setStep(3);
     pushToast(`🔒 KYC credential issued — ${cid}`, 'success', tx);
   };
 
@@ -372,6 +379,12 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                 Welcome to Lloyds, <b>{form.fullName}</b>. Your identity is verified once — reused everywhere.
               </div>
               <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 8, textAlign: 'left', background: '#F2F0E6', borderRadius: 12, padding: '16px 24px', marginBottom: 28 }}>
+                {customerId && (
+                  <>
+                    <div style={{ fontSize: 11, color: '#9A9A8A' }}>Customer ID</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 700, color: '#024731' }}>{customerId}</div>
+                  </>
+                )}
                 <div style={{ fontSize: 11, color: '#9A9A8A' }}>Credential ID</div>
                 <div style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 700, color: '#024731' }}>{credentialId}</div>
                 <div style={{ fontSize: 11, color: '#9A9A8A', marginTop: 4 }}>Transaction Hash</div>
@@ -381,6 +394,7 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                 <button className="btn-primary" onClick={() => onNavigate('kyc_registry')}>View KYC Registry →</button>
                 <button className="btn-ghost" onClick={() => {
                   setStep(0); setUploads({});
+                  setCustomerId('');
                   setForm({ fullName: '', email: '', phone: '', dob: '', nationality: 'British', address: '' });
                 }}>Add another customer</button>
               </div>
