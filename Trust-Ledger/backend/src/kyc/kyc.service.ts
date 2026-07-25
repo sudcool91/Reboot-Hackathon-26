@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { FabricService } from '../fabric/fabric.service';
 import { PresentationDataService } from '../presentation-api/presentation-data.service';
 import { IssueKycDto } from './dto/issue-kyc.dto';
@@ -40,38 +40,32 @@ export class KycService {
     const address = metadata.address || 'Address not provided';
     const nationalID = metadata.nationalID || `NID-${suffix}`;
 
-    // Try Fabric first: create customer on ledger, then issue KYC.
-    let fabricTxHash = '';
-    try {
-      const createResult = await this.fabricService.submit('CreateCustomer', {
-        customerID: customerId,
-        fullName: name,
-        dateOfBirth,
-        email,
-        phone,
-        address,
-        nationalID,
-        issuingBank: payload.issuer || 'Lloyds',
-        documentHash: payload.documentHash,
-      });
+    const createResult = await this.fabricService.submit('CreateCustomer', {
+      customerID: customerId,
+      fullName: name,
+      dateOfBirth,
+      email,
+      phone,
+      address,
+      nationalID,
+      issuingBank: payload.issuer || 'Lloyds',
+      documentHash: payload.documentHash,
+    });
 
-      if (this.isFabricFailure(createResult) && !this.isAlreadyExistsFailure(createResult)) {
-        throw new Error(this.getFabricError(createResult));
-      }
-
-      const issueResult = await this.fabricService.submit(
-        this.operationToFunction.issue,
-        { customerID: customerId },
-      );
-
-      if (this.isFabricFailure(issueResult)) {
-        throw new Error(this.getFabricError(issueResult));
-      }
-
-      fabricTxHash = this.getFabricTxHash(issueResult);
-    } catch (_) {
-      // Keep UX resilient even if Fabric is unavailable.
+    if (this.isFabricFailure(createResult) && !this.isAlreadyExistsFailure(createResult)) {
+      throw new BadRequestException(`Failed to create customer on Fabric: ${this.getFabricError(createResult)}`);
     }
+
+    const issueResult = await this.fabricService.submit(
+      this.operationToFunction.issue,
+      { customerID: customerId },
+    );
+
+    if (this.isFabricFailure(issueResult)) {
+      throw new BadRequestException(`Failed to issue KYC on Fabric: ${this.getFabricError(issueResult)}`);
+    }
+
+    const fabricTxHash = this.getFabricTxHash(issueResult);
 
     const credentialId = `KYC-${initials}-${suffix}`;
     const txHash = fabricTxHash || `0x${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 6)}`;
@@ -118,7 +112,53 @@ export class KycService {
   }
 
   async revoke(payload: RevokeKycDto) {
-    try { await this.fabricService.submit(this.operationToFunction.revoke, payload); } catch (_) {}
+    const credential = await this.dataService.getCredential(payload.credentialId);
+    if (!credential) {
+      throw new BadRequestException(`Credential ${payload.credentialId} not found`);
+    }
+    if (!credential.customerId) {
+      throw new BadRequestException(`Credential ${payload.credentialId} is missing customerId mapping`);
+    }
+
+    const readCustomerResult = await this.fabricService.evaluate('ReadCustomer', {
+      customerID: credential.customerId,
+    });
+
+    if (this.isFabricFailure(readCustomerResult)) {
+      throw new BadRequestException(`Failed to read customer on Fabric: ${this.getFabricError(readCustomerResult)}`);
+    }
+
+    const customer = this.getFabricCustomer(readCustomerResult);
+    const fabricResult = await this.fabricService.submit('UpdateCustomer', {
+      customerID: credential.customerId,
+      fullName: customer.fullName,
+      dateOfBirth: customer.dateOfBirth,
+      email: customer.email,
+      phone: customer.phone,
+      address: customer.address,
+      nationalID: customer.nationalId,
+      issuingBank: customer.issuingBank,
+      kycStatus: 'REVOKED',
+      documentHash: customer.documentHash,
+    });
+
+    if (this.isFabricFailure(fabricResult)) {
+      throw new BadRequestException(`Failed to revoke on Fabric: ${this.getFabricError(fabricResult)}`);
+    }
+
+    const verifyCustomerResult = await this.fabricService.evaluate('ReadCustomer', {
+      customerID: credential.customerId,
+    });
+
+    if (this.isFabricFailure(verifyCustomerResult)) {
+      throw new BadRequestException(`Failed to verify revoke on Fabric: ${this.getFabricError(verifyCustomerResult)}`);
+    }
+
+    const verifiedCustomer = this.getFabricCustomer(verifyCustomerResult);
+    if (verifiedCustomer.kycStatus !== 'REVOKED') {
+      throw new BadRequestException('Fabric customer status did not transition to REVOKED');
+    }
+
     await this.dataService.updateCredential(payload.credentialId, { status: 'Revoked' });
     await this.dataService.pushLedgerEvent(payload.credentialId, 'ConsentRevoked', 'Revoked by admin', 'Admin');
     return { credentialId: payload.credentialId, status: 'Revoked' };
@@ -158,4 +198,53 @@ export class KycService {
     const txId = (result as { txId?: string }).txId;
     return typeof txId === 'string' ? txId : '';
   }
+
+  private getFabricCustomer(result: unknown): {
+    fullName: string;
+    dateOfBirth: string;
+    email: string;
+    phone: string;
+    address: string;
+    nationalId: string;
+    issuingBank: string;
+    kycStatus: string;
+    documentHash: string;
+  } {
+    if (!result || typeof result !== 'object') {
+      throw new BadRequestException('Invalid customer response from Fabric');
+    }
+
+    const rawData = (result as { data?: unknown }).data;
+    let parsed: Record<string, unknown> | null = null;
+
+    if (typeof rawData === 'string') {
+      try {
+        const value = JSON.parse(rawData);
+        if (value && typeof value === 'object') {
+          parsed = value as Record<string, unknown>;
+        }
+      } catch {
+        throw new BadRequestException('Unable to parse customer payload from Fabric');
+      }
+    } else if (rawData && typeof rawData === 'object') {
+      parsed = rawData as Record<string, unknown>;
+    }
+
+    if (!parsed) {
+      throw new BadRequestException('Invalid customer response from Fabric');
+    }
+
+    return {
+      fullName: String(parsed.fullName ?? ''),
+      dateOfBirth: String(parsed.dateOfBirth ?? ''),
+      email: String(parsed.email ?? ''),
+      phone: String(parsed.phone ?? ''),
+      address: String(parsed.address ?? ''),
+      nationalId: String(parsed.nationalId ?? ''),
+      issuingBank: String(parsed.issuingBank ?? ''),
+      kycStatus: String(parsed.kycStatus ?? ''),
+      documentHash: String(parsed.documentHash ?? ''),
+    };
+  }
+
 }

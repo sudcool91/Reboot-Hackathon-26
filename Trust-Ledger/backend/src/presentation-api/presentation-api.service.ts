@@ -1,12 +1,16 @@
 ﻿import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PresentationDataService } from './presentation-data.service';
+import { FabricService } from '../fabric/fabric.service';
 
 interface DecisionPayload { decision: 'grant' | 'reject'; remark?: string; actor?: string; }
 interface ConsentPayload { bank: string; action: 'share' | 'revoke'; }
 
 @Injectable()
 export class PresentationApiService {
-  constructor(private readonly data: PresentationDataService) {}
+  constructor(
+    private readonly data: PresentationDataService,
+    private readonly fabricService: FabricService,
+  ) {}
 
   async getDashboardSummary() {
     const applications = await this.data.getApplications();
@@ -88,19 +92,41 @@ export class PresentationApiService {
   async updateConsent(credentialId: string, payload: ConsentPayload) {
     const record = await this.data.getCredential(credentialId);
     if (!record) throw new NotFoundException(`Credential ${credentialId} not found`);
+    if (!record.customerId) throw new BadRequestException(`Credential ${credentialId} is missing customerId mapping`);
+
     const bank = payload.bank?.trim();
     if (!bank) throw new BadRequestException('bank is required');
+
     const bankExists = record.sharedWith.includes(bank);
+
     if (payload.action === 'share' && !bankExists) {
+      const fabricResult = await this.fabricService.submit('GrantConsent', {
+        customerID: record.customerId,
+      });
+
+      if (this.isFabricFailure(fabricResult)) {
+        throw new BadRequestException(`Failed to grant consent on Fabric: ${this.getFabricError(fabricResult)}`);
+      }
+
       record.sharedWith.push(bank);
       await this.data.updateCredential(credentialId, { sharedWith: record.sharedWith });
       await this.data.pushLedgerEvent(credentialId, 'ConsentGranted', `Consent shared with ${bank}`, 'Consent service');
     }
+
     if (payload.action === 'revoke' && bankExists) {
+      const fabricResult = await this.fabricService.submit('RevokeConsent', {
+        customerID: record.customerId,
+      });
+
+      if (this.isFabricFailure(fabricResult)) {
+        throw new BadRequestException(`Failed to revoke consent on Fabric: ${this.getFabricError(fabricResult)}`);
+      }
+
       record.sharedWith = record.sharedWith.filter(v => v !== bank);
       await this.data.updateCredential(credentialId, { sharedWith: record.sharedWith });
       await this.data.pushLedgerEvent(credentialId, 'ConsentRevoked', `Consent revoked for ${bank}`, 'Consent service');
     }
+
     return { credentialId, sharedWith: record.sharedWith, message: payload.action === 'share' ? `Consent shared with ${bank}` : `Consent revoked for ${bank}` };
   }
 
@@ -201,5 +227,20 @@ export class PresentationApiService {
         pendingDocs:   applications.filter(a => a.status === 'Pending docs').length,
       },
     };
+  }
+
+  private isFabricFailure(result: unknown): boolean {
+    if (!result || typeof result !== 'object') {
+      return false;
+    }
+    return 'success' in result && (result as { success?: boolean }).success === false;
+  }
+
+  private getFabricError(result: unknown): string {
+    if (!result || typeof result !== 'object') {
+      return 'Unknown Fabric error';
+    }
+    const message = (result as { message?: string }).message;
+    return typeof message === 'string' && message ? message : 'Unknown Fabric error';
   }
 }
