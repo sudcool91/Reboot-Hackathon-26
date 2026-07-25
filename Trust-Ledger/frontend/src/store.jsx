@@ -18,11 +18,11 @@ export const DEMO_USERS = [
     username: 'customer',
     password: 'customer123',
     role: 'customer',
-    name: 'Rohan Sharma',
-    initials: 'RS',
+    name: 'Sunil K Pandey',
+    initials: 'SK',
     title: 'Personal Banking Customer',
-    email: 'rohan.sharma@email.com',
-    credentialId: 'KYC-RS-88213',
+    email: 'sunil.kpandey@gmail.com',
+    credentialId: 'KYC-SKP-24188',
   },
 ];
 

@@ -533,10 +533,15 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
                               <button disabled={!!st} onClick={async ()=>{
                                 setShareDeciding(d=>({...d,[r.id]:"approved"}));
                                 try {
-                                  await decideShareRequest(r.id,"approved","Credential share approved by "+actor,actor);
+                                  const result = await decideShareRequest(r.id,"approved","Credential share approved by "+actor,actor);
+                                  if (!result || result.status !== 'approved') {
+                                    throw new Error('Share request approval failed');
+                                  }
                                   await load();
                                   pushToast("&#x1F3E6; Share approved for "+r.targetBank,"success");
-                                } catch { pushToast("Action saved","success"); }
+                                } catch {
+                                  pushToast("Failed to approve share request","error");
+                                }
                                 setShareDeciding(d=>{const n={...d};delete n[r.id];return n;});
                               }} style={{fontSize:11,padding:"5px 10px",borderRadius:7,background:"#F0FAF4",color:"#024731",border:"1px solid #C6E8D4",cursor:"pointer",fontWeight:700}}>
                                 {st==="approved"?"⏳":"✔ Approve"}
@@ -544,10 +549,15 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
                               <button disabled={!!st} onClick={async ()=>{
                                 setShareDeciding(d=>({...d,[r.id]:"rejected"}));
                                 try {
-                                  await decideShareRequest(r.id,"rejected","Share request rejected by "+actor,actor);
+                                  const result = await decideShareRequest(r.id,"rejected","Share request rejected by "+actor,actor);
+                                  if (!result || result.status !== 'rejected') {
+                                    throw new Error('Share request rejection failed');
+                                  }
                                   await load();
                                   pushToast("Share request rejected","success");
-                                } catch { pushToast("Action saved","success"); }
+                                } catch {
+                                  pushToast("Failed to reject share request","error");
+                                }
                                 setShareDeciding(d=>{const n={...d};delete n[r.id];return n;});
                               }} style={{fontSize:11,padding:"5px 10px",borderRadius:7,background:"#FCEBEB",color:"#A32D2D",border:"1px solid #F0C0C0",cursor:"pointer",fontWeight:700}}>
                                 {st==="rejected"?"⏳":"✘ Reject"}
