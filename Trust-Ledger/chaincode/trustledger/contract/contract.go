@@ -31,8 +31,8 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 			KYCStatus:      model.KYCStatusVerified,
 			ConsentGranted: true,
 			DocumentHash:   "HASH123456",
-			CreatedAt:      utils.GetCurrentTimestamp(),
-			UpdatedAt:      utils.GetCurrentTimestamp(),
+			CreatedAt:      utils.GetCurrentTimestamp(ctx),
+			UpdatedAt:      utils.GetCurrentTimestamp(ctx),
 		},
 	}
 

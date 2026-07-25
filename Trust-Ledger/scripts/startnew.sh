@@ -12,6 +12,15 @@
 #
 set -Eeuo pipefail
 
+# WSL + Docker Desktop: auto-detect docker socket
+if ! docker info >/dev/null 2>&1; then
+  if [ -S /var/run/docker.sock ]; then
+    export DOCKER_HOST=unix:///var/run/docker.sock
+  elif [ -S /run/docker.sock ]; then
+    export DOCKER_HOST=unix:///run/docker.sock
+  fi
+fi
+
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FABRIC_DIR="${PROJECT_ROOT}/fabric-network"
 LOG_DIR="${PROJECT_ROOT}/logs"
@@ -48,9 +57,15 @@ if [[ "$OSTYPE" != linux* ]]; then
   fail "This script must run in WSL or Linux, not Windows directly."
 fi
 
-# Check Docker
+# Check Docker - try multiple socket paths for WSL + Docker Desktop
 if ! docker info >/dev/null 2>&1; then
-  fail "Docker daemon is not running. Start Docker Desktop and try again."
+  if DOCKER_HOST=unix:///var/run/docker.sock docker info >/dev/null 2>&1; then
+    export DOCKER_HOST=unix:///var/run/docker.sock
+  elif DOCKER_HOST=unix:///run/docker.sock docker info >/dev/null 2>&1; then
+    export DOCKER_HOST=unix:///run/docker.sock
+  else
+    fail "Docker daemon is not running. Start Docker Desktop and try again."
+  fi
 fi
 ok "Docker daemon is running."
 
@@ -88,7 +103,8 @@ ok "Line endings verified."
 # ============================================
 info "Setting up environment variables..."
 
-export PATH="${PROJECT_ROOT}/bin:$PATH"
+# Append Fabric bin AFTER system PATH so system docker takes priority
+export PATH="$PATH:${PROJECT_ROOT}/bin"
 export FABRIC_CFG_PATH="${PROJECT_ROOT}/config"
 
 # Verify config files exist

@@ -27,13 +27,16 @@ export const updateConsent        = (credentialId, bank, action) =>
   req('POST', `/api/v1/kyc-registry/${credentialId}/consent`, { bank, action });
 
 // ── Loan Applications ──────────────────────────────────────────────────────
-export const getLoanApplications  = () => req('GET', '/api/v1/loan-applications');
+export const getLoanApplications  = (email) => req('GET', `/api/v1/loan-applications${email ? `?email=${encodeURIComponent(email)}` : ''}`);
 export const submitApplication    = (data) => req('POST', '/api/v1/loan-applications', data);
 
 // ── Loan Decision ──────────────────────────────────────────────────────────
 export const getLoanDecision      = (applicationId) => req('GET', `/api/v1/loan-applications/${applicationId}/decision`);
 export const decideLoan           = (applicationId, decision, remark, actor) =>
-  req('POST', `/api/v1/loan-applications/${applicationId}/decision`, { decision, remark, actor });
+  req('POST', `/api/v1/loan-applications/${applicationId}/decision`, {
+    decision: decision === 'approved' ? 'grant' : decision === 'rejected' ? 'reject' : decision,
+    remark, actor
+  });
 
 // ── Ledger Explorer ────────────────────────────────────────────────────────
 export const getLedgerExplorer    = (credentialId) => req('GET', `/api/v1/ledger-explorer/${credentialId}`);
@@ -67,6 +70,24 @@ export const uploadDocument = async (file, docType, customerId) => {
   }
 };
 
+// ── Auth ───────────────────────────────────────────────────────────────────
+export const loginUser    = (username, password) => req('POST', '/api/v1/auth/login', { username, password });
+export const registerUser = (data) => req('POST', '/api/v1/auth/register', data);
+
+// <<<<<<< lakshy
+// ── KYC Requests (customer → admin approval flow) ─────────────────────────
+export const submitKycRequest      = (data) => req('POST', '/api/v1/kyc-requests', data);
+export const getKycRequests        = (status) => req('GET', `/api/v1/kyc-requests${status ? `?status=${status}` : ''}`);
+export const getKycRequestsByEmail = (email) => req('GET', `/api/v1/kyc-requests?email=${encodeURIComponent(email)}`);
+export const decideKycRequest      = (id, decision, remark, decidedBy) =>
+  req('PATCH', `/api/v1/kyc-requests/${id}/decide`, { decision, remark, decidedBy });
+
+// ── Credential Share Requests ──────────────────────────────────────────────
+export const submitShareRequest      = (data) => req('POST', '/api/v1/credential-share-requests', data);
+export const getShareRequests        = (status) => req('GET', `/api/v1/credential-share-requests${status ? `?status=${status}` : ''}`);
+export const getShareRequestsByEmail = (email) => req('GET', `/api/v1/credential-share-requests?email=${encodeURIComponent(email)}`);
+export const decideShareRequest      = (id, decision, remark, decidedBy) =>
+  req('PATCH', `/api/v1/credential-share-requests/${id}/decide`, { decision, remark, decidedBy });
 // ══════════════════════════════════════════════════════════════════════════
 // ── FABRIC SDK API (Direct Blockchain Access) ─────────────────────────────
 // ══════════════════════════════════════════════════════════════════════════
@@ -95,4 +116,5 @@ export const revokeConsentOnChain = (customerID) => req('POST', '/fabric-sdk/con
 
 // ── Utility ────────────────────────────────────────────────────────────────
 export const initLedger = () => req('POST', '/fabric-sdk/init-ledger');
+
 

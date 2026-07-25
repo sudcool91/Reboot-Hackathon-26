@@ -25,7 +25,7 @@ func (s *SmartContract) IssueKYC(
 	}
 
 	customer.KYCStatus = model.KYCStatusVerified
-	customer.UpdatedAt = utils.GetCurrentTimestamp()
+	customer.UpdatedAt = utils.GetCurrentTimestamp(ctx)
 
 	return s.saveCustomer(ctx, customer)
 }
@@ -54,7 +54,7 @@ func (s *SmartContract) VerifyKYC(
 		return fmt.Errorf("issuing bank cannot verify its own KYC")
 	}
 
-	customer.UpdatedAt = utils.GetCurrentTimestamp()
+	customer.UpdatedAt = utils.GetCurrentTimestamp(ctx)
 
 	return s.saveCustomer(ctx, customer)
 }
@@ -75,7 +75,7 @@ func (s *SmartContract) GrantConsent(
 	}
 
 	customer.ConsentGranted = true
-	customer.UpdatedAt = utils.GetCurrentTimestamp()
+	customer.UpdatedAt = utils.GetCurrentTimestamp(ctx)
 
 	return s.saveCustomer(ctx, customer)
 }
@@ -96,7 +96,7 @@ func (s *SmartContract) RevokeConsent(
 	}
 
 	customer.ConsentGranted = false
-	customer.UpdatedAt = utils.GetCurrentTimestamp()
+	customer.UpdatedAt = utils.GetCurrentTimestamp(ctx)
 
 	return s.saveCustomer(ctx, customer)
 }

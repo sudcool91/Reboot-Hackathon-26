@@ -1,14 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const TOUR_STEPS = [
+const ADMIN_TOUR_STEPS = [
   { selector: '[data-page="dashboard"]', title: 'Everything starts here', desc: 'The sidebar is your map of the whole platform — applications, cards, the KYC registry, admin tools, and the blockchain layer, all one click away.', page: 'dashboard' },
   { selector: '.fluid-btn', title: 'The story, in motion', desc: 'This button opens a fluid, scroll-driven explainer of why the platform exists — the thread literally connects each idea as you scroll.', page: 'dashboard' },
-  { selector: '.ncu-hero', title: 'A clear path for new customers', desc: 'First-time applicants upload documents here in one guided flow — clean steps, live progress, and no confusion about what is still needed.', page: 'new_customer_upload' },
-  { selector: '.role-card.mine', title: 'Built for admins, with real control', desc: 'Admins see exactly what they are allowed to do — roles, permissions, and policy rules are explicit, not buried in settings.', page: 'admin_control_center' },
+  { selector: '.block-num', title: 'Pending queue — act fast', desc: 'The pending action queue shows every loan application waiting for your decision. Approve or reject in one click — DB updates instantly.', page: 'admin_control_center' },
   { selector: '.trail', title: 'See the proof, not just the claim', desc: 'Every credential check is a real on-chain event. The ledger explorer shows the full audit trail — who verified what, and when.', page: 'ledger_explorer' },
 ];
 
-export default function Tour({ currentPage, onNavigate, autoStart = false }) {
+const CUSTOMER_TOUR_STEPS = [
+  { selector: '[data-page="customer_dashboard"]', title: 'Your dashboard', desc: 'See your KYC status, all your loan applications, and credential share requests — all in one place. Hit Refresh any time to get the latest status.', page: 'customer_dashboard' },
+  { selector: '.btn-primary', title: 'Apply for a product', desc: 'Select from personal loans, home loans, vehicle loans and business loans. Your verified identity is reused automatically — no re-uploading.', page: 'customer_application' },
+  { selector: '.ncu-hero', title: 'Upload your documents once', desc: 'Submit your KYC documents here. Once approved by admin your credential is issued and reused across all Lloyds products permanently.', page: 'new_customer_upload' },
+  { selector: '.trail', title: 'Your audit trail on the ledger', desc: 'Every identity check is written on-chain. View your full credential history — immutable, transparent, yours.', page: 'ledger_explorer' },
+];
+
+export default function Tour({ currentPage, onNavigate, autoStart = false, role = 'admin' }) {
+  const TOUR_STEPS = role === 'customer' ? CUSTOMER_TOUR_STEPS : ADMIN_TOUR_STEPS;
   const [active, setActive] = useState(false);
   const [index, setIndex] = useState(0);
 
@@ -109,9 +116,8 @@ export default function Tour({ currentPage, onNavigate, autoStart = false }) {
       {/* Launcher */}
       {!active && (
         <button className="tour-launcher" onClick={startTour}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-            <circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4"/>
-            <circle cx="12" cy="17" r="0.5" fill="currentColor"/>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3" fill="rgba(255,255,255,0.15)" stroke="currentColor"/>
           </svg>
           Take a tour
         </button>

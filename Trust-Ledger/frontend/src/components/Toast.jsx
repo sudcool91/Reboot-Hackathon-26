@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 // ── Toast Component ───────────────────────────────────────────────────────
 export function ToastContainer({ toasts, onDismiss }) {
   return (
-    <div style={{ position: 'fixed', bottom: 80, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 380 }}>
+    <div style={{ position: 'fixed', top: 20, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 380 }}>
       <AnimatePresence>
         {toasts.map(t => (
           <motion.div

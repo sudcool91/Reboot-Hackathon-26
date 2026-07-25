@@ -16,7 +16,7 @@ import { PresentationApiModule } from '../presentation-api/presentation-api.modu
         issue: 'IssueKYC',
         verify: 'VerifyKYC',
         getCredential: 'GetCredential',
-        revoke: 'RevokeKYC',
+        revoke: 'UpdateCustomer',
         getHistory: 'GetHistory',
       },
     },

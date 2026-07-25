@@ -17,6 +17,7 @@
 TEST_NETWORK_HOME=${TEST_NETWORK_HOME:-${PWD}}
 . ${TEST_NETWORK_HOME}/scripts/utils.sh
 
+VERBOSE=${VERBOSE:-false}
 export CORE_PEER_TLS_ENABLED=true
 export ORDERER_CA=${TEST_NETWORK_HOME}/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
 export PEER0_ORG1_CA=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
@@ -26,7 +27,7 @@ export PEER0_ORG3_CA=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org3.e
 # Set environment variables for the peer org
 setGlobals() {
   local USING_ORG=""
-  if [ -z "$OVERRIDE_ORG" ]; then
+  if [ -z "${OVERRIDE_ORG:-}" ]; then
     USING_ORG=$1
   else
     USING_ORG="${OVERRIDE_ORG}"

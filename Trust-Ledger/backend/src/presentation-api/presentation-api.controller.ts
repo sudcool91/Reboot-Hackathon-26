@@ -45,8 +45,12 @@ export class PresentationApiController {
   }
 
   @Get('loan-applications')
-  getLoanApplications() {
-    return this.presentationApiService.getLoanApplications();
+  async getLoanApplications(@Query('email') email?: string) {
+    const all = await this.presentationApiService.getLoanApplications();
+    if (email) {
+      return all.filter((a: any) => a.email?.toLowerCase() === email.toLowerCase());
+    }
+    return all;
   }
 
   @Post('loan-applications')
