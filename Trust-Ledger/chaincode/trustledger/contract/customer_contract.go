@@ -61,8 +61,8 @@ func (s *SmartContract) CreateCustomer(
 		KYCStatus:       model.KYCStatusPending,
 		ConsentGranted:  false,
 		DocumentHash:    documentHash,
-		CreatedAt:       utils.GetCurrentTimestamp(),
-		UpdatedAt:       utils.GetCurrentTimestamp(),
+		CreatedAt:       utils.GetCurrentTimestamp(ctx),
+		UpdatedAt:       utils.GetCurrentTimestamp(ctx),
 	}
 
 	if err := utils.ValidateCustomer(customer); err != nil {
@@ -123,7 +123,7 @@ func (s *SmartContract) UpdateCustomer(
 	customer.Email = email
 	customer.Phone = phone
 	customer.Address = address
-	customer.UpdatedAt = utils.GetCurrentTimestamp()
+	customer.UpdatedAt = utils.GetCurrentTimestamp(ctx)
 
 	if err := utils.ValidateCustomer(*customer); err != nil {
 		return err
