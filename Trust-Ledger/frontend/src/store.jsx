@@ -14,15 +14,15 @@ export const DEMO_USERS = [
     email: 'admin@lloyds.co.uk',
     branch: 'London - Canary Wharf',
   },
-  {
+ {
     username: 'customer',
     password: 'customer123',
     role: 'customer',
-    name: 'Megha Pandey',
-    initials: 'MP',
+    name: 'Sunil K Pandey',
+    initials: 'SK',
     title: 'Personal Banking Customer',
-    email: 'megha@gmail.com',
-    credentialId: 'KYC-MP-83830',
+    email: 'sunil.kpandey@gmail.com',
+    credentialId: 'KYC-SKP-24188',
   },
 ];
 
