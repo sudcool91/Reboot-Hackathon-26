@@ -463,11 +463,11 @@ export default function Navbar({ crumb, onFluid, variant = 'default', notificati
                       }}>
                         <span style={{ fontSize: 16, marginTop: 1 }}>{ACTION_ICON[n.type] || '📌'}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: '#1A1A14', lineBreak: 'anywhere' }}>{n.text}</div>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: '#1A1A14', lineBreak: 'anywhere' }}>{n.msg || n.text || '—'}</div>
                           {n.description && <div style={{ fontSize: 11, color: '#6A6A5A', marginTop: 2 }}>{n.description}</div>}
                           <div style={{ fontSize: 10, color: '#9A9A8A', marginTop: 3 }}>
                             {n.blockNumber && <span>block #{n.blockNumber} · </span>}
-                            {n.at}
+                            {n.at || (n.time ? new Date(n.time).toLocaleDateString('en-GB', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '')}
                           </div>
                         </div>
                       </div>

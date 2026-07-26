@@ -186,6 +186,8 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
     const e = {};
     if (step === 0 && !form.product) e.product = 'Please select a product';
     if (step === 1 && !form.bank) e.bank = 'Please select a bank';
+    if (step === 1 && form.bank && !alreadySharedWithBank(form.bank) && !form.shareConsent)
+      e.shareConsent = `⚠️ ${form.bank} requires your KYC credential to process your application. Please tick the checkbox to share your credential, or select a bank where it's already shared.`;
     if (step === 2) {
       // Skip validation for KYC-verified customers — fields are auto-filled and locked
       if (!(kycGateStatus === 'verified' && currentUser?.role !== 'admin')) {
@@ -222,15 +224,21 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
     setSubmitting(true);
     try {
       const productLabel = PRODUCTS.find(p => p.id === form.product)?.label || form.product;
-      const applicantName = kycRecord?.name || `${form.firstName} ${form.lastName}`;
+      // Always use logged-in user's registered name as primary — guarantees DB filter works
+      const applicantName = currentUser?.name || kycRecord?.name || `${form.firstName} ${form.lastName}`.trim();
+      const nameParts = applicantName.trim().split(/\s+/);
+      const avatarInitials = (nameParts.length >= 2
+        ? nameParts[0][0] + nameParts[nameParts.length - 1][0]
+        : applicantName.slice(0, 2)
+      ).toUpperCase();
 
       // If share consent given and not already shared â†’ auto-create share request
       if (form.shareConsent && form.bank && !alreadySharedWithBank(form.bank)) {
-        const kycForShare = kycRecord || { credentialId: `KYC-${form.firstName[0]}${form.lastName[0]}-PENDING` };
+        const kycForShare = kycRecord || { credentialId: `KYC-PENDING-${Date.now()}` };
         await submitShareRequest({
           credentialId:  kycForShare.credentialId,
           customerName:  applicantName,
-          customerEmail: form.email,
+          customerEmail: currentUser?.email || form.email,
           targetBank:    form.bank,
           status:        'pending',
           source:        'product_application',
@@ -240,14 +248,15 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
 
       const payload = {
         applicantName,
-        avatar:           `${form.firstName[0]}${form.lastName[0]}`.toUpperCase(),
+        customerName:     applicantName,
+        avatar:           avatarInitials,
         product:          productLabel,
         amount:           `GBP ${parseInt(form.loanAmount).toLocaleString()}`,
         kycSource:        kycRecord ? `On-chain · ${kycRecord.issuer}` : 'New · customer portal',
         credentialId:     kycRecord?.credentialId || null,
         creditScore:      kycRecord?.score || null,
         status:           kycRecord?.status === 'Active' ? 'Auto-eligible' : 'Pending docs',
-        email:            form.email,
+        email:            currentUser?.email || form.email,
         phone:            form.phone,
         annualIncome:     form.annualIncome,
         employmentStatus: form.employmentStatus,
@@ -525,7 +534,12 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                         </label>
                         {form.shareConsent && (
                           <div style={{ marginTop: 10, padding: '8px 12px', background: '#E2EEE7', borderRadius: 8, fontSize: 11, color: '#024731' }}>
-                            🔐 A credential share request will be automatically created when you submit this application.
+                            🔐 A credential share request will be automatically created when you submit this application.
+                          </div>
+                        )}
+                        {!form.shareConsent && errors.shareConsent && (
+                          <div style={{ marginTop: 10, padding: '10px 14px', background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: 8, fontSize: 12, color: '#92400E', fontWeight: 500 }}>
+                            {errors.shareConsent}
                           </div>
                         )}
                       </>

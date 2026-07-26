@@ -90,7 +90,7 @@ function StatusTag({ s }) {
 
 // ── User Management Component ────────────────────────────────────────────────
 function UserManagement({ pushToast }) {
-  const EMPTY_FORM = { name:'', email:'', password:'' };
+  const EMPTY_FORM = { name:'', email:'', password:'', phone:'' };
   const [customUsers, setCustomUsers] = useState(getCustomUsers());
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
@@ -121,6 +121,7 @@ function UserManagement({ pushToast }) {
       initials: parts.map(w => w[0]).join('').toUpperCase().slice(0,2),
       title: 'Personal Banking Customer',
       email: form.email.trim().toLowerCase(),
+      phone: form.phone?.trim() || '',
       _custom: true,
       _createdAt: new Date().toISOString(),
     };
@@ -158,10 +159,11 @@ function UserManagement({ pushToast }) {
           style={{background:'#F0FAF4',border:'1.5px solid #C6E8D4',borderRadius:14,padding:'20px 24px',marginBottom:20}}>
           <div style={{fontWeight:700,fontSize:14,color:'#024731',marginBottom:4}}>🆕 New login account</div>
           <div style={{fontSize:11,color:'#6A6A5A',marginBottom:16}}>Creates a customer login. Username is auto-derived from email.</div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14,marginBottom:16}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:14,marginBottom:16}}>
             {[
               {label:'Full Name', key:'name',     type:'text',  placeholder:'e.g. Priya Nair'},
               {label:'Email',     key:'email',    type:'email', placeholder:'e.g. priya@email.com'},
+              {label:'Phone',     key:'phone',    type:'tel',   placeholder:'e.g. 07700 900000'},
               {label:'Password',  key:'password', type:'text',  placeholder:'min 4 characters'},
             ].map(({label,key,type,placeholder}) => (
               <div key={key}>
@@ -291,6 +293,7 @@ function BlockchainCustomerManagement({ pushToast }) {
           initials: parts.map(w => w[0]).join('').toUpperCase().slice(0, 2),
           title: 'Personal Banking Customer',
           email: form.email.trim().toLowerCase(),
+          phone: form.phone?.trim() || '',
           _custom: true,
           _createdAt: new Date().toISOString(),
         };
@@ -495,7 +498,7 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
       const [l,k,a,r,sr] = await Promise.all([
         getLoanApplications(), getKycRegistry(), getDashboardActivity(), getKycRequests(), getShareRequests()
       ]);
-      setLoans(Array.isArray(l) ? l : []);
+      setLoans(Array.isArray(l) ? l.sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0)) : []);
       setKyc(Array.isArray(k) ? k : []);
       setActivity(Array.isArray(a?.recentActivity) ? a.recentActivity : Array.isArray(a) ? a : []);
       setKycReqs(Array.isArray(r) ? r : []);
@@ -553,6 +556,7 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
             initials: parts.map(w => w[0]).join('').toUpperCase().slice(0, 2),
             title: 'Personal Banking Customer',
             email: req.email.trim().toLowerCase(),
+            phone: req.phone?.trim() || '',
             _custom: true,
             _createdAt: new Date().toISOString(),
           };

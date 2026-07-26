@@ -27,7 +27,14 @@ export const updateConsent        = (credentialId, bank, action) =>
   req('POST', `/api/v1/kyc-registry/${credentialId}/consent`, { bank, action });
 
 // ── Loan Applications ──────────────────────────────────────────────────────
-export const getLoanApplications  = (email) => req('GET', `/api/v1/loan-applications${email ? `?email=${encodeURIComponent(email)}` : ''}`);
+export const getLoanApplications  = (email, name, phone) => {
+  const params = new URLSearchParams();
+  if (email) params.set('email', email);
+  if (name)  params.set('name', name);
+  if (phone) params.set('phone', phone);
+  const qs = params.toString();
+  return req('GET', `/api/v1/loan-applications${qs ? `?${qs}` : ''}`);
+};
 export const submitApplication    = (data) => req('POST', '/api/v1/loan-applications', data);
 
 // ── Loan Decision ──────────────────────────────────────────────────────────

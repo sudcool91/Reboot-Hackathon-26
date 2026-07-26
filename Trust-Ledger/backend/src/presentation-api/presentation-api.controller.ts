@@ -45,12 +45,22 @@ export class PresentationApiController {
   }
 
   @Get('loan-applications')
-  async getLoanApplications(@Query('email') email?: string) {
+  async getLoanApplications(
+    @Query('email') email?: string,
+    @Query('name') name?: string,
+    @Query('phone') phone?: string,
+  ) {
     const all = await this.presentationApiService.getLoanApplications();
-    if (email) {
-      return all.filter((a: any) => a.email?.toLowerCase() === email.toLowerCase());
-    }
-    return all;
+    if (!email && !name && !phone) return all;
+    return all.filter((a: any) => {
+      if (email && a.email?.toLowerCase() === email.toLowerCase()) return true;
+      if (name && (
+        a.applicantName?.toLowerCase() === name.toLowerCase() ||
+        a.customerName?.toLowerCase() === name.toLowerCase()
+      )) return true;
+      if (phone && a.phone === phone) return true;
+      return false;
+    });
   }
 
   @Post('loan-applications')

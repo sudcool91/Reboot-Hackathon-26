@@ -84,7 +84,12 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
   const [txHash, setTxHash] = useState('');
   const [credentialId, setCredentialId] = useState('');
   const [customerId, setCustomerId] = useState('');
-  const [form, setForm] = useState({ fullName: '', email: '', phone: '', dob: '', nationality: 'British', address: '' });
+  const [form, setForm] = useState({
+    fullName: currentUser?.name || '',
+    email:    currentUser?.email || '',
+    phone:    currentUser?.phone || '',
+    dob: '', nationality: 'British', address: '',
+  });
   const [uploads, setUploads] = useState({});
   const fileRefs = useRef({});
   const [kycChecking, setKycChecking] = useState(false);
@@ -239,9 +244,9 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
     pushToast('📨 Submitting KYC request to admin…', 'info');
     const docKeys = Object.keys(uploads).filter(k => uploads[k]?.status === 'done').join(',');
     await submitKycRequest({
-      customerName: form.fullName,
-      email:        form.email,
-      phone:        form.phone,
+      customerName: currentUser?.name || form.fullName,
+      email:        currentUser?.email || form.email,
+      phone:        currentUser?.phone || form.phone,
       dob:          form.dob,
       nationality:  form.nationality,
       address:      form.address,
@@ -257,7 +262,8 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
 
   const resetForm = () => {
     setStep(0); setUploads({}); setKycChecked(false); setExistingKyc(null); setShowErrors(false);
-    setForm({ fullName: '', email: '', phone: '', dob: '', nationality: 'British', address: '' });
+    // Keep account values pre-filled on reset
+    setForm({ fullName: currentUser?.name || '', email: currentUser?.email || '', phone: currentUser?.phone || '', dob: '', nationality: 'British', address: '' });
   };
 
   return (
@@ -464,9 +470,36 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                 <div className="block-head"><div className="block-title"><span className="block-num">01</span>Personal details</div></div>
                 <div className="card-pad-standalone">
                   <div className="ncu-form-grid">
-                    <Field label="Full Name" fkey="fullName" type="text" placeholder="e.g. Rohan Sharma" value={form.fullName} onChange={v => set('fullName', v)} required />
-                    <Field label="Email Address" fkey="email" type="email" placeholder="e.g. rohan@email.com" value={form.email} onChange={v => set('email', v)} required />
-                    <Field label="Phone Number" fkey="phone" type="tel" placeholder="+44 7700 900000" value={form.phone} onChange={v => set('phone', v)} />
+                    {/* Full Name — locked if from account */}
+                    {currentUser?.name ? (
+                      <div className="ncu-field">
+                        <label className="ncu-label">Full Name <span style={{color:'#059669',fontSize:10,fontWeight:700,marginLeft:4}}>🔒 from your account</span></label>
+                        <input className="ncu-input" type="text" value={currentUser.name} readOnly
+                          style={{background:'#F0FAF4',color:'#024731',border:'1.5px solid #C6E8D4',cursor:'not-allowed'}} />
+                      </div>
+                    ) : (
+                      <Field label="Full Name" fkey="fullName" type="text" placeholder="e.g. Rohan Sharma" value={form.fullName} onChange={v => set('fullName', v)} required />
+                    )}
+                    {/* Email — locked if from account */}
+                    {currentUser?.email ? (
+                      <div className="ncu-field">
+                        <label className="ncu-label">Email Address <span style={{color:'#059669',fontSize:10,fontWeight:700,marginLeft:4}}>🔒 from your account</span></label>
+                        <input className="ncu-input" type="email" value={currentUser.email} readOnly
+                          style={{background:'#F0FAF4',color:'#024731',border:'1.5px solid #C6E8D4',cursor:'not-allowed'}} />
+                      </div>
+                    ) : (
+                      <Field label="Email Address" fkey="email" type="email" placeholder="e.g. rohan@email.com" value={form.email} onChange={v => set('email', v)} required />
+                    )}
+                    {/* Phone — locked if from account, editable otherwise */}
+                    {currentUser?.phone ? (
+                      <div className="ncu-field">
+                        <label className="ncu-label">Phone Number <span style={{color:'#059669',fontSize:10,fontWeight:700,marginLeft:4}}>🔒 from your account</span></label>
+                        <input className="ncu-input" type="tel" value={currentUser.phone} readOnly
+                          style={{background:'#F0FAF4',color:'#024731',border:'1.5px solid #C6E8D4',cursor:'not-allowed'}} />
+                      </div>
+                    ) : (
+                      <Field label="Phone Number" fkey="phone" type="tel" placeholder="+44 7700 900000" value={form.phone} onChange={v => set('phone', v)} />
+                    )}
                     <Field label="Date of Birth" fkey="dob" type="date" placeholder="" value={form.dob} onChange={v => set('dob', v)} required />
                     <div className="ncu-field">
                       <label className="ncu-label">Nationality</label>
@@ -716,8 +749,8 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                     <div style={{fontWeight:700,color:'#FCD34D',fontSize:14}}>Awaiting admin approval</div>
                   </div>
                   {[
-                    ['Customer', form.fullName],
-                    ['Email', form.email],
+                    ['Customer', currentUser?.name || form.fullName],
+                    ['Email', currentUser?.email || form.email],
                     ['Documents uploaded', Object.keys(uploads).filter(k => uploads[k]?.status === 'done').length + ' files'],
                     ['Submitted at', new Date().toLocaleString()],
                   ].map(([l, v]) => (
@@ -729,11 +762,12 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                 </div>
 
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', position:'relative',zIndex:1 }}>
-                  <button onClick={() => onNavigate('admin_control_center')}
+                  <button onClick={() => onNavigate('customer_dashboard')}
                     style={{padding:'11px 22px',borderRadius:10,background:'linear-gradient(135deg,#4DFF9A,#059669)',color:'#012820',border:'none',fontWeight:800,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
-                    View in Admin Control Center →
+                    Go to My Dashboard →
                   </button>
-                  <button className="btn-ghost" style={{borderColor:'rgba(255,255,255,0.2)',color:'rgba(255,255,255,0.8)'}} onClick={resetForm}>
+                  <button onClick={resetForm}
+                    style={{padding:'11px 22px',borderRadius:10,background:'rgba(255,255,255,0.12)',color:'#F2F0E6',border:'1px solid rgba(255,255,255,0.25)',fontWeight:700,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
                     Submit another
                   </button>
                 </div>

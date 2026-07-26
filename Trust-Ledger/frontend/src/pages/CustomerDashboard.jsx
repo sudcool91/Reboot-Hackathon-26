@@ -91,7 +91,7 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
     try {
       const [kycData, loanData, kycReqData, allKycReqData, shareReqData] = await Promise.all([
         getKycRegistry(),
-        currentUser?.email ? getLoanApplications(currentUser.email) : getLoanApplications(),
+        getLoanApplications(currentUser?.email, currentUser?.name, currentUser?.phone),
         currentUser?.email ? getKycRequestsByEmail(currentUser.email) : Promise.resolve([]),
         getKycRequests().catch(() => []),   // fetch all, filter client-side as fallback
         currentUser?.email ? getShareRequestsByEmail(currentUser.email) : Promise.resolve([]),
@@ -105,20 +105,17 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
       setKycRecord(myKyc || null);
 
       const loanList = Array.isArray(loanData) ? loanData : (loanData?.applications || []);
-      const myLoans = loanList.filter(a =>
-        !currentUser?.email ||
-        a.email?.toLowerCase() === currentUser.email.toLowerCase() ||
-        a.applicantName?.toLowerCase() === currentUser.name?.toLowerCase() ||
-        a.customerName?.toLowerCase() === currentUser.name?.toLowerCase()
-      );
-      setApplications(myLoans.sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0)));
+      // Backend already filters by email/name/phone — just sort by date
+      setApplications(loanList.sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0)));
 
-      // Merge email-filtered + all-filtered-by-name, deduplicate by id
+      // Merge email-filtered + all-filtered-by-name/email/phone, deduplicate by id
       const emailReqs = Array.isArray(kycReqData) ? kycReqData : [];
       const allReqs   = Array.isArray(allKycReqData) ? allKycReqData : [];
-      const nameReqs  = allReqs.filter(r =>
-        r.customerName?.toLowerCase().trim() === currentUser?.name?.toLowerCase().trim() ||
-        r.email?.toLowerCase().trim() === currentUser?.email?.toLowerCase().trim()
+      const myEmail = currentUser?.email?.toLowerCase().trim();
+      const myName  = currentUser?.name?.toLowerCase().trim();
+      const nameReqs = allReqs.filter(r =>
+        (myEmail && r.email?.toLowerCase().trim() === myEmail) ||
+        (myName  && r.customerName?.toLowerCase().trim() === myName)
       );
       const merged = [...emailReqs, ...nameReqs.filter(n => !emailReqs.some(e => e.id === n.id))];
       setKycRequests(merged.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
