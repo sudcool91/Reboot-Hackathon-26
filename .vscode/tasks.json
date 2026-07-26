@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Backend",
+			"type": "shell",
+			"command": "cd \"D:\\LBG\\Reboot-Hackathon-26\\Trust-Ledger\\backend\" && npm run start:dev",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}
