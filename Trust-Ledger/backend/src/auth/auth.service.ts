@@ -26,17 +26,7 @@ export class AuthService implements OnModuleInit {
         title: 'Senior Loan Admin',
         email: 'admin@lloyds.co.uk',
         branch: 'London - Canary Wharf',
-      },
-      {
-        username: 'customer',
-        password: 'customer123',
-        role: 'customer',
-        name: 'Rohan Sharma',
-        initials: 'RS',
-        title: 'Personal Banking Customer',
-        email: 'rohan.sharma@email.com',
-        credentialId: 'KYC-RS-88213',
-      },
+      }
     ];
 
     for (const d of defaults) {

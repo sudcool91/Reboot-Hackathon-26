@@ -1,8 +1,55 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
-import { getLoanApplications, getKycRegistry, getDashboardActivity, decideLoan, getKycRequests, decideKycRequest, getShareRequests, decideShareRequest, registerUser } from "../services/api";
+import { getLoanApplications, getKycRegistry, getDashboardActivity, decideLoan, getKycRequests, decideKycRequest, getShareRequests, decideShareRequest, registerUser, adminCreateBlockchainCustomer, adminGetBlockchainCustomers } from "../services/api";
 import { useStore, getCustomUsers, saveCustomUsers, DEMO_USERS } from "../store";
+import horseLogo from '../assets/lloyds-horse.gif';
+
+// ── Fabric blockchain loading overlay ────────────────────────────────────────
+function FabricLoader({ visible, message="Writing to Fabric blockchain…" }) {
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0,transition:{duration:0.4}}}
+          style={{position:'fixed',inset:0,zIndex:99998,background:'rgba(2,18,12,0.88)',backdropFilter:'blur(8px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:22,pointerEvents:'all'}}>
+          <motion.img src={horseLogo} alt="Processing…" initial={{scale:0.8,opacity:0}} animate={{scale:1,opacity:1}} transition={{duration:0.35}}
+            style={{width:110,height:110,objectFit:'contain',filter:'drop-shadow(0 0 28px rgba(110,231,183,0.55))'}}/>
+          <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{delay:0.2}}
+            style={{color:'#6EE7B7',fontSize:14,fontWeight:700,letterSpacing:'0.09em',textAlign:'center'}}>
+            {message}
+          </motion.div>
+          <div style={{fontSize:11,color:'rgba(110,231,183,0.5)'}}>⛓ Hyperledger Fabric · Lloyds Banking Group</div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ── 5-row paginator ──────────────────────────────────────────────────────────
+const PAGE_SIZE = 5;
+function Pager({ page, setPage, total }) {
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  if (totalPages <= 1) return null;
+  const from = page * PAGE_SIZE + 1;
+  const to   = Math.min((page + 1) * PAGE_SIZE, total);
+  return (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 18px',borderTop:'1px solid #E2E0D2',background:'#FAFAF7',borderRadius:'0 0 10px 10px',fontSize:12,color:'#6A6A5A'}}>
+      <span style={{fontSize:11}}>Showing <b>{from}–{to}</b> of <b>{total}</b></span>
+      <div style={{display:'flex',gap:5,alignItems:'center'}}>
+        <button disabled={page===0} onClick={()=>setPage(p=>p-1)}
+          style={{padding:'4px 11px',borderRadius:6,border:'1px solid #D4D3C4',background:page===0?'#F0EFE6':'#fff',cursor:page===0?'not-allowed':'pointer',fontSize:11,fontWeight:600,opacity:page===0?0.5:1}}>← Prev</button>
+        {Array.from({length:totalPages},(_,i)=>(
+          <button key={i} onClick={()=>setPage(i)}
+            style={{padding:'4px 9px',borderRadius:6,border:`1px solid ${i===page?'#024731':'#D4D3C4'}`,background:i===page?'#024731':'#fff',color:i===page?'#fff':'#4A4A40',cursor:'pointer',fontSize:11,fontWeight:i===page?700:400,minWidth:28}}>
+            {i+1}
+          </button>
+        ))}
+        <button disabled={page>=totalPages-1} onClick={()=>setPage(p=>p+1)}
+          style={{padding:'4px 11px',borderRadius:6,border:'1px solid #D4D3C4',background:page>=totalPages-1?'#F0EFE6':'#fff',cursor:page>=totalPages-1?'not-allowed':'pointer',fontSize:11,fontWeight:600,opacity:page>=totalPages-1?0.5:1}}>Next →</button>
+      </div>
+    </div>
+  );
+}
 
 const fadeUp = { hidden:{opacity:0,y:16}, show:{opacity:1,y:0,transition:{duration:0.3}} };
 const container = { hidden:{}, show:{transition:{staggerChildren:0.09}} };
@@ -43,22 +90,17 @@ function StatusTag({ s }) {
 
 // ── User Management Component ────────────────────────────────────────────────
 function UserManagement({ pushToast }) {
-  const EMPTY_FORM = { name:'', username:'', password:'', email:'' };
+  const EMPTY_FORM = { name:'', email:'', password:'' };
   const [customUsers, setCustomUsers] = useState(getCustomUsers());
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [showForm, setShowForm] = useState(false);
 
-  const refresh = () => setCustomUsers(getCustomUsers());
-  const allUsernames = [...DEMO_USERS, ...getCustomUsers()].map(u => u.username.toLowerCase());
-
   const validate = () => {
     const e = {};
-    if (!form.name.trim())     e.name     = 'Full name required';
-    if (!form.username.trim()) e.username = 'Username required';
-    else if (allUsernames.includes(form.username.toLowerCase())) e.username = 'Username already taken';
-    if (!form.password || form.password.length < 4) e.password = 'Min 4 characters';
+    if (!form.name.trim()) e.name = 'Full name required';
     if (!form.email.includes('@')) e.email = 'Valid email required';
+    if (!form.password || form.password.length < 4) e.password = 'Min 4 characters';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -66,8 +108,13 @@ function UserManagement({ pushToast }) {
   const handleCreate = async () => {
     if (!validate()) return;
     const parts = form.name.trim().split(' ');
+    // Auto-derive username from email prefix
+    const username = form.email.trim().toLowerCase().split('@')[0];
+    const allUsernames = [...DEMO_USERS, ...getCustomUsers()].map(u => u.username.toLowerCase());
+    const finalUsername = allUsernames.includes(username) ? username + '_' + Date.now().toString().slice(-4) : username;
+
     const newUser = {
-      username: form.username.trim().toLowerCase(),
+      username: finalUsername,
       password: form.password,
       role: 'customer',
       name: form.name.trim(),
@@ -77,21 +124,15 @@ function UserManagement({ pushToast }) {
       _custom: true,
       _createdAt: new Date().toISOString(),
     };
-    // 1. Save to DB via API
     const dbResult = await registerUser(newUser);
-    if (dbResult?.error) {
-      setErrors(e => ({...e, username: dbResult.error}));
-      return;
-    }
-    // Use DB-returned user (has real id) merged with local fields
+    if (dbResult?.error) { setErrors(e => ({...e, email: dbResult.error})); return; }
     const savedUser = dbResult ? { ...newUser, ...dbResult, password: newUser.password } : newUser;
-    // 2. Also persist in localStorage as fallback
     const updated = [...getCustomUsers().filter(u => u.username !== savedUser.username), savedUser];
     saveCustomUsers(updated);
     setCustomUsers(updated);
     setForm(EMPTY_FORM);
     setShowForm(false);
-    pushToast(`✅ Customer "${savedUser.name}" created & saved to DB — login: ${savedUser.username} / ${form.password}`, 'success');
+    pushToast(`✅ "${savedUser.name}" created — login: ${savedUser.username} / ${form.password}`, 'success');
   };
 
   const handleDelete = (username) => {
@@ -106,22 +147,22 @@ function UserManagement({ pushToast }) {
   return (
     <section className="block">
       <div className="block-head">
-        <div className="block-title"><span className="block-num">09</span>Customer user management</div>
+        <div className="block-title"><span className="block-num">09</span>👤 Quick customer login accounts</div>
         <button className="btn-primary" style={{fontSize:12,padding:"6px 16px"}} onClick={()=>setShowForm(s=>!s)}>
-          {showForm ? 'Cancel' : '+ Create new customer'}
+          {showForm ? 'Cancel' : '+ Quick create'}
         </button>
       </div>
 
       {showForm && (
         <motion.div initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}}
           style={{background:'#F0FAF4',border:'1.5px solid #C6E8D4',borderRadius:14,padding:'20px 24px',marginBottom:20}}>
-          <div style={{fontWeight:700,fontSize:14,color:'#024731',marginBottom:16}}>🆕 New customer account</div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:16}}>
+          <div style={{fontWeight:700,fontSize:14,color:'#024731',marginBottom:4}}>🆕 New login account</div>
+          <div style={{fontSize:11,color:'#6A6A5A',marginBottom:16}}>Creates a customer login. Username is auto-derived from email.</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14,marginBottom:16}}>
             {[
-              {label:'Full Name',   key:'name',     type:'text',     placeholder:'e.g. Priya Nair'},
-              {label:'Email',       key:'email',    type:'email',    placeholder:'e.g. priya@email.com'},
-              {label:'Username',    key:'username', type:'text',     placeholder:'e.g. priya'},
-              {label:'Password',    key:'password', type:'text',     placeholder:'min 4 characters'},
+              {label:'Full Name', key:'name',     type:'text',  placeholder:'e.g. Priya Nair'},
+              {label:'Email',     key:'email',    type:'email', placeholder:'e.g. priya@email.com'},
+              {label:'Password',  key:'password', type:'text',  placeholder:'min 4 characters'},
             ].map(({label,key,type,placeholder}) => (
               <div key={key}>
                 <label style={{fontSize:11,fontWeight:700,color:'#4A4A40',display:'block',marginBottom:4}}>{label}</label>
@@ -132,8 +173,13 @@ function UserManagement({ pushToast }) {
               </div>
             ))}
           </div>
+          {form.email.includes('@') && (
+            <div style={{fontSize:11,color:'#6A6A5A',marginBottom:14}}>
+              🔑 Login username will be: <code style={{background:'#E8F4EC',padding:'1px 6px',borderRadius:4}}>{form.email.split('@')[0]}</code>
+            </div>
+          )}
           <div style={{display:'flex',gap:10}}>
-            <button className="btn-primary" style={{fontSize:13}} onClick={handleCreate}>Create customer →</button>
+            <button className="btn-primary" style={{fontSize:13}} onClick={handleCreate}>Create →</button>
             <button className="btn-ghost" style={{fontSize:13}} onClick={()=>{setShowForm(false);setErrors({});}}>Cancel</button>
           </div>
         </motion.div>
@@ -142,12 +188,19 @@ function UserManagement({ pushToast }) {
       <div className="card">
         {customUsers.length === 0 ? (
           <div style={{padding:'28px 20px',textAlign:'center',color:'#9A9A8A',fontSize:13}}>
-            No custom customers yet. Click <b>"+ Create new customer"</b> to add one.
+            No accounts yet. Click <b>"+ Quick create"</b> to add one.
           </div>
         ) : (
           <table>
             <thead style={{background:'linear-gradient(90deg,#024731,#036844)'}}>
-              <tr><th style={{color:'#fff',fontWeight:700}}>Name</th><th style={{color:'#fff',fontWeight:700}}>Email</th><th style={{color:'#fff',fontWeight:700}}>Username</th><th style={{color:'#fff',fontWeight:700}}>Password</th><th style={{color:'#fff',fontWeight:700}}>Created</th><th style={{color:'#fff',fontWeight:700}}>Action</th></tr>
+              <tr>
+                <th style={{color:'#fff',fontWeight:700}}>Name</th>
+                <th style={{color:'#fff',fontWeight:700}}>Email</th>
+                <th style={{color:'#fff',fontWeight:700}}>Username (login)</th>
+                <th style={{color:'#fff',fontWeight:700}}>Password</th>
+                <th style={{color:'#fff',fontWeight:700}}>Created</th>
+                <th style={{color:'#fff',fontWeight:700}}>Action</th>
+              </tr>
             </thead>
             <tbody>
               {customUsers.map(u => (
@@ -173,6 +226,246 @@ function UserManagement({ pushToast }) {
   );
 }
 
+// ── Blockchain Customer Management Component ─────────────────────────────────
+function BlockchainCustomerManagement({ pushToast }) {
+  const EMPTY = {
+    customerID: '', fullName: '', email: '', dateOfBirth: '',
+    phone: '', address: '', nationalID: '', issuingBank: 'LloydsBankingGroup',
+  };
+  const [form, setForm]           = useState(EMPTY);
+  const [errors, setErrors]       = useState({});
+  const [showForm, setShowForm]   = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [banner, setBanner]       = useState(null); // { type: 'success'|'fabric'|'db', msg, txId }
+  const [customers, setCustomers] = useState([]);
+  const [loadingList, setLoadingList] = useState(true);
+
+  const loadCustomers = useCallback(async () => {
+    setLoadingList(true);
+    try {
+      const data = await adminGetBlockchainCustomers();
+      setCustomers(Array.isArray(data) ? data : []);
+    } catch { setCustomers([]); }
+    setLoadingList(false);
+  }, []);
+
+  useEffect(() => { loadCustomers(); }, [loadCustomers]);
+
+  const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const validate = () => {
+    const e = {};
+    if (!form.customerID.trim()) e.customerID = 'Customer ID required (e.g. CUST-LBG-001)';
+    if (!form.fullName.trim())   e.fullName   = 'Full name required';
+    if (!form.email.includes('@')) e.email    = 'Valid email required';
+    if (!form.dateOfBirth)       e.dateOfBirth = 'Date of birth required';
+    if (!form.phone.trim())      e.phone      = 'Phone required';
+    if (!form.address.trim())    e.address    = 'Address required';
+    if (!form.nationalID.trim()) e.nationalID = 'Nationality / National ID required';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleCreate = async () => {
+    if (!validate()) return;
+    setSubmitting(true);
+    setBanner(null);
+    try {
+      const result = await adminCreateBlockchainCustomer(form);
+      if (result?.success) {
+        const txShort = result.fabricTxId ? result.fabricTxId.slice(0, 14) + '…' : '—';
+
+        // ── Auto-create login account ──────────────────────────────────────
+        const parts = form.fullName.trim().split(' ');
+        const autoUsername = form.email.trim().toLowerCase().split('@')[0];
+        const allUsernames = [...DEMO_USERS, ...getCustomUsers()].map(u => u.username.toLowerCase());
+        const finalUsername = allUsernames.includes(autoUsername)
+          ? autoUsername + '_' + Date.now().toString().slice(-4)
+          : autoUsername;
+        const autoPassword = 'Pass' + Date.now().toString().slice(-4);
+        const loginUser = {
+          username: finalUsername,
+          password: autoPassword,
+          role: 'customer',
+          name: form.fullName.trim(),
+          initials: parts.map(w => w[0]).join('').toUpperCase().slice(0, 2),
+          title: 'Personal Banking Customer',
+          email: form.email.trim().toLowerCase(),
+          _custom: true,
+          _createdAt: new Date().toISOString(),
+        };
+        try {
+          await registerUser(loginUser);
+          const updated = [...getCustomUsers().filter(u => u.username !== loginUser.username), loginUser];
+          saveCustomUsers(updated);
+          setBanner({ type: 'success', msg: `✅ Customer "${form.fullName}" written to Fabric & saved to DB. Login: ${finalUsername} / ${autoPassword}`, txId: txShort });
+          pushToast(`✅ ${form.fullName} on Fabric. Login: ${finalUsername} / ${autoPassword}`, 'success');
+        } catch {
+          setBanner({ type: 'success', msg: `✅ Customer "${form.fullName}" written to Fabric & saved to DB`, txId: txShort });
+          pushToast(`✅ ${form.fullName} added to Fabric ledger & DB`, 'success');
+        }
+        // ──────────────────────────────────────────────────────────────────
+
+        setForm(EMPTY);
+        setShowForm(false);
+        loadCustomers();
+      } else {
+        const stage = result?.stage || 'unknown';
+        const errMsg = result?.error || 'Unknown error';
+        if (stage === 'fabric') {
+          setBanner({ type: 'fabric', msg: `❌ Fabric error: ${errMsg}` });
+          pushToast(`❌ Fabric write failed: ${errMsg}`, 'error');
+        } else if (stage === 'database') {
+          setBanner({ type: 'db', msg: `⚠️ Fabric OK but DB failed: ${errMsg}`, txId: result.fabricTxId?.slice(0,14)+'…' });
+          pushToast(`⚠️ DB save failed (Fabric TX committed)`, 'warn');
+        } else {
+          setBanner({ type: 'fabric', msg: `❌ ${errMsg}` });
+          pushToast(`❌ Failed: ${errMsg}`, 'error');
+        }
+      }
+    } catch (err) {
+      setBanner({ type: 'fabric', msg: `❌ Network error: ${err?.message || err}` });
+      pushToast('❌ Request failed', 'error');
+    }
+    setSubmitting(false);
+  };
+
+  const kycColor = s => s === 'VERIFIED' ? '#D1FAE5' : s === 'REJECTED' ? '#FCEBEB' : '#FEF3C7';
+  const kycText  = s => s === 'VERIFIED' ? '#065F46' : s === 'REJECTED' ? '#A32D2D' : '#92400E';
+
+  const FIELDS = [
+    { label:'Customer ID',   key:'customerID',  type:'text',  placeholder:'e.g. CUST-LBG-003', col:1 },
+    { label:'Full Name',     key:'fullName',    type:'text',  placeholder:'e.g. Alice Johnson', col:1 },
+    { label:'Email',         key:'email',       type:'email', placeholder:'e.g. alice@lloyds.com', col:1 },
+    { label:'Date of Birth', key:'dateOfBirth', type:'date',  placeholder:'', col:1 },
+    { label:'Phone',         key:'phone',       type:'text',  placeholder:'e.g. +44 7700 900123', col:1 },
+    { label:'National ID / Nationality', key:'nationalID', type:'text', placeholder:'e.g. British', col:1 },
+    { label:'Address',       key:'address',     type:'text',  placeholder:'e.g. 12 Baker Street, London', col:2 },
+    { label:'Issuing Bank',  key:'issuingBank', type:'text',  placeholder:'LloydsBankingGroup', col:1 },
+  ];
+
+  return (
+    <section className="block">
+      <div className="block-head">
+        <div className="block-title"><span className="block-num">08b</span>⛓ Blockchain customer registry</div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <button onClick={loadCustomers} style={{fontSize:11,padding:'5px 12px',borderRadius:6,background:'#F0EFE6',color:'#4A4A40',border:'1px solid #D4D3C4',cursor:'pointer',fontFamily:'inherit'}}>↻ Refresh</button>
+          <button className="btn-primary" style={{fontSize:12,padding:"6px 16px"}} onClick={() => { setShowForm(s => !s); setBanner(null); }}>
+            {showForm ? 'Cancel' : '+ Register on Fabric'}
+          </button>
+        </div>
+      </div>
+
+      {/* Banner */}
+      <AnimatePresence>
+        {banner && (
+          <motion.div initial={{opacity:0,y:-6}} animate={{opacity:1,y:0}} exit={{opacity:0}}
+            style={{
+              background: banner.type==='success' ? '#D1FAE5' : banner.type==='db' ? '#FEF3C7' : '#FCEBEB',
+              border: `1.5px solid ${banner.type==='success'?'#6EE7B7':banner.type==='db'?'#FCD34D':'#F0C0C0'}`,
+              borderRadius: 10, padding: '12px 16px', marginBottom: 16,
+              fontSize: 13, fontWeight: 600,
+              color: banner.type==='success' ? '#065F46' : banner.type==='db' ? '#92400E' : '#A32D2D',
+              display:'flex', justifyContent:'space-between', alignItems:'center'
+            }}>
+            <span>{banner.msg}{banner.txId ? <> · TX: <code style={{fontFamily:'monospace',fontSize:11}}>{banner.txId}</code></> : null}</span>
+            <button onClick={()=>setBanner(null)} style={{background:'none',border:'none',cursor:'pointer',fontSize:16,color:'inherit',padding:'0 4px'}}>✕</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Form */}
+      {showForm && (
+        <motion.div initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}}
+          style={{background:'#F0FAF4',border:'1.5px solid #C6E8D4',borderRadius:14,padding:'20px 24px',marginBottom:20}}>
+          <div style={{fontWeight:700,fontSize:14,color:'#024731',marginBottom:4}}>🆕 Register new customer on Hyperledger Fabric</div>
+          <div style={{fontSize:11,color:'#6A6A5A',marginBottom:16}}>Data will be written to the Fabric ledger, then stored in the database.</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:16}}>
+            {FIELDS.filter(fi=>fi.key!=='address').map(({label,key,type,placeholder}) => (
+              <div key={key}>
+                <label style={{fontSize:11,fontWeight:700,color:'#4A4A40',display:'block',marginBottom:4}}>{label}</label>
+                <input type={type} placeholder={placeholder} value={form[key]}
+                  onChange={e=>f(key,e.target.value)}
+                  style={{width:'100%',padding:'9px 12px',border:`1px solid ${errors[key]?'#A32D2D':'#C6E8D4'}`,borderRadius:8,fontSize:13,fontFamily:'inherit',outline:'none',boxSizing:'border-box',background:'#fff'}}/>
+                {errors[key] && <div style={{fontSize:11,color:'#A32D2D',marginTop:3}}>⚠ {errors[key]}</div>}
+              </div>
+            ))}
+          </div>
+          {/* Address — full width */}
+          <div style={{marginBottom:16}}>
+            <label style={{fontSize:11,fontWeight:700,color:'#4A4A40',display:'block',marginBottom:4}}>Address</label>
+            <input type="text" placeholder="e.g. 12 Baker Street, London" value={form.address}
+              onChange={e=>f('address',e.target.value)}
+              style={{width:'100%',padding:'9px 12px',border:`1px solid ${errors.address?'#A32D2D':'#C6E8D4'}`,borderRadius:8,fontSize:13,fontFamily:'inherit',outline:'none',boxSizing:'border-box',background:'#fff'}}/>
+            {errors.address && <div style={{fontSize:11,color:'#A32D2D',marginTop:3}}>⚠ {errors.address}</div>}
+          </div>
+          <div style={{display:'flex',gap:10,alignItems:'center'}}>
+            <button className="btn-primary" style={{fontSize:13,opacity:submitting?0.7:1,cursor:submitting?'wait':'pointer'}}
+              onClick={handleCreate} disabled={submitting}>
+              {submitting ? '⏳ Writing to Fabric…' : '⛓ Create on Fabric →'}
+            </button>
+            <button className="btn-ghost" style={{fontSize:13}} onClick={()=>{setShowForm(false);setErrors({});setBanner(null);}}>Cancel</button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Table */}
+      <div className="card">
+        {loadingList ? (
+          <div style={{padding:'28px 20px',textAlign:'center',color:'#9A9A8A',fontSize:13}}>⏳ Loading from database…</div>
+        ) : customers.length === 0 ? (
+          <div style={{padding:'28px 20px',textAlign:'center',color:'#9A9A8A',fontSize:13}}>
+            No blockchain customers yet. Click <b>"+ Register on Fabric"</b> to add one.
+          </div>
+        ) : (
+          <div style={{overflowX:'auto'}}>
+            <table>
+              <thead style={{background:'linear-gradient(90deg,#024731,#036844)'}}>
+                <tr>
+                  {['Customer ID','Full Name','Email / Phone','KYC Status','Fabric TX','Issuing Bank','Created'].map(h=>(
+                    <th key={h} style={{color:'#fff',fontWeight:700,whiteSpace:'nowrap'}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {customers.map(c => (
+                  <tr key={c.customerID}>
+                    <td>
+                      <code style={{background:'#F0EFE6',padding:'2px 7px',borderRadius:4,fontSize:11,fontFamily:'monospace'}}>
+                        {c.customerID}
+                      </code>
+                    </td>
+                    <td style={{fontWeight:700}}>{c.fullName}</td>
+                    <td>
+                      <div style={{fontSize:12}}>{c.email}</div>
+                      <div style={{fontSize:11,color:'#6A6A5A'}}>{c.phone}</div>
+                    </td>
+                    <td>
+                      <span style={{
+                        background: kycColor(c.kycStatus), color: kycText(c.kycStatus),
+                        padding:'2px 9px', borderRadius:12, fontSize:11, fontWeight:700,
+                      }}>{c.kycStatus || 'PENDING'}</span>
+                    </td>
+                    <td>
+                      <code style={{fontSize:10,fontFamily:'monospace',color:'#4A4A40',wordBreak:'break-all'}}>
+                        {c.fabricTxId ? c.fabricTxId.slice(0,16)+'…' : '—'}
+                      </code>
+                    </td>
+                    <td style={{fontSize:12}}>{c.issuingBank}</td>
+                    <td style={{fontSize:11,color:'#9A9A8A',whiteSpace:'nowrap'}}>
+                      {c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function AdminControlCenter({ onNavigate, notifications=[] }) {
   const { pushToast, currentUser } = useStore();
   const [loans,       setLoans]       = useState([]);
@@ -184,8 +477,16 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
   const [deciding,    setDeciding]    = useState({});
   const [kycDeciding, setKycDeciding] = useState({});
   const [shareDeciding, setShareDeciding] = useState({});
-  const [viewingDocs, setViewingDocs] = useState(null); // KYC request object to view docs
+  const [viewingDocs, setViewingDocs] = useState(null);
   const [policyOn, setPolicyOn] = useState({ auto_eligible:true, manual_review:true, revocation:true, cross_bank:true });
+
+  // ── pagination state (5 rows per table) ──────────────────────────────────
+  const [kycPage,      setKycPage]      = useState(0);
+  const [loanPage,     setLoanPage]     = useState(0);
+  const [sharePage,    setSharePage]    = useState(0);
+  const [expiringPage, setExpiringPage] = useState(0);
+
+  const fabricBusy = Object.keys(kycDeciding).length > 0;
   const actor = currentUser?.name || "Admin";
 
   const load = async () => {
@@ -232,6 +533,37 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
         : "KYC request rejected by "+actor;
       await decideKycRequest(req.id, decision, remark, actor);
       await load();
+
+      if (decision === "approved" && req.email) {
+        // ── Auto-create login account when KYC is approved ────────────────
+        const parts = (req.customerName || req.email).trim().split(' ');
+        const autoUsername = req.email.trim().toLowerCase().split('@')[0];
+        const allUsernames = [...DEMO_USERS, ...getCustomUsers()].map(u => u.username.toLowerCase());
+        const alreadyExists = getCustomUsers().some(u => u.email?.toLowerCase() === req.email.toLowerCase());
+        if (!alreadyExists) {
+          const finalUsername = allUsernames.includes(autoUsername)
+            ? autoUsername + '_' + Date.now().toString().slice(-4)
+            : autoUsername;
+          const autoPassword = parts[0]?.toLowerCase().slice(0,6) || 'pass01';
+          const loginUser = {
+            username: finalUsername,
+            password: autoPassword,
+            role: 'customer',
+            name: req.customerName || finalUsername,
+            initials: parts.map(w => w[0]).join('').toUpperCase().slice(0, 2),
+            title: 'Personal Banking Customer',
+            email: req.email.trim().toLowerCase(),
+            _custom: true,
+            _createdAt: new Date().toISOString(),
+          };
+          try { await registerUser(loginUser); } catch {}
+          const updated = [...getCustomUsers().filter(u => u.username !== loginUser.username), loginUser];
+          saveCustomUsers(updated);
+          pushToast(`✅ Login created — ${finalUsername} / ${autoPassword}`, 'success');
+        }
+        // ─────────────────────────────────────────────────────────────────
+      }
+
       pushToast(
         decision==="approved"
           ? "\uD83D\uDD12 KYC credential issued for "+req.customerName
@@ -247,7 +579,7 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
   const DOC_LABELS = { passport:'Passport / National ID', proof_id:'Proof of Identity', address:'Address Proof', income:'Income Proof', bank_stmt:'Bank Statement' };
 
   return (
-    <div className="main">
+    <><div className="main">
       <Navbar crumb="Admin control center" onFluid={()=>onNavigate("fluid_overview")} variant="admin" notifications={notifications}/>
       <div className="content">
 
@@ -393,13 +725,12 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
             ) : kycReqs.length === 0 ? (
               <div style={{padding:"32px",textAlign:"center",color:"#9A9A8A"}}>✅ No KYC requests yet.</div>
             ) : (
-              <table>
+              <><table>
                 <thead style={{background:'linear-gradient(90deg,#024731,#036844)'}}>
                   <tr><th style={{color:'#fff',fontWeight:700}}>Customer</th><th style={{color:'#fff',fontWeight:700}}>Email</th><th style={{color:'#fff',fontWeight:700}}>Documents</th><th style={{color:'#fff',fontWeight:700}}>Submitted</th><th style={{color:'#fff',fontWeight:700}}>Status</th><th style={{color:'#fff',fontWeight:700}}>Actions</th></tr>
                 </thead>
                 <tbody>
-                  {kycReqs.map(r => {
-                    const st = kycDeciding[r.id];
+                  {kycReqs.slice(kycPage*PAGE_SIZE,(kycPage+1)*PAGE_SIZE).map(r => {                    const st = kycDeciding[r.id];
                     const statusCls = r.status==="approved"?"tag-go":r.status==="rejected"?"tag-stop":"tag-warn";
                     const docCount = r.uploadedDocs ? r.uploadedDocs.split(",").filter(Boolean).length : 0;
                     return (
@@ -443,6 +774,7 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
                   })}
                 </tbody>
               </table>
+              <Pager page={kycPage} setPage={setKycPage} total={kycReqs.length}/></>
             )}
           </motion.div>
         </section>
@@ -450,23 +782,24 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
         {/* ── 02 PENDING ACTION QUEUE ── */}
         <section className="block">
           <div className="block-head">
-            <div className="block-title"><span className="block-num">02</span>Pending loan action queue</div>
-            <div className="block-note">{activeQueue.length} application{activeQueue.length!==1?"s":""} need attention</div>
+            <div className="block-title"><span className="block-num">02</span>Product application queue</div>
+            <div className="block-note">{activeQueue.length} pending · {loans.length} total applications</div>
           </div>
           <motion.div className="card" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0.15}}>
             {loading ? (
-              <div style={{padding:"32px",textAlign:"center",color:"#9A9A8A"}}>\u23F3 Loading applications...</div>
-            ) : activeQueue.length===0 ? (
-              <div style={{padding:"32px",textAlign:"center",color:"#9A9A8A"}}>\u2705 No pending applications &mdash; all clear!</div>
+              <div style={{padding:"32px",textAlign:"center",color:"#9A9A8A"}}>⏳ Loading applications...</div>
+            ) : loans.length===0 ? (
+              <div style={{padding:"32px",textAlign:"center",color:"#9A9A8A"}}>✅ No applications yet — all clear!</div>
             ) : (
-              <table>
+              <><table>
                 <thead style={{background:'linear-gradient(90deg,#024731,#036844)'}}>
                   <tr><th style={{color:'#fff',fontWeight:700}}>Applicant</th><th style={{color:'#fff',fontWeight:700}}>Product</th><th style={{color:'#fff',fontWeight:700}}>Bank</th><th style={{color:'#fff',fontWeight:700}}>Amount</th><th style={{color:'#fff',fontWeight:700}}>Credit score</th><th style={{color:'#fff',fontWeight:700}}>Status</th><th style={{color:'#fff',fontWeight:700}}>Actions</th></tr>
                 </thead>
                 <tbody>
-                  {activeQueue.map(app => {
+                  {loans.slice(loanPage*PAGE_SIZE,(loanPage+1)*PAGE_SIZE).map(app => {
                     const appId = app.applicationId || app.id;
                     const st = deciding[appId];
+                    const isPending = pending.includes((app.status||app.applicationStatus||"").toLowerCase());
                     return (
                       <tr key={appId}>
                         <td>
@@ -481,8 +814,10 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
                         <td>
                           <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                             <button className="btn-ghost" style={{fontSize:11,padding:"5px 10px"}} onClick={()=>onNavigate("loan_applications")}>View →</button>
-                            <button disabled={!!st} onClick={()=>handleDecide(app,"approved")} style={{fontSize:11,padding:"5px 10px",borderRadius:7,background:"#F0FAF4",color:"#024731",border:"1px solid #C6E8D4",cursor:"pointer",fontWeight:700}}>{st==="approved"?"⏳":"✔ Approve"}</button>
-                            <button disabled={!!st} onClick={()=>handleDecide(app,"rejected")} style={{fontSize:11,padding:"5px 10px",borderRadius:7,background:"#FCEBEB",color:"#A32D2D",border:"1px solid #F0C0C0",cursor:"pointer",fontWeight:700}}>{st==="rejected"?"⏳":"✘ Reject"}</button>
+                            {isPending && <>
+                              <button disabled={!!st} onClick={()=>handleDecide(app,"approved")} style={{fontSize:11,padding:"5px 10px",borderRadius:7,background:"#F0FAF4",color:"#024731",border:"1px solid #C6E8D4",cursor:"pointer",fontWeight:700}}>{st==="approved"?"⏳":"✔ Approve"}</button>
+                              <button disabled={!!st} onClick={()=>handleDecide(app,"rejected")} style={{fontSize:11,padding:"5px 10px",borderRadius:7,background:"#FCEBEB",color:"#A32D2D",border:"1px solid #F0C0C0",cursor:"pointer",fontWeight:700}}>{st==="rejected"?"⏳":"✘ Reject"}</button>
+                            </>}
                           </div>
                         </td>
                       </tr>
@@ -490,6 +825,7 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
                   })}
                 </tbody>
               </table>
+              <Pager page={loanPage} setPage={setLoanPage} total={loans.length}/></>
             )}
           </motion.div>
         </section>
@@ -506,12 +842,12 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
             ) : shareReqs.length === 0 ? (
               <div style={{padding:"32px",textAlign:"center",color:"#9A9A8A"}}>&#x1F3E6; No credential share requests yet.</div>
             ) : (
-              <table>
+              <><table>
                 <thead style={{background:'linear-gradient(90deg,#024731,#036844)'}}>
                   <tr><th style={{color:'#fff',fontWeight:700}}>Customer</th><th style={{color:'#fff',fontWeight:700}}>Credential ID</th><th style={{color:'#fff',fontWeight:700}}>Target bank</th><th style={{color:'#fff',fontWeight:700}}>Requested</th><th style={{color:'#fff',fontWeight:700}}>Status</th><th style={{color:'#fff',fontWeight:700}}>Actions</th></tr>
                 </thead>
                 <tbody>
-                  {shareReqs.map(r => {
+                  {shareReqs.slice(sharePage*PAGE_SIZE,(sharePage+1)*PAGE_SIZE).map(r => {
                     const st = shareDeciding[r.id];
                     const statusCls = r.status==="approved"?"tag-go":r.status==="rejected"?"tag-stop":"tag-warn";
                     return (
@@ -562,6 +898,7 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
                   })}
                 </tbody>
               </table>
+              <Pager page={sharePage} setPage={setSharePage} total={shareReqs.length}/></>
             )}
           </motion.div>
         </section>
@@ -578,12 +915,12 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
             ) : expiringSoon.length===0 ? (
               <div style={{padding:"32px",textAlign:"center",color:"#9A9A8A"}}>\uD83D\uDEE1\uFE0F No credentials expiring within 90 days.</div>
             ) : (
-              <table>
+              <><table>
                 <thead style={{background:'linear-gradient(90deg,#024731,#036844)'}}>
                   <tr><th style={{color:'#fff',fontWeight:700}}>Customer</th><th style={{color:'#fff',fontWeight:700}}>Credential ID</th><th style={{color:'#fff',fontWeight:700}}>Status</th><th style={{color:'#fff',fontWeight:700}}>Expires</th><th style={{color:'#fff',fontWeight:700}}>Days left</th><th style={{color:'#fff',fontWeight:700}}>Action</th></tr>
                 </thead>
                 <tbody>
-                  {expiringSoon.map((r,i) => {
+                  {expiringSoon.slice(expiringPage*PAGE_SIZE,(expiringPage+1)*PAGE_SIZE).map((r,i) => {
                     const d=Math.ceil((new Date(r.expiresOn)-new Date())/86400000);
                     return (
                       <tr key={i}>
@@ -598,6 +935,7 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
                   })}
                 </tbody>
               </table>
+              <Pager page={expiringPage} setPage={setExpiringPage} total={expiringSoon.length}/></>
             )}
           </motion.div>
         </section>
@@ -651,10 +989,16 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
           </section>
         </div>
 
+        {/* ── 08b BLOCKCHAIN CUSTOMER REGISTRY (commented out — use New Customer Upload flow instead) ── */}
+        {/* <BlockchainCustomerManagement pushToast={pushToast} /> */}
+
         {/* ── 09 USER MANAGEMENT ── */}
         <UserManagement pushToast={pushToast} />
 
       </div>
     </div>
+
+    <FabricLoader visible={fabricBusy} message="Issuing KYC credential on Hyperledger Fabric…" />
+    </>
   );
 }

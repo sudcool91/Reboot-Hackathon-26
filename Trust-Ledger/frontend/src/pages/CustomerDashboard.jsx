@@ -2,7 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
 import { useStore } from "../store";
-import { getKycRegistry, getLoanApplications, getKycRequestsByEmail, getShareRequestsByEmail, submitShareRequest, decideShareRequest } from "../services/api";
+import { getKycRegistry, getLoanApplications, getKycRequestsByEmail, getKycRequests, getShareRequestsByEmail, submitShareRequest, decideShareRequest } from "../services/api";
 
 const fadeUp = { hidden:{opacity:0,y:14}, show:{opacity:1,y:0} };
 const container = { hidden:{}, show:{transition:{staggerChildren:0.08}} };
@@ -89,10 +89,11 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [kycData, loanData, kycReqData, shareReqData] = await Promise.all([
+      const [kycData, loanData, kycReqData, allKycReqData, shareReqData] = await Promise.all([
         getKycRegistry(),
         currentUser?.email ? getLoanApplications(currentUser.email) : getLoanApplications(),
         currentUser?.email ? getKycRequestsByEmail(currentUser.email) : Promise.resolve([]),
+        getKycRequests().catch(() => []),   // fetch all, filter client-side as fallback
         currentUser?.email ? getShareRequestsByEmail(currentUser.email) : Promise.resolve([]),
       ]);
 
@@ -104,17 +105,23 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
       setKycRecord(myKyc || null);
 
       const loanList = Array.isArray(loanData) ? loanData : (loanData?.applications || []);
-      // Already filtered by email from API, but also keep name fallback for legacy data
       const myLoans = loanList.filter(a =>
         !currentUser?.email ||
         a.email?.toLowerCase() === currentUser.email.toLowerCase() ||
-        a.applicantName?.toLowerCase() === currentUser.name?.toLowerCase()
+        a.applicantName?.toLowerCase() === currentUser.name?.toLowerCase() ||
+        a.customerName?.toLowerCase() === currentUser.name?.toLowerCase()
       );
-      // Latest first
       setApplications(myLoans.sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0)));
 
-      const reqs = Array.isArray(kycReqData) ? kycReqData : [];
-      setKycRequests(reqs.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      // Merge email-filtered + all-filtered-by-name, deduplicate by id
+      const emailReqs = Array.isArray(kycReqData) ? kycReqData : [];
+      const allReqs   = Array.isArray(allKycReqData) ? allKycReqData : [];
+      const nameReqs  = allReqs.filter(r =>
+        r.customerName?.toLowerCase().trim() === currentUser?.name?.toLowerCase().trim() ||
+        r.email?.toLowerCase().trim() === currentUser?.email?.toLowerCase().trim()
+      );
+      const merged = [...emailReqs, ...nameReqs.filter(n => !emailReqs.some(e => e.id === n.id))];
+      setKycRequests(merged.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
 
       const shares = Array.isArray(shareReqData) ? shareReqData : [];
       setShareRequests(shares.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
@@ -337,40 +344,73 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
 
         <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr",gap:20}}>
 
-          {/* My applications */}
           <section className="block" style={{marginBottom:0}}>
             <div className="block-head">
-              <div className="block-title"><span className="block-num">01</span>My applications</div>
+              <div className="block-title"><span className="block-num">01</span>My activity</div>
               <button className="btn-ghost" style={{fontSize:11,padding:"5px 12px"}} onClick={()=>onNavigate("customer_application")}>+ New</button>
             </div>
             <div className="card">
               {loading ? (
                 <div style={{padding:"24px",textAlign:"center",opacity:0.4,fontSize:13}}>Loading…</div>
-              ) : applications.length===0 ? (
-                <div style={{padding:"32px 20px",textAlign:"center"}}>
-                  <div style={{fontSize:36,marginBottom:12}}>📋</div>
-                  <div style={{fontSize:14,fontWeight:700,color:"#1A1A14",marginBottom:6}}>No applications yet</div>
-                  <button className="btn-primary" style={{fontSize:12}} onClick={()=>onNavigate("customer_application")}>Apply now →</button>
-                </div>
-              ) : (
-                <table>
-                  <thead><tr><th>Product</th><th>Bank</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
-                  <tbody>
-                    {applications.map((a,i) => {
-                      const sc = STATUS_COLOR[a.status]||{bg:"#F0EFE6",color:"#4A4A40"};
-                      return (
-                        <tr key={i}>
-                          <td><div style={{fontWeight:600,fontSize:13}}>{a.product||a.productType||a.loanType||"—"}</div><div style={{fontSize:11,color:"#9A9A8A"}}>{a.applicationId||a.id||""}</div></td>
-                          <td style={{fontSize:12,color:"#4A4A40"}}>{a.targetBank||"—"}</td>
-                          <td style={{fontWeight:600}}>{(a.amount||"").toString().replace("GBP","£")}</td>
-                          <td><span style={{...sc,padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>{a.status||a.applicationStatus}</span></td>
-                          <td style={{fontSize:11,color:"#9A9A8A"}}>{a.createdAt?new Date(a.createdAt).toLocaleDateString():"—"}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
+              ) : (() => {
+                // Combine all activity types into one list
+                const rows = [
+                  ...applications.map(a => ({
+                    type: 'loan',
+                    icon: a.product?.toLowerCase().includes('credit') ? '💰' : a.product?.toLowerCase().includes('home') ? '🏠' : a.product?.toLowerCase().includes('vehicle') ? '🚗' : '💳',
+                    title: a.product || a.productType || a.loanType || 'Loan application',
+                    sub: a.targetBank || '—',
+                    status: a.status || a.applicationStatus || 'Pending',
+                    date: a.createdAt,
+                    amount: a.amount ? '£' + Number(String(a.amount).replace(/[^0-9]/g,'')).toLocaleString() : '—',
+                  })),
+                  ...kycRequests.map(r => ({
+                    type: 'kyc',
+                    icon: '🔐',
+                    title: 'KYC verification request',
+                    sub: r.credentialId || (r.status === 'approved' ? 'Approved' : 'Pending admin review'),
+                    status: r.status === 'approved' ? 'Approved' : r.status === 'rejected' ? 'Rejected' : 'Pending',
+                    date: r.createdAt,
+                    amount: '—',
+                  })),
+                  ...shareRequests.map(r => ({
+                    type: 'share',
+                    icon: '🏦',
+                    title: 'Credential share — ' + r.targetBank,
+                    sub: r.credentialId || '—',
+                    status: r.status === 'approved' ? 'Approved' : r.status === 'rejected' ? 'Rejected' : 'Pending',
+                    date: r.createdAt,
+                    amount: '—',
+                  })),
+                ].sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
+
+                if (rows.length === 0) return (
+                  <div style={{padding:"32px 20px",textAlign:"center"}}>
+                    <div style={{fontSize:36,marginBottom:12}}>📋</div>
+                    <div style={{fontSize:14,fontWeight:700,color:"#1A1A14",marginBottom:6}}>No activity yet</div>
+                    <button className="btn-primary" style={{fontSize:12}} onClick={()=>onNavigate("customer_application")}>Apply now →</button>
+                  </div>
+                );
+                return (
+                  <table>
+                    <thead><tr><th>Type</th><th>Details</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+                    <tbody>
+                      {rows.map((a,i) => {
+                        const sc = STATUS_COLOR[a.status]||{bg:"#F0EFE6",color:"#4A4A40"};
+                        return (
+                          <tr key={i}>
+                            <td><span style={{fontSize:18}}>{a.icon}</span></td>
+                            <td><div style={{fontWeight:600,fontSize:13}}>{a.title}</div><div style={{fontSize:11,color:"#9A9A8A"}}>{a.sub}</div></td>
+                            <td style={{fontWeight:600}}>{a.amount}</td>
+                            <td><span style={{...sc,padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>{a.status}</span></td>
+                            <td style={{fontSize:11,color:"#9A9A8A"}}>{a.date?new Date(a.date).toLocaleDateString():"—"}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                );
+              })()}
             </div>
           </section>
 

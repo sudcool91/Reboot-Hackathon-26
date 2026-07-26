@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../components/Navbar';
-import { getDashboardSummary, getDashboardActivity, getLoanApplications, getKycRegistry, getKycRequests, getShareRequests } from '../services/api';
+import { getDashboardSummary, getDashboardActivity, getLoanApplications, getKycRegistry, getKycRequests, getShareRequests, decideLoan } from '../services/api';
+import { useStore } from '../store';
 
 const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
@@ -88,12 +89,16 @@ function ProfilePopup({ item, onClose }) {
 const PAGE_SIZE = 5;
 
 export default function Dashboard({ onNavigate, notifications = [] }) {
+  const { currentUser, pushToast } = useStore();
   const [summary, setSummary]         = useState(null);
   const [activity, setActivity]       = useState([]);
-  const [unified, setUnified]         = useState([]); // merged activity rows
+  const [unified, setUnified]         = useState([]);
+  const [filtered, setFiltered]       = useState([]);
+  const [typeFilter, setTypeFilter]   = useState('all');
   const [lastRefresh, setLastRefresh] = useState(null);
   const [refreshing, setRefreshing]   = useState(false);
-  const [viewing, setViewing]         = useState(null); // profile popup
+  const [viewing, setViewing]         = useState(null);
+  const [deciding, setDeciding]       = useState({});
   const [page, setPage]               = useState(1);
 
   const fetchAll = useCallback(async (showSpinner = false) => {
@@ -183,6 +188,7 @@ export default function Dashboard({ onNavigate, notifications = [] }) {
       // Sort newest first
       rows.sort((a,b) => new Date(b._date||0) - new Date(a._date||0));
       setUnified(rows);
+      setFiltered(rows);
       setPage(1);
       setLastRefresh(new Date());
     } finally {
@@ -195,6 +201,25 @@ export default function Dashboard({ onNavigate, notifications = [] }) {
     const id = setInterval(() => fetchAll(false), 15000);
     return () => clearInterval(id);
   }, [fetchAll]);
+
+  // Apply type filter
+  useEffect(() => {
+    if (typeFilter === 'all') setFiltered(unified);
+    else setFiltered(unified.filter(r => r._type === typeFilter));
+    setPage(1);
+  }, [typeFilter, unified]);
+
+  const handleDecide = async (row, decision) => {
+    const appId = row._details.find(([l]) => l === 'Application ID')?.[1];
+    if (!appId) return;
+    setDeciding(d => ({...d, [appId]: decision}));
+    try {
+      await decideLoan(appId, decision, (decision === 'approved' ? 'Approved' : 'Rejected') + ' by ' + (currentUser?.name || 'Admin'), currentUser?.name || 'Admin');
+      pushToast(decision === 'approved' ? '✅ Application approved' : '❌ Application rejected', 'success');
+      await fetchAll(false);
+    } catch { pushToast('Action failed', 'error'); }
+    setDeciding(d => { const n = {...d}; delete n[appId]; return n; });
+  };
 
   return (
     <div className="main">
@@ -274,14 +299,19 @@ export default function Dashboard({ onNavigate, notifications = [] }) {
         <section className="block">
           <div className="block-head">
             <div className="block-title"><span className="block-num">03</span>Recent activity — all events</div>
-            <div style={{display:'flex',gap:10,alignItems:'center'}}>
-              <div style={{display:'flex',gap:6}}>
-                {Object.entries(TYPE_META).map(([k,m])=>(
-                  <span key={k} style={{fontSize:10,padding:'3px 8px',borderRadius:20,background:m.bg,color:m.color,fontWeight:700}}>
-                    {m.icon} {m.label}
-                  </span>
-                ))}
-              </div>
+            <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+              {/* Type filter tabs */}
+              {[['all','All',null],['loan','Loans','💳'],['kyc','KYC','🪪'],['share','Shares','🏦']].map(([k,l,ic])=>(
+                <button key={k} onClick={()=>setTypeFilter(k)}
+                  style={{fontSize:11,padding:'4px 10px',borderRadius:20,border:'1.5px solid',cursor:'pointer',fontWeight:700,fontFamily:'inherit',transition:'all 0.15s',
+                    borderColor: typeFilter===k ? '#024731' : '#E2E0D2',
+                    background:  typeFilter===k ? '#024731' : '#FAFAF7',
+                    color:       typeFilter===k ? '#fff' : '#4A4A40',
+                  }}>
+                  {ic&&<span style={{marginRight:4}}>{ic}</span>}{l}
+                  {k!=='all'&&<span style={{marginLeft:5,opacity:0.7}}>{unified.filter(r=>r._type===k).length}</span>}
+                </button>
+              ))}
               <button className="btn-ghost" style={{fontSize:11,height:28}} onClick={()=>fetchAll(true)}>↻ Refresh</button>
             </div>
           </div>
@@ -294,15 +324,18 @@ export default function Dashboard({ onNavigate, notifications = [] }) {
                   <th>Details</th>
                   <th>Date</th>
                   <th>Status</th>
-                  <th></th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {unified.length === 0 && (
+                {filtered.length === 0 && (
                   <tr><td colSpan={6} style={{textAlign:'center',opacity:0.4,padding:'28px 0'}}>⏳ Loading activity…</td></tr>
                 )}
-                {unified.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE).map((row, i) => {
+                {filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE).map((row, i) => {
                   const meta = TYPE_META[row._type];
+                  const appId = row._details.find(([l]) => l === 'Application ID')?.[1];
+                  const isPendingLoan = row._type === 'loan' && ['pending docs','pending','manual review','auto-eligible'].includes((row._status||'').toLowerCase());
+                  const st = deciding[appId];
                   return (
                     <tr key={i}>
                       <td>
@@ -327,14 +360,10 @@ export default function Dashboard({ onNavigate, notifications = [] }) {
                       <td style={{fontSize:12,maxWidth:220}}>
                         <div style={{fontWeight:600,color:'#1A1A14',lineHeight:1.4}}>{row._title}</div>
                         {row._details.find(([l])=>l==='Amount')?.[1] && row._details.find(([l])=>l==='Amount')[1] !== '—' && (
-                          <div style={{fontSize:11,color:'#4A4A40',marginTop:2}}>
-                            {row._details.find(([l])=>l==='Amount')[1]}
-                          </div>
+                          <div style={{fontSize:11,color:'#4A4A40',marginTop:2}}>{row._details.find(([l])=>l==='Amount')[1]}</div>
                         )}
                         {row._details.find(([l])=>l==='Target Bank')?.[1] && row._details.find(([l])=>l==='Target Bank')[1] !== '—' && (
-                          <div style={{fontSize:11,color:'#4A4A40',marginTop:2}}>
-                            → {row._details.find(([l])=>l==='Target Bank')[1]}
-                          </div>
+                          <div style={{fontSize:11,color:'#4A4A40',marginTop:2}}>→ {row._details.find(([l])=>l==='Target Bank')[1]}</div>
                         )}
                       </td>
                       <td style={{fontSize:11,color:'#6A6A5A',whiteSpace:'nowrap'}}>
@@ -343,10 +372,24 @@ export default function Dashboard({ onNavigate, notifications = [] }) {
                       </td>
                       <td><span className={`tag ${STATUS_CLS[row._status] || 'tag-warn'}`}>{row._status}</span></td>
                       <td>
-                        <button onClick={()=>setViewing(row)}
-                          style={{fontSize:11,padding:'5px 10px',borderRadius:7,background:'#F0EFE6',color:'#024731',border:'1px solid #D8D6C8',cursor:'pointer',fontWeight:700,fontFamily:'inherit',whiteSpace:'nowrap'}}>
-                          View →
-                        </button>
+                        <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                          <button onClick={()=>setViewing(row)}
+                            style={{fontSize:11,padding:'4px 9px',borderRadius:7,background:'#F0EFE6',color:'#024731',border:'1px solid #D8D6C8',cursor:'pointer',fontWeight:700,fontFamily:'inherit',whiteSpace:'nowrap'}}>
+                            View →
+                          </button>
+                          {isPendingLoan && appId && (
+                            <>
+                              <button disabled={!!st} onClick={()=>handleDecide(row,'approved')}
+                                style={{fontSize:11,padding:'4px 9px',borderRadius:7,background:'#F0FAF4',color:'#024731',border:'1px solid #C6E8D4',cursor:'pointer',fontWeight:700,fontFamily:'inherit',whiteSpace:'nowrap'}}>
+                                {st==='approved'?'⏳':'✔ Approve'}
+                              </button>
+                              <button disabled={!!st} onClick={()=>handleDecide(row,'rejected')}
+                                style={{fontSize:11,padding:'4px 9px',borderRadius:7,background:'#FCEBEB',color:'#A32D2D',border:'1px solid #F0C0C0',cursor:'pointer',fontWeight:700,fontFamily:'inherit',whiteSpace:'nowrap'}}>
+                                {st==='rejected'?'⏳':'✘ Reject'}
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -355,10 +398,10 @@ export default function Dashboard({ onNavigate, notifications = [] }) {
             </table>
 
             {/* ── Pagination ── */}
-            {unified.length > 0 && (() => {
-              const totalPages = Math.ceil(unified.length / PAGE_SIZE);
+            {filtered.length > 0 && (() => {
+              const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
               const start = (page - 1) * PAGE_SIZE + 1;
-              const end   = Math.min(page * PAGE_SIZE, unified.length);
+              const end   = Math.min(page * PAGE_SIZE, filtered.length);
 
               // Build page numbers: always show first, last, current ±1, with ellipsis
               const pages = [];
@@ -375,7 +418,8 @@ export default function Dashboard({ onNavigate, notifications = [] }) {
                 }}>
                   {/* Record count */}
                   <div style={{ fontSize: 12, color: '#9A9A8A' }}>
-                    Showing <b style={{color:'#1A1A14'}}>{start}–{end}</b> of <b style={{color:'#1A1A14'}}>{unified.length}</b> records
+                    Showing <b style={{color:'#1A1A14'}}>{start}–{end}</b> of <b style={{color:'#1A1A14'}}>{filtered.length}</b> records
+                    {typeFilter !== 'all' && <span style={{marginLeft:6,opacity:0.6}}>({unified.length} total)</span>}
                   </div>
 
                   {/* Page buttons */}

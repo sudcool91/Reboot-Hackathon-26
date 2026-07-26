@@ -8,10 +8,10 @@ const ADMIN_TOUR_STEPS = [
 ];
 
 const CUSTOMER_TOUR_STEPS = [
-  { selector: '[data-page="customer_dashboard"]', title: 'Your dashboard', desc: 'See your KYC status, all your loan applications, and credential share requests — all in one place. Hit Refresh any time to get the latest status.', page: 'customer_dashboard' },
-  { selector: '.btn-primary', title: 'Apply for a product', desc: 'Select from personal loans, home loans, vehicle loans and business loans. Your verified identity is reused automatically — no re-uploading.', page: 'customer_application' },
+  { selector: '.block-title', title: 'Your dashboard', desc: 'See your KYC status, all your loan applications, and credential share requests — all in one place. Hit Refresh any time to get the latest status.', page: 'customer_dashboard' },
+  { selector: '.page-title', title: 'Apply for a product', desc: 'Select from personal loans, home loans, vehicle loans and business loans. Your verified identity is reused automatically — no re-uploading.', page: 'customer_application' },
   { selector: '.ncu-hero', title: 'Upload your documents once', desc: 'Submit your KYC documents here. Once approved by admin your credential is issued and reused across all Lloyds products permanently.', page: 'new_customer_upload' },
-  { selector: '.trail', title: 'Your audit trail on the ledger', desc: 'Every identity check is written on-chain. View your full credential history — immutable, transparent, yours.', page: 'ledger_explorer' },
+  { selector: '.block-head', title: 'Your audit trail on the ledger', desc: 'Every identity check is written on-chain. View your full credential history — immutable, transparent, yours.', page: 'ledger_explorer' },
 ];
 
 export default function Tour({ currentPage, onNavigate, autoStart = false, role = 'admin' }) {
@@ -58,7 +58,7 @@ export default function Tour({ currentPage, onNavigate, autoStart = false, role 
     const step = TOUR_STEPS[index];
     const rect = getRect(step.selector);
     if (!rect) {
-      if (retries < 6) setTimeout(() => renderStep(retries + 1), 150);
+      if (retries < 10) setTimeout(() => renderStep(retries + 1), 250);
       return;
     }
     const pad = 8;
@@ -71,7 +71,7 @@ export default function Tour({ currentPage, onNavigate, autoStart = false, role 
     const step = TOUR_STEPS[index];
     if (currentPage !== step.page) {
       onNavigate(step.page);
-      setTimeout(() => renderStep(0), 200);
+      setTimeout(() => renderStep(0), 450);
     } else {
       renderStep(0);
     }

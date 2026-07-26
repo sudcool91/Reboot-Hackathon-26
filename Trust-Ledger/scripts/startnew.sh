@@ -183,6 +183,7 @@ ok "Fabric network and channel are ready."
 cd "$FABRIC_DIR"
 export PATH="${PROJECT_ROOT}/bin:$PATH"
 export FABRIC_CFG_PATH="${PROJECT_ROOT}/config"
+export VERBOSE=false
 source scripts/envVar.sh
 setGlobals 1
 

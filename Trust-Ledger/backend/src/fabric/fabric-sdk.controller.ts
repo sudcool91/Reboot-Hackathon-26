@@ -17,6 +17,8 @@ import {
   Logger,
 } from '@nestjs/common';
 import { SdkFabricGateway } from './gateways/sdk-fabric.gateway';
+import { BlockchainCustomerService } from './blockchain-customer.service';
+import type { CreateBlockchainCustomerDto } from './blockchain-customer.service';
 import type {
   CreateCustomerDTO,
   UpdateCustomerDTO,
@@ -28,7 +30,10 @@ import type {
 export class FabricSdkController {
   private readonly logger = new Logger(FabricSdkController.name);
 
-  constructor(private readonly sdkGateway: SdkFabricGateway) {}
+  constructor(
+    private readonly sdkGateway: SdkFabricGateway,
+    private readonly blockchainCustomerService: BlockchainCustomerService,
+  ) {}
 
   // ============================================
   // Health & Info
@@ -262,6 +267,50 @@ export class FabricSdkController {
         success: false,
         message: error.message,
       };
+    }
+  }
+
+  // ============================================
+  // Admin: Blockchain Customer Management (Fabric → DB)
+  // ============================================
+
+  @Post('admin/customers')
+  @HttpCode(HttpStatus.CREATED)
+  async adminCreateCustomer(@Body() dto: CreateBlockchainCustomerDto) {
+    try {
+      const result = await this.blockchainCustomerService.createAndStore(dto);
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.error,
+          stage: result.stage,
+          fabricTxId: result.fabricTxId,
+        };
+      }
+      return {
+        success: true,
+        customer: result.customer,
+        fabricTxId: result.fabricTxId,
+        message: `Customer ${dto.customerID} created on Fabric and saved to database`,
+      };
+    } catch (error) {
+      this.logger.error(`Admin create customer failed: ${error.message}`, error);
+      return {
+        success: false,
+        error: error.message,
+        stage: 'validation',
+      };
+    }
+  }
+
+  @Get('admin/customers')
+  async adminGetAllCustomers() {
+    try {
+      const customers = await this.blockchainCustomerService.findAll();
+      return { success: true, data: customers, count: customers.length };
+    } catch (error) {
+      this.logger.error(`Admin get customers failed: ${error.message}`, error);
+      return { success: false, error: error.message, data: [] };
     }
   }
 }

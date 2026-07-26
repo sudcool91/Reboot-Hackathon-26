@@ -32,17 +32,23 @@ export class FabricContractService {
    */
   async createCustomer(data: CreateCustomerDTO): Promise<TransactionResultDTO> {
     try {
+      // Support both fullName and name (UI may send 'name')
+      const fullName = data.fullName || (data as any).name || '';
+      const nationalID = data.nationalID || (data as any).nationality || 'PENDING';
+      const issuingBank = data.issuingBank || 'LloydsBankingGroup';
+      const documentHash = data.documentHash || `HASH-${data.customerID}-${Date.now()}`;
+
       const result = await this.contract.submitTransaction(
         'CreateCustomer',
         data.customerID,
-        data.fullName,
-        data.dateOfBirth,
-        data.email,
-        data.phone,
-        data.address,
-        data.nationalID,
-        data.issuingBank,
-        data.documentHash,
+        fullName,
+        data.dateOfBirth || '',
+        data.email || '',
+        data.phone || '',
+        data.address || '',
+        nationalID,
+        issuingBank,
+        documentHash,
       );
 
       return {

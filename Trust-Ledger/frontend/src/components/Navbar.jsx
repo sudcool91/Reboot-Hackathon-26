@@ -26,8 +26,8 @@ function CryptoWalletModal({ user, onClose }) {
 
   const assets = [
     { name:'KYC Credential NFT', symbol:'KYC',  balance: user?.credentialId ? '1' : '0', color:'#4DFF9A', icon:'🔐', sub: user?.credentialId || 'Not issued' },
-    { name:'Trust Token',        symbol:'TRST', balance:'100.00', color:'#60AAFF', icon:'💎', sub:'Governance token' },
-    { name:'Consent Token',      symbol:'CNST', balance:'5.00',   color:'#FFB347', icon:'📋', sub:'Access control' },
+    { name:'Tokenised Deposit', symbol:'TD',   balance:'100.00', color:'#60AAFF', icon:'🏦', sub:'UK Digital Asset' },
+    { name:'Gilt-backed TD',    symbol:'GBTD', balance:'5.00',   color:'#FFB347', icon:'🏛', sub:'Govt-backed token' },
   ];
 
   const copyAddr = () => {
@@ -143,6 +143,232 @@ function CryptoWalletModal({ user, onClose }) {
   );
 }
 
+// ── Customer chain stats (shown on all customer pages) ──────────────────────
+function CustomerChainStats() {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 4000);
+    return () => clearInterval(id);
+  }, []);
+  const block = (48221 + tick).toLocaleString();
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+      <motion.div key={block} initial={{y:-5,opacity:0}} animate={{y:0,opacity:1}} transition={{type:'spring',stiffness:400,damping:28}}
+        style={{ display:'flex', alignItems:'center', gap:7,
+          background:'linear-gradient(135deg,#012820,#024731)',
+          border:'1.5px solid rgba(77,255,154,0.25)', borderRadius:10, padding:'5px 11px',
+          boxShadow:'0 0 8px rgba(77,255,154,0.08)' }}>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4DFF9A" strokeWidth="2.5">
+          <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        </svg>
+        <span style={{fontSize:11,fontWeight:800,color:'#4DFF9A',fontFamily:'monospace'}}>#{block}</span>
+      </motion.div>
+      <div style={{ display:'flex', alignItems:'center', gap:6,
+        background:'rgba(1,28,18,0.85)', border:'1.5px solid rgba(77,255,154,0.2)',
+        borderRadius:99, padding:'5px 10px' }}>
+        <motion.div animate={{opacity:[1,0.3,1]}} transition={{duration:1.4,repeat:Infinity}}
+          style={{width:6,height:6,borderRadius:'50%',background:'#4DFF9A',boxShadow:'0 0 6px #4DFF9A'}}/>
+        <span style={{fontSize:10,fontWeight:800,color:'#4DFF9A',letterSpacing:'0.05em'}}>Network healthy</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Admin chain stats (shown in navbar on all admin pages) ───────────────────
+function AdminChainStats() {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 3200);
+    return () => clearInterval(id);
+  }, []);
+  const block = (48221 + tick).toLocaleString();
+
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+
+      {/* Role badge */}
+      <div style={{
+        display:'flex', alignItems:'center', gap:7,
+        background:'linear-gradient(135deg,#012820,#024731)',
+        border:'1.5px solid rgba(77,255,154,0.3)',
+        borderRadius:10, padding:'6px 12px',
+        boxShadow:'0 0 10px rgba(77,255,154,0.1)',
+      }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4DFF9A" strokeWidth="2.2">
+          <path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/>
+        </svg>
+        <div>
+          <div style={{fontSize:8,color:'rgba(77,255,154,0.5)',fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',lineHeight:1}}>Role</div>
+          <div style={{fontSize:11,fontWeight:900,color:'#4DFF9A',lineHeight:1.2,whiteSpace:'nowrap'}}>Tier 2 · Senior admin</div>
+        </div>
+      </div>
+
+      {/* Block height */}
+      <motion.div key={block} initial={{y:-6,opacity:0}} animate={{y:0,opacity:1}} transition={{type:'spring',stiffness:400,damping:28}}
+        style={{
+          display:'flex', alignItems:'center', gap:7,
+          background:'linear-gradient(135deg,#0D1B3E,#1a2a5e)',
+          border:'1.5px solid rgba(96,170,255,0.3)',
+          borderRadius:10, padding:'6px 12px',
+          boxShadow:'0 0 10px rgba(96,170,255,0.1)',
+        }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#60AAFF" strokeWidth="2.5">
+          <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        </svg>
+        <div>
+          <div style={{fontSize:8,color:'rgba(96,170,255,0.5)',fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',lineHeight:1}}>Block</div>
+          <div style={{fontSize:11,fontWeight:900,color:'#60AAFF',fontFamily:'monospace',lineHeight:1.2}}>#{block}</div>
+        </div>
+      </motion.div>
+
+      {/* Channel */}
+      <div style={{
+        display:'flex', alignItems:'center', gap:7,
+        background:'linear-gradient(135deg,#1A0A2E,#2D1565)',
+        border:'1.5px solid rgba(167,139,250,0.3)',
+        borderRadius:10, padding:'6px 12px',
+        boxShadow:'0 0 10px rgba(167,139,250,0.08)',
+      }}>
+        <div style={{display:'flex',gap:2.5,alignItems:'center'}}>
+          {[0,1,2,3].map(i=>(
+            <motion.div key={i} animate={{opacity:[0.4,1,0.4]}} transition={{duration:1.8,repeat:Infinity,delay:i*0.35}}
+              style={{width:4,height:4,borderRadius:'50%',background:'#A78BFA',boxShadow:'0 0 4px #A78BFA'}}/>
+          ))}
+        </div>
+        <div>
+          <div style={{fontSize:8,color:'rgba(167,139,250,0.5)',fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',lineHeight:1}}>Channel</div>
+          <div style={{fontSize:11,fontWeight:900,color:'#A78BFA',lineHeight:1.2}}>kycchannel</div>
+        </div>
+      </div>
+
+      {/* Live */}
+      <motion.div animate={{boxShadow:['0 0 0 0 rgba(77,255,154,0.35)','0 0 0 5px rgba(77,255,154,0)']}} transition={{duration:2,repeat:Infinity}}
+        style={{display:'flex',alignItems:'center',gap:5,
+          background:'rgba(1,28,18,0.85)',border:'1.5px solid rgba(77,255,154,0.25)',
+          borderRadius:99,padding:'5px 10px'}}>
+        <motion.div animate={{opacity:[1,0.3,1]}} transition={{duration:1.2,repeat:Infinity}}
+          style={{width:6,height:6,borderRadius:'50%',background:'#4DFF9A',boxShadow:'0 0 8px #4DFF9A'}}/>
+        <span style={{fontSize:10,fontWeight:800,color:'#4DFF9A',letterSpacing:'0.05em'}}>LIVE</span>
+      </motion.div>
+    </div>
+  );
+}
+
+// ── Ledger Stats bar (shown in navbar on Ledger Explorer) ───────────────────
+function LedgerStats({ blockHeight }) {
+  const [tick, setTick] = useState(0);
+  const [tps, setTps] = useState(3);
+  const [latency, setLatency] = useState(142);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setTick(t => t + 1);
+      setTps(Math.floor(2 + Math.random() * 5));
+      setLatency(Math.floor(120 + Math.random() * 60));
+    }, 2800);
+    return () => clearInterval(id);
+  }, []);
+
+  const block = (parseInt((blockHeight || '48221').toString().replace(',','')) + tick).toLocaleString();
+
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+
+      {/* Block counter */}
+      <motion.div
+        key={block}
+        initial={{ y: -8, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+        style={{
+          display:'flex', alignItems:'center', gap:7,
+          background:'linear-gradient(135deg,#012820,#024731)',
+          border:'1.5px solid rgba(77,255,154,0.35)',
+          borderRadius:10, padding:'6px 12px',
+          boxShadow:'0 0 12px rgba(77,255,154,0.12)',
+        }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4DFF9A" strokeWidth="2.5">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        </svg>
+        <div>
+          <div style={{fontSize:8,color:'rgba(77,255,154,0.5)',fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',lineHeight:1}}>Block</div>
+          <div style={{fontSize:12,fontWeight:900,color:'#4DFF9A',fontFamily:'monospace',lineHeight:1.2}}>#{block}</div>
+        </div>
+      </motion.div>
+
+      {/* Validators */}
+      <div style={{
+        display:'flex', alignItems:'center', gap:7,
+        background:'linear-gradient(135deg,#0D1B3E,#1a2a5e)',
+        border:'1.5px solid rgba(96,170,255,0.35)',
+        borderRadius:10, padding:'6px 12px',
+        boxShadow:'0 0 12px rgba(96,170,255,0.1)',
+      }}>
+        <div style={{display:'flex',gap:3,alignItems:'center'}}>
+          {[0,1,2,3].map(i => (
+            <motion.div key={i}
+              animate={{opacity:[0.5,1,0.5]}}
+              transition={{duration:1.6,repeat:Infinity,delay:i*0.3}}
+              style={{width:5,height:5,borderRadius:'50%',background:'#60AAFF',boxShadow:'0 0 4px #60AAFF'}}/>
+          ))}
+        </div>
+        <div>
+          <div style={{fontSize:8,color:'rgba(96,170,255,0.55)',fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',lineHeight:1}}>Validators</div>
+          <div style={{fontSize:12,fontWeight:900,color:'#60AAFF',lineHeight:1.2}}>4/4 <span style={{fontSize:9,fontWeight:500,opacity:0.7}}>RAFT</span></div>
+        </div>
+      </div>
+
+      {/* TPS */}
+      <div style={{
+        display:'flex', alignItems:'center', gap:7,
+        background:'linear-gradient(135deg,#1A0A2E,#2D1565)',
+        border:'1.5px solid rgba(167,139,250,0.35)',
+        borderRadius:10, padding:'6px 12px',
+        boxShadow:'0 0 12px rgba(167,139,250,0.1)',
+      }}>
+        <motion.svg animate={{rotate:[0,360]}} transition={{duration:3,repeat:Infinity,ease:'linear'}}
+          width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" strokeWidth="2.5">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/>
+        </motion.svg>
+        <div>
+          <div style={{fontSize:8,color:'rgba(167,139,250,0.55)',fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',lineHeight:1}}>TPS</div>
+          <div style={{fontSize:12,fontWeight:900,color:'#A78BFA',fontFamily:'monospace',lineHeight:1.2}}>{tps}.0</div>
+        </div>
+      </div>
+
+      {/* Latency */}
+      <div style={{
+        display:'flex', alignItems:'center', gap:7,
+        background:'linear-gradient(135deg,#1A0F00,#3D2200)',
+        border:'1.5px solid rgba(251,191,36,0.35)',
+        borderRadius:10, padding:'6px 12px',
+        boxShadow:'0 0 12px rgba(251,191,36,0.08)',
+      }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FBB824" strokeWidth="2.5">
+          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+        </svg>
+        <div>
+          <div style={{fontSize:8,color:'rgba(251,191,36,0.55)',fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',lineHeight:1}}>Latency</div>
+          <div style={{fontSize:12,fontWeight:900,color:'#FBB824',fontFamily:'monospace',lineHeight:1.2}}>{latency}ms</div>
+        </div>
+      </div>
+
+      {/* Live pulse */}
+      <motion.div
+        animate={{boxShadow:['0 0 0 0 rgba(77,255,154,0.4)','0 0 0 6px rgba(77,255,154,0)']}}
+        transition={{duration:1.8,repeat:Infinity}}
+        style={{display:'flex',alignItems:'center',gap:5,
+          background:'rgba(1,28,18,0.85)',border:'1.5px solid rgba(77,255,154,0.25)',
+          borderRadius:99,padding:'5px 10px'}}>
+        <motion.div animate={{opacity:[1,0.3,1]}} transition={{duration:1.2,repeat:Infinity}}
+          style={{width:6,height:6,borderRadius:'50%',background:'#4DFF9A',boxShadow:'0 0 8px #4DFF9A'}}/>
+        <span style={{fontSize:10,fontWeight:800,color:'#4DFF9A',letterSpacing:'0.05em'}}>LIVE</span>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function Navbar({ crumb, onFluid, variant = 'default', notifications = [], blockHeight }) {
   const { currentUser, logout } = useStore();
   const [notifOpen, setNotifOpen] = useState(false);
@@ -158,19 +384,11 @@ export default function Navbar({ crumb, onFluid, variant = 'default', notificati
       <div className="navbar-right">
         <FluidButton onClick={onFluid} />
         {variant === 'admin' ? (
-          <span className="pill pill-dark">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/>
-            </svg>
-            Tier 2 · Senior admin
-          </span>
+          <AdminChainStats />
         ) : variant === 'ledger' ? (
-          <>
-            <span><span className="pill-dot"></span>block #{blockHeight || '48,221'}</span>
-            <span>4/4 validators</span>
-          </>
+          <LedgerStats blockHeight={blockHeight} />
         ) : (
-          <span className="pill pill-live"><span className="pill-dot"></span>Network healthy</span>
+          <CustomerChainStats />
         )}
 
         {/* Notification Bell */}

@@ -17,6 +17,7 @@ import { LedgerEvent } from './database/entities/ledger-event.entity';
 import { User } from './database/entities/user.entity';
 import { KycRequest } from './database/entities/kyc-request.entity';
 import { CredentialShareRequest } from './database/entities/credential-share-request.entity';
+import { BlockchainCustomer } from './database/entities/blockchain-customer.entity';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { CredentialShareRequest } from './database/entities/credential-share-req
         username: config.get<string>('DB_USER') || 'trustledger',
         password: config.get<string>('DB_PASS') || 'trustledger',
         database: config.get<string>('DB_NAME') || 'trustledger',
-        entities: [KycCredential, LoanApplication, LedgerEvent, User, KycRequest, CredentialShareRequest],
+        entities: [KycCredential, LoanApplication, LedgerEvent, User, KycRequest, CredentialShareRequest, BlockchainCustomer],
         synchronize: true,
         logging: false,
       }),

@@ -1,8 +1,9 @@
 ﻿import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../components/Navbar';
-import { uploadDocument, getKycRegistry, submitKycRequest, getKycRequestsByEmail } from '../services/api';
+import { uploadDocument, getKycRegistry, submitKycRequest, getKycRequestsByEmail, adminCreateBlockchainCustomer } from '../services/api';
 import { useStore } from '../store';
+import horseLogo from '../assets/lloyds-horse.gif';
 
 const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
 const STEPS = ['Personal details', 'Upload documents', 'Review & submit', 'Request submitted'];
@@ -77,6 +78,7 @@ function Field({ label, fkey, type, placeholder, value, onChange, required }) {
 export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
   const { pushToast, currentUser } = useStore();
   const [pageKycStatus, setPageKycStatus] = useState('loading'); // 'loading' | 'none' | 'pending' | 'approved'
+  const [fabricLoading, setFabricLoading] = useState(false);
   const [step, setStep]             = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [txHash, setTxHash] = useState('');
@@ -89,10 +91,12 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
   const [existingKyc, setExistingKyc] = useState(null);
   const [kycChecked, setKycChecked]   = useState(false);
   const [showErrors, setShowErrors]   = useState(false);
+  const [approvedDocs, setApprovedDocs] = useState(null); // array of doc keys or null
 
   const set = (k, v) => {
     setForm(f => ({ ...f, [k]: v }));
-    if (k === 'email' || k === 'fullName') { setKycChecked(false); setExistingKyc(null); }
+    // Reset KYC check whenever any of the three identity fields change
+    if (k === 'email' || k === 'fullName' || k === 'phone') { setKycChecked(false); setExistingKyc(null); }
   };
 
   const nameErr  = validators.fullName(form.fullName);
@@ -127,27 +131,64 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
     });
   }, [currentUser]);
 
+  // Load approved docs when user is verified
   useEffect(() => {
+    if (pageKycStatus !== 'approved' || !currentUser?.email) return;
+    const eL = currentUser.email.toLowerCase().trim();
+    getKycRequestsByEmail(eL).then(reqData => {
+      const reqs = Array.isArray(reqData) ? reqData : [];
+      const approved = reqs.find(r => (r.status || '').toLowerCase() === 'approved');
+      if (approved?.uploadedDocs) {
+        setApprovedDocs(approved.uploadedDocs.split(',').map(s => s.trim()).filter(Boolean));
+      } else {
+        setApprovedDocs([]);
+      }
+    }).catch(() => setApprovedDocs([]));
+  }, [pageKycStatus, currentUser]);
+
+  useEffect(() => {
+    // Need at least name + email to start checking; phone adds precision
     if (nameErr || emailErr || !form.fullName || !form.email) return;
     setKycChecked(false);
     const t = setTimeout(async () => {
       setKycChecking(true);
       try {
-        const data = await getKycRegistry();
-        const list = Array.isArray(data) ? data : [];
+        const [kycData, reqData] = await Promise.all([
+          getKycRegistry(),
+          getKycRequestsByEmail(form.email.toLowerCase().trim()),
+        ]);
+
         const eL = form.email.toLowerCase().trim();
         const nL = form.fullName.toLowerCase().trim();
-        const match = list.find(r =>
-          (nL && r.customerName?.toLowerCase().trim() === nL) ||
-          (r.email && r.email.toLowerCase().trim() === eL)
-        );
-        setExistingKyc(match || null);
+        const pH = (form.phone || '').replace(/\D/g, ''); // digits only for comparison
+
+        // ── Match in KYC Registry (approved credentials) ───────────────────
+        const credList = Array.isArray(kycData) ? kycData : [];
+        const credMatch = credList.find(r => {
+          const emailMatch = r.email?.toLowerCase().trim() === eL;
+          const nameMatch  = r.customerName?.toLowerCase().trim() === nL;
+          const phoneMatch = pH ? (r.phone || '').replace(/\D/g, '') === pH : true;
+          // All three must match if phone is provided; else name+email
+          return pH ? (emailMatch && nameMatch && phoneMatch) : (emailMatch && nameMatch);
+        });
+
+        // ── Match in KYC Requests (pending / approved requests) ────────────
+        const reqList = Array.isArray(reqData) ? reqData : [];
+        const reqMatch = reqList.find(r => {
+          const emailMatch = r.email?.toLowerCase().trim() === eL;
+          const nameMatch  = r.customerName?.toLowerCase().trim() === nL;
+          const phoneMatch = pH ? (r.phone || '').replace(/\D/g, '') === pH : true;
+          return pH ? (emailMatch && nameMatch && phoneMatch) : (emailMatch && nameMatch);
+        });
+
+        // Prefer credential record (approved), fall back to request record
+        setExistingKyc(credMatch || reqMatch || null);
         setKycChecked(true);
       } catch { setExistingKyc(null); setKycChecked(true); }
       finally { setKycChecking(false); }
-    }, 900);
+    }, 800);
     return () => clearTimeout(t);
-  }, [form.email, form.fullName]);
+  }, [form.email, form.fullName, form.phone]);
 
   const handleFilePick = async (docKey, file) => {
     if (!file) return;
@@ -170,56 +211,77 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    
-    pushToast('Submitting KYC request to admin\u2026', 'info');
+
+    // ── Step 1: Register customer on Fabric ledger ─────────────────────────
+    setFabricLoading(true);
+    pushToast('⛓ Registering on Hyperledger Fabric…', 'info');
+    const initials = form.fullName.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3);
+    const customerID = `KYC-${initials}-${Date.now().toString().slice(-6)}`;
+    try {
+      await adminCreateBlockchainCustomer({
+        customerID,
+        fullName:    form.fullName,
+        email:       form.email,
+        dateOfBirth: form.dob,
+        phone:       form.phone,
+        address:     form.address,
+        nationalID:  form.nationality,
+        issuingBank: 'LloydsBankingGroup',
+      });
+      pushToast('✅ Customer registered on Fabric ledger', 'success');
+    } catch (fabricErr) {
+      // Non-fatal — continue to submit KYC request even if Fabric is down
+      pushToast('⚠️ Fabric registration skipped — continuing KYC submission', 'warn');
+    }
+    setFabricLoading(false);
+
+    // ── Step 2: Submit KYC request to admin queue ──────────────────────────
+    pushToast('📨 Submitting KYC request to admin…', 'info');
     const docKeys = Object.keys(uploads).filter(k => uploads[k]?.status === 'done').join(',');
-    const result = await submitKycRequest({
+    await submitKycRequest({
       customerName: form.fullName,
-      email: form.email,
-      phone: form.phone,
-      dob: form.dob,
-      nationality: form.nationality,
-      address: form.address,
+      email:        form.email,
+      phone:        form.phone,
+      dob:          form.dob,
+      nationality:  form.nationality,
+      address:      form.address,
       uploadedDocs: docKeys,
+      fabricCustomerId: customerID,
       status: 'pending',
     });
+
     setSubmitting(false);
     setStep(3);
-    pushToast('\uD83D\uDCE8 KYC request submitted \u2014 awaiting admin approval', 'success');
+    pushToast('📨 KYC request submitted — awaiting admin approval', 'success');
   };
 
   const resetForm = () => {
     setStep(0); setUploads({}); setKycChecked(false); setExistingKyc(null); setShowErrors(false);
     setForm({ fullName: '', email: '', phone: '', dob: '', nationality: 'British', address: '' });
-
-//     pushToast('Submitting to Hyperledger Fabric...', 'info');
-//     const docHash = 'sha256:' + Array.from({ length: 16 }, () =>
-//       Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');
-//     const networkId = `NET-${form.fullName.replace(/\s+/g, '').toUpperCase().slice(0, 6)}-${Date.now()}`;
-//     const result = await issueKyc(
-//       networkId,
-//       docHash,
-//       'Lloyds Branch Validator',
-//       // extra fields passed through
-//       {
-//         customerName: form.fullName,
-//         email: form.email,
-//         phone: form.phone,
-//         dateOfBirth: form.dob,
-//         address: form.address,
-//       },
-//     );
-//     setSubmitting(false);
-//     const tx = result?.txHash || `0x${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 6)}`;
-//     const cid = result?.credentialId || `KYC-${form.fullName.split(' ').map(w => w[0]).join('')}-${Math.floor(Math.random() * 90000 + 10000)}`;
-//     setTxHash(tx); setCredentialId(cid); setCustomerId(result?.customerId || ''); setStep(3);
-//     pushToast(`🔒 KYC credential issued — ${cid}`, 'success', tx);
-
   };
 
   return (
     <div className="main">
       <Navbar crumb="New customer upload" onFluid={() => onNavigate('fluid_overview')} notifications={notifications} />
+
+      {/* ── Fabric blockchain loading overlay ── */}
+      <AnimatePresence>
+        {fabricLoading && (
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0,transition:{duration:0.4}}}
+            style={{position:'fixed',inset:0,zIndex:99998,background:'rgba(2,18,12,0.92)',backdropFilter:'blur(8px)',
+              display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:22,pointerEvents:'all'}}>
+            <motion.img src={horseLogo} alt="Processing…"
+              initial={{scale:0.8,opacity:0}} animate={{scale:1,opacity:1}} transition={{duration:0.35}}
+              style={{width:110,height:110,objectFit:'contain',filter:'drop-shadow(0 0 28px rgba(110,231,183,0.6))'}}/>
+            <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{delay:0.2}}
+              style={{color:'#6EE7B7',fontSize:15,fontWeight:800,letterSpacing:'0.09em',textAlign:'center'}}>
+              Writing to Hyperledger Fabric…
+            </motion.div>
+            <div style={{fontSize:12,color:'rgba(110,231,183,0.5)'}}>⛓ Committing your KYC credential on-chain</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="content">
 
         {/* ── Dark gradient hero banner ── */}
@@ -268,23 +330,91 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
         {/* ── KYC status banners ── */}
         {pageKycStatus === 'approved' && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-            style={{ background: 'linear-gradient(135deg,#012820,#024731)', border: '1.5px solid #059669', borderRadius: 16, padding: '20px 28px',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, gap: 16,
+            style={{ marginBottom: 24 }}>
+            {/* Verified hero banner */}
+            <div style={{ background: 'linear-gradient(135deg,#012820,#024731)', border: '1.5px solid #059669', borderRadius: 16, padding: '20px 28px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 16,
               boxShadow:'0 0 0 4px rgba(5,150,105,0.1)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{width:52,height:52,borderRadius:'50%',background:'rgba(77,255,154,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0}}>✅</div>
-              <div>
-                <div style={{ fontWeight: 800, fontSize: 16, color: '#4DFF9A' }}>KYC already verified</div>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', marginTop: 4 }}>
-                  Your identity is live on the Trust Ledger. No further uploads needed.
+              <div style={{ display:'flex', alignItems:'center', gap: 16 }}>
+                <div style={{width:52,height:52,borderRadius:'50%',background:'rgba(77,255,154,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0}}>✅</div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 16, color: '#4DFF9A' }}>KYC already verified</div>
+                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', marginTop: 4 }}>
+                    Your identity is live on the Trust Ledger. No further uploads needed.
+                  </div>
+                  {approvedDocs !== null && (
+                    <div style={{ marginTop: 8, display:'flex', alignItems:'center', gap: 8 }}>
+                      <span style={{ background:'rgba(77,255,154,0.2)', color:'#4DFF9A', border:'1px solid rgba(77,255,154,0.4)', borderRadius: 99, fontSize: 12, fontWeight: 800, padding:'3px 12px' }}>
+                        📄 {approvedDocs.length} document{approvedDocs.length !== 1 ? 's' : ''} submitted
+                      </span>
+                      <span style={{ fontSize:11, color:'rgba(255,255,255,0.45)' }}>
+                        {DOC_TYPES.filter(d => approvedDocs.includes(d.key)).map(d => d.label).join(', ') || 'All documents verified'}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
+              <button onClick={() => onNavigate('customer_dashboard')}
+                style={{ background: 'linear-gradient(135deg,#4DFF9A,#059669)', color: '#012820', border: 'none', borderRadius: 10,
+                  padding: '10px 22px', fontWeight: 800, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink:0 }}>
+                Go to Dashboard →
+              </button>
             </div>
-            <button onClick={() => onNavigate('customer_dashboard')}
-              style={{ background: 'linear-gradient(135deg,#4DFF9A,#059669)', color: '#012820', border: 'none', borderRadius: 10,
-                padding: '10px 22px', fontWeight: 800, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink:0 }}>
-              Go to Dashboard →
-            </button>
+
+            {/* Uploaded docs cards */}
+            <div style={{ background:'#fff', border:'1.5px solid #E8E7DD', borderRadius:16, padding:'20px 24px' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+                <div>
+                  <div style={{ fontSize:14, fontWeight:800, color:'#1A1A14' }}>Documents submitted</div>
+                  <div style={{ fontSize:12, color:'#6A6A5A', marginTop:2 }}>
+                    {approvedDocs === null ? 'Loading…' : `${approvedDocs.length} document${approvedDocs.length !== 1 ? 's' : ''} verified on Trust Ledger`}
+                  </div>
+                </div>
+                <span style={{ background:'#ECFDF5', color:'#059669', border:'1px solid #A7F3D0', borderRadius:99, fontSize:11, fontWeight:700, padding:'4px 12px' }}>
+                  ✓ All verified
+                </span>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:12 }}>
+                {approvedDocs === null ? (
+                  [1,2,3].map(i => (
+                    <div key={i} style={{ height:90, borderRadius:12, background:'#F5F4EE', animation:'pulse 1.5s infinite' }} />
+                  ))
+                ) : approvedDocs.length === 0 ? (
+                  DOC_TYPES.map(dt => (
+                    <div key={dt.key} style={{ borderRadius:12, border:'1.5px solid #E8E7DD', padding:'14px 16px', display:'flex', flexDirection:'column', gap:8 }}>
+                      <div style={{ fontSize:22 }}>{dt.icon}</div>
+                      <div style={{ fontSize:12, fontWeight:700, color:'#1A1A14' }}>{dt.label}</div>
+                      <span style={{ fontSize:10, color:'#059669', fontWeight:700 }}>✓ Submitted</span>
+                    </div>
+                  ))
+                ) : (
+                  DOC_TYPES.map(dt => {
+                    const uploaded = approvedDocs.includes(dt.key);
+                    return (
+                      <div key={dt.key} style={{
+                        borderRadius:12, border:`1.5px solid ${uploaded ? '#A7F3D0' : '#E8E7DD'}`,
+                        padding:'14px 16px', display:'flex', flexDirection:'column', gap:8,
+                        background: uploaded ? '#F0FAF4' : '#FAFAF8',
+                      }}>
+                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                          <span style={{ fontSize:22 }}>{dt.icon}</span>
+                          {uploaded
+                            ? <span style={{ fontSize:16 }}>✅</span>
+                            : <span style={{ fontSize:16, color:'#D1D5DB' }}>—</span>}
+                        </div>
+                        <div style={{ fontSize:12, fontWeight:700, color:'#1A1A14', lineHeight:1.3 }}>{dt.label}</div>
+                        <span style={{ fontSize:10, fontWeight:700, color: uploaded ? '#059669' : '#9A9A8A' }}>
+                          {uploaded ? '✓ Verified on ledger' : 'Not submitted'}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              <div style={{ marginTop:16, padding:'12px 16px', background:'#F0FAF4', borderRadius:10, border:'1px solid #D1FAE5', fontSize:12, color:'#065F46', lineHeight:1.6 }}>
+                🔒 Your documents are hashed on Hyperledger Fabric — only cryptographic proofs are stored on-chain. Source files are encrypted at rest.
+              </div>
+            </div>
           </motion.div>
         )}
 
@@ -362,34 +492,74 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                     </div>
                   )}
 
-                  {kycChecked && existingKyc && (
+                  {kycChecked && existingKyc && (() => {
+                    // Determine which fields actually match the found record
+                    const eL = form.email.toLowerCase().trim();
+                    const nL = form.fullName.toLowerCase().trim();
+                    const pH = (form.phone || '').replace(/\D/g, '');
+                    const recPhone = (existingKyc.phone || '').replace(/\D/g, '');
+                    const emailMatch = existingKyc.email?.toLowerCase().trim() === eL;
+                    const nameMatch  = existingKyc.customerName?.toLowerCase().trim() === nL;
+                    const phoneMatch = pH && recPhone ? pH === recPhone : null; // null = not provided
+
+                    const allMatch = emailMatch && nameMatch && (phoneMatch === null || phoneMatch === true);
+                    const partialMatch = !allMatch;
+
+                    return (
                     <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-                      style={{ marginTop: 16, background: '#FFF7E6', border: '1px solid #F0C040', borderRadius: 12, padding: '16px 18px' }}>
+                      style={{ marginTop: 16, background: allMatch ? '#FFF7E6' : '#EFF6FF', border: `1px solid ${allMatch ? '#F0C040' : '#93C5FD'}`, borderRadius: 12, padding: '16px 18px' }}>
                       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                        <span style={{ fontSize: 24 }}>⚠️</span>
+                        <span style={{ fontSize: 24 }}>{allMatch ? '⚠️' : 'ℹ️'}</span>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 800, fontSize: 14, color: '#7A5A00', marginBottom: 4 }}>Customer already exists in our system</div>
-                          <div style={{ fontSize: 12, color: '#4A4A40', marginBottom: 10 }}><b>{existingKyc.customerName}</b> already has a KYC credential on the network:</div>
+                          <div style={{ fontWeight: 800, fontSize: 14, color: allMatch ? '#7A5A00' : '#1E40AF', marginBottom: 4 }}>
+                            {allMatch ? 'Customer already exists in our system' : 'Similar record found — details differ'}
+                          </div>
+                          <div style={{ fontSize: 12, color: '#4A4A40', marginBottom: 10 }}>
+                            {allMatch
+                              ? <><b>{existingKyc.customerName}</b> already has a KYC credential on the network:</>
+                              : <>A record for <b>{existingKyc.customerName}</b> was found, but some details don't match the entry above. If this is a different person, you can continue. If it's the same person, please correct the details:</>
+                            }
+                          </div>
+
+                          {/* Field-by-field match indicators */}
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                            {[
+                              { label: 'Name',  match: nameMatch },
+                              { label: 'Email', match: emailMatch },
+                              { label: 'Phone', match: phoneMatch === null ? null : phoneMatch },
+                            ].map(({ label, match }) => match === null ? null : (
+                              <span key={label} style={{
+                                fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+                                background: match ? '#D1FAE5' : '#FCEBEB',
+                                color: match ? '#065F46' : '#A32D2D',
+                              }}>
+                                {match ? '✓' : '✗'} {label}
+                              </span>
+                            ))}
+                          </div>
+
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 12 }}>
-                            {[['Credential ID', existingKyc.credentialId], ['Status', existingKyc.status], ['Issuer', existingKyc.issuer || 'Lloyds'], ['Expires', existingKyc.expiresOn || '—']].map(([l, v]) => (
+                            {[['Credential ID', existingKyc.credentialId], ['Status', existingKyc.status || existingKyc.kycStatus], ['Issuer', existingKyc.issuer || 'Lloyds'], ['Expires', existingKyc.expiresOn || '—']].map(([l, v]) => (
                               <div key={l} style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 7, padding: '6px 10px' }}>
                                 <div style={{ fontSize: 10, color: '#9A9A8A' }}>{l}</div>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: '#1A1A14' }}>{v}</div>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: '#1A1A14' }}>{v || '—'}</div>
                               </div>
                             ))}
                           </div>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => onNavigate('kyc_registry')}>View in KYC Registry →</button>
-                            <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => onNavigate('ledger_explorer', { credentialId: existingKyc.credentialId, customerName: existingKyc.customerName })}>View audit trail →</button>
+                            {allMatch && <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => onNavigate('kyc_registry')}>View in KYC Registry →</button>}
+                            {allMatch && <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => onNavigate('ledger_explorer', { credentialId: existingKyc.credentialId, customerName: existingKyc.customerName })}>View audit trail →</button>}
                             <button style={{ fontSize: 11, padding: '6px 12px', borderRadius: 7, background: '#FCEBEB', color: '#A32D2D', border: '1px solid #F0C0C0', cursor: 'pointer', fontWeight: 600 }}
-                              onClick={() => { setKycChecked(false); setExistingKyc(null); setForm(f => ({ ...f, fullName: '', email: '' })); }}>
+                              onClick={() => { setKycChecked(false); setExistingKyc(null); setForm(f => ({ ...f, fullName: '', email: '', phone: '' })); }}>
                               Enter different customer
                             </button>
+                            {partialMatch && <button className="btn-primary" style={{ fontSize: 11 }} onClick={() => setExistingKyc(null)}>Continue anyway →</button>}
                           </div>
                         </div>
                       </div>
                     </motion.div>
-                  )}
+                    );
+                  })()}
 
                   {kycChecked && !existingKyc && step0Valid && (
                     <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}

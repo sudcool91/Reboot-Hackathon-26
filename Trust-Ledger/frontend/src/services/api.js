@@ -96,6 +96,10 @@ export const decideShareRequest      = (id, decision, remark, decidedBy) =>
 export const getFabricHealth = () => req('GET', '/fabric-sdk/health');
 export const getFabricInfo = () => req('GET', '/fabric-sdk/info');
 
+// ── Admin: Blockchain Customer (Fabric → DB) ───────────────────────────────
+export const adminCreateBlockchainCustomer = (dto) => req('POST', '/fabric-sdk/admin/customers', dto);
+export const adminGetBlockchainCustomers   = ()    => req('GET',  '/fabric-sdk/admin/customers');
+
 // ── Customer Operations (Blockchain) ───────────────────────────────────────
 export const createCustomerOnChain = (customer) => req('POST', '/fabric-sdk/customers', customer);
 export const getAllCustomersFromChain = () => req('GET', '/fabric-sdk/customers');

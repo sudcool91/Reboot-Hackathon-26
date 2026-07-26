@@ -35,13 +35,13 @@ export class FabricGatewayManager {
       // Get connection profile
       const connectionProfile = this.connectionManager.getConnectionProfile();
 
-      // Configure gateway options
+      // Configure gateway options - sequence 2, OR policy, fixed wallet + grpcOptions
       const gatewayOptions: GatewayOptions = {
         wallet: this.walletManager.getWallet(),
         identity: this.config.userId,
         discovery: {
-          enabled: true,
-          asLocalhost: true, // Use 'true' for local development
+          enabled: true,   // Discovery needed for peer population; identity now valid
+          asLocalhost: true,
         },
       };
 
