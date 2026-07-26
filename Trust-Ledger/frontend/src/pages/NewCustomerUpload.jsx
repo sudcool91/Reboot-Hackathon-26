@@ -563,7 +563,7 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                     style={{padding:'11px 22px',borderRadius:10,background:'linear-gradient(135deg,#4DFF9A,#059669)',color:'#012820',border:'none',fontWeight:800,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
                     View in Admin Control Center →
                   </button>
-                  <button className="btn-ghost" style={{borderColor:'rgba(255,255,255,0.2)',color:'rgba(255,255,255,0.8)'}} onClick={resetForm}>
+                  <button className="btn-ghost" style={{borderRadius:10,background:'linear-gradient(135deg,#4DFF9A,#059669)',color:'#012820',fontWeight:800,fontSize:13,fontFamily:'inherit',borderColor:'rgba(255,255,255,0.2)'}} onClick={resetForm}>
                     Submit another
                   </button>
                 </div>

@@ -215,7 +215,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
         avatar:           `${form.firstName[0]}${form.lastName[0]}`.toUpperCase(),
         product:          productLabel,
         amount:           `GBP ${parseInt(form.loanAmount).toLocaleString()}`,
-        kycSource:        kycRecord ? `On-chain Â· ${kycRecord.issuer}` : 'New Â· customer portal',
+        kycSource:        kycRecord ? `On-chain · ${kycRecord.issuer}` : 'New Â· customer portal',
         credentialId:     kycRecord?.credentialId || null,
         creditScore:      kycRecord?.score || null,
         status:           kycRecord?.status === 'Active' ? 'Auto-eligible' : 'Pending docs',
@@ -233,7 +233,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
       };
       const data = await submitApplication(payload);
       setSubmitted(data || payload);
-      pushToast(`âœ… Application submitted! Ref: ${data?.applicationId || 'pending'}`);
+      pushToast(`Application submitted! Ref: ${data?.applicationId || 'pending'}`);
     } catch {
       pushToast('Submission failed — please try again', 'error');
     } finally {
@@ -250,7 +250,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
           <motion.div initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 260, damping: 20 }}
             style={{ textAlign: 'center', padding: '48px 32px', background: '#FAFAF7', borderRadius: 20, border: '1px solid #E2E0D2', marginTop: 32 }}>
-            <div style={{ fontSize: 56, marginBottom: 16 }}>âœ…</div>
+            <div style={{ fontSize: 56, marginBottom: 16 }}>✓</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#1A1A14', marginBottom: 8 }}>Application submitted!</div>
             <div style={{ fontSize: 14, color: '#4A4A40', marginBottom: 24 }}>
               {kycRecord
@@ -266,14 +266,14 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
             {form.bank && (
               <div style={{ background: '#F0FAF4', border: '1px solid #C6E8D4', borderRadius: 10, padding: '10px 20px', marginBottom: 24, fontSize: 13, color: '#024731' }}>
                 🏦 Applied via <b>{form.bank}</b>
-                {form.shareConsent && <span> Â· Credential share request sent</span>}
+                {form.shareConsent && <span> · Credential share request sent</span>}
               </div>
             )}
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
               <button className="btn-primary" onClick={() => { setSubmitted(null); setForm(EMPTY); setStep(0); setKycRecord(null); setKycStatus('idle'); }}>
                 Submit another
               </button>
-              <button className="btn-ghost" onClick={() => onNavigate('customer_dashboard')}>My Dashboard â†’</button>
+              <button className="btn-ghost" onClick={() => onNavigate('customer_dashboard')}>My Dashboard →</button>
             </div>
           </motion.div>
         </div>
@@ -383,7 +383,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                 color:      i < step ? '#fff'    : i === step ? '#024731' : '#9A9A8A',
                 border:     i === step ? '2px solid #0B5C3F' : '2px solid transparent',
               }}>
-                {i < step ? 'âœ“' : i + 1}
+                {i < step ? '✓' : i + 1}
               </div>
               {(i === step || i < step) && (
                 <div style={{ fontSize: 11, fontWeight: 700, marginLeft: 6, color: i < step ? '#024731' : '#1A1A14', whiteSpace: 'nowrap' }}>
@@ -455,7 +455,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                         <div style={{ fontWeight: 700, fontSize: 13, color: isSelected ? '#024731' : '#1A1A14' }}>🏦 {b}</div>
                         {shared && (
                           <div style={{ fontSize: 10, color: '#059669', marginTop: 4, fontWeight: 600 }}>
-                            âœ… Credential already shared
+                            Credential already shared
                           </div>
                         )}
                       </div>
@@ -473,7 +473,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
 
                     {alreadySharedWithBank(form.bank) ? (
                       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <span style={{ fontSize: 22 }}>âœ…</span>
+                        <span style={{ fontSize: 22 }}></span>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: 13, color: '#065F46' }}>Credential already shared with {form.bank}</div>
                           <div style={{ fontSize: 12, color: '#047857', marginTop: 2 }}>
@@ -544,7 +544,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                           border:     kycStatus === 'checking' ? '1px solid #E2E0D2' : kycStatus === 'found' ? '1px solid #C6E8D4' : '1px solid #F0C040',
                           whiteSpace: 'nowrap',
                         }}>
-                          {kycStatus === 'checking' ? '🔐 Checking…' : kycStatus === 'found' ? 'âœ… KYC found' : '📋 Not on-chain'}
+                          {kycStatus === 'checking' ? '🔐 Checking…' : kycStatus === 'found' ? 'KYC found' : '📋 Not on-chain'}
                         </div>
                       )}
                     </div>
@@ -563,7 +563,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                       style={{ marginTop: 16, padding: '16px 20px', borderRadius: 12,
                         background: 'linear-gradient(135deg,#024731,#0B5C3F)', color: '#fff',
                         display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: 26, flexShrink: 0 }}>âœ…</span>
+                      <span style={{ fontSize: 26, flexShrink: 0 }}></span>
                       <div>
                         <div style={{ fontWeight: 800, fontSize: 14 }}>KYC credential found on-chain!</div>
                         <div style={{ fontSize: 12, opacity: 0.85, marginTop: 3 }}>
@@ -595,7 +595,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                     <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
                       style={{ background: 'linear-gradient(135deg,#024731 0%,#0B5C3F 100%)', borderRadius: 16, padding: '28px 24px', marginBottom: 24, color: '#fff' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                        <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>âœ…</div>
+                        <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}></div>
                         <div>
                           <div style={{ fontSize: 18, fontWeight: 800 }}>Identity already verified!</div>
                           <div style={{ fontSize: 13, opacity: 0.85, marginTop: 2 }}>Your KYC credential was found — no documents needed</div>
@@ -653,7 +653,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                 </div>
                 {kycRecord && (
                   <div style={{ background: '#E2EEE7', borderRadius: 10, padding: '8px 14px', marginBottom: 20, fontSize: 12, color: '#024731', display: 'flex', gap: 8, alignItems: 'center' }}>
-                    âœ… <span><b>KYC verified</b> Â· {kycRecord.credentialId} Â· Credit score {kycRecord.score}</span>
+                    ✓ <span><b>KYC verified</b> · {kycRecord.credentialId} · Credit score {kycRecord.score}</span>
                   </div>
                 )}
                 <div className="ncu-form-grid">
@@ -717,13 +717,13 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                   background: kycRecord ? '#E2EEE7' : '#FFF7E6',
                   border: `1px solid ${kycRecord ? '#C6E8D4' : '#F0C040'}`,
                   display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <span style={{ fontSize: 22 }}>{kycRecord ? '🛡️ï¸' : '📋'}</span>
+                  <span style={{ fontSize: 22 }}>{kycRecord ? '🛡️' : '📋'}</span>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 13, color: '#1A1A14' }}>
-                      {kycRecord ? `KYC verified Â· ${kycRecord.credentialId}` : 'KYC pending — manual verification required'}
+                      {kycRecord ? `KYC verified · ${kycRecord.credentialId}` : 'KYC pending — manual verification required'}
                     </div>
                     <div style={{ fontSize: 11, color: '#4A4A40', marginTop: 2 }}>
-                      {kycRecord ? `Issued by ${kycRecord.issuer} Â· expires ${kycRecord.expires}` : 'A Lloyds officer will contact you'}
+                      {kycRecord ? `Issued by ${kycRecord.issuer} · expires ${kycRecord.expires}` : 'A Lloyds officer will contact you'}
                     </div>
                   </div>
                 </div>
@@ -737,7 +737,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                       <div style={{ fontWeight: 700, fontSize: 13, color: '#065F46' }}>Applying via {form.bank}</div>
                       <div style={{ fontSize: 11, color: '#047857', marginTop: 2 }}>
                         {alreadySharedWithBank(form.bank)
-                          ? 'Credential already shared with this bank âœ…'
+                          ? 'Credential already shared with this bank'
                           : form.shareConsent
                           ? '📤 Consent given — share request will be created on submit'
                           : 'No credential share consent given'}
@@ -783,7 +783,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
 
         {/* â”€â”€ Navigation buttons â”€â”€ */}
         <div className="ncu-actions" style={{ marginTop: 32 }}>
-          {step > 0 && <button className="btn-ghost" onClick={back}>â† Back</button>}
+          {step > 0 && <button className="btn-ghost" onClick={back}>Back</button>}
           {step < 5 ? (
             <button
               className="btn-primary"
@@ -801,12 +801,12 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
               {step === 2 && kycStatus === 'checking'
                 ? '🔐 Checking KYC…'
                 : step === 2 && kycStatus === 'found'
-                ? 'âœ… KYC found — Continue â†’'
-                : 'Continue â†’'}
+                ? 'KYC found — Continue'
+                : 'Continue'}
             </button>
           ) : (
             <button className="btn-primary" onClick={submit} disabled={submitting || !form.agreeTerms}>
-              {submitting ? 'Submitting…' : kycRecord ? 'âš¡ Submit (fast-tracked)' : 'Submit application'}
+              {submitting ? 'Submitting…' : kycRecord ? ' Submit (fast-tracked)' : 'Submit application'}
             </button>
           )}
         </div>
