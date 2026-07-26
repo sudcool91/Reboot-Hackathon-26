@@ -115,7 +115,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
     <div style={{ color: '#A32D2D', fontSize: 11, marginTop: 3 }}>{errors[k]}</div>
   );
 
-  /* â”€â”€ Load existing share requests for current user â”€â”€ */
+  /* -- Load existing share requests for current user -- */
   useEffect(() => {
     const email = currentUser?.email || form.email;
     if (!email || !email.includes('@')) return;
@@ -124,7 +124,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
     }).catch(() => {});
   }, [currentUser?.email, form.email]);
 
-  /* â”€â”€ Auto-check KYC as user types email on step 2 â”€â”€ */
+  /* -- Auto-check KYC as user types email on step 2 -- */
   useEffect(() => {
     if (step !== 2) return;
     const email = form.email.trim();
@@ -141,7 +141,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
     return () => clearTimeout(debounceRef.current);
   }, [form.email, step]);
 
-  /* â”€â”€ Pre-fill email from logged-in user â”€â”€ */
+  /* -- Pre-fill email from logged-in user -- */
   useEffect(() => {
     if (currentUser?.email && !form.email) {
       set('email', currentUser.email);
@@ -196,7 +196,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
       const productLabel = PRODUCTS.find(p => p.id === form.product)?.label || form.product;
       const applicantName = kycRecord?.name || `${form.firstName} ${form.lastName}`;
 
-      // If share consent given and not already shared â†’ auto-create share request
+      // If share consent given and not already shared -> auto-create share request
       if (form.shareConsent && form.bank && !alreadySharedWithBank(form.bank)) {
         const kycForShare = kycRecord || { credentialId: `KYC-${form.firstName[0]}${form.lastName[0]}-PENDING` };
         await submitShareRequest({
@@ -215,7 +215,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
         avatar:           `${form.firstName[0]}${form.lastName[0]}`.toUpperCase(),
         product:          productLabel,
         amount:           `GBP ${parseInt(form.loanAmount).toLocaleString()}`,
-        kycSource:        kycRecord ? `On-chain · ${kycRecord.issuer}` : 'New Â· customer portal',
+        kycSource:        kycRecord ? `On-chain - ${kycRecord.issuer}` : 'New - customer portal',
         credentialId:     kycRecord?.credentialId || null,
         creditScore:      kycRecord?.score || null,
         status:           kycRecord?.status === 'Active' ? 'Auto-eligible' : 'Pending docs',
@@ -241,7 +241,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
     }
   };
 
-  /* â”€â”€ Success screen â”€â”€ */
+  /* -- Success screen -- */
   if (submitted) {
     return (
       <div className="main">
@@ -266,7 +266,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
             {form.bank && (
               <div style={{ background: '#F0FAF4', border: '1px solid #C6E8D4', borderRadius: 10, padding: '10px 20px', marginBottom: 24, fontSize: 13, color: '#024731' }}>
                 🏦 Applied via <b>{form.bank}</b>
-                {form.shareConsent && <span> · Credential share request sent</span>}
+                {form.shareConsent && <span> - Credential share request sent</span>}
               </div>
             )}
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -371,7 +371,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
           </div>
         </div>
 
-        {/* â”€â”€ Stepper â”€â”€ */}
+        {/* -- Stepper -- */}
         <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1px solid #E2E0D2', borderRadius: 14, padding: '12px 16px', marginBottom: 28, overflowX: 'auto', gap: 0 }}>
           {STEPS.map((s, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : '0 0 auto', minWidth: 0 }}>
@@ -401,7 +401,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
           <motion.div key={step} initial="hidden" animate="show" exit={{ opacity: 0 }}
             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}>
 
-            {/* â”€â”€ STEP 0: Product selection â”€â”€ */}
+            {/* -- STEP 0: Product selection -- */}
             {step === 0 && (
               <motion.div variants={fadeUp}>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: '#1A1A14' }}>
@@ -425,7 +425,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
               </motion.div>
             )}
 
-            {/* â”€â”€ STEP 1: Bank selection + KYC consent â”€â”€ */}
+            {/* -- STEP 1: Bank selection + KYC consent -- */}
             {step === 1 && (
               <motion.div variants={fadeUp}>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Select bank & consent</div>
@@ -507,7 +507,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
               </motion.div>
             )}
 
-            {/* â”€â”€ STEP 2: Personal details â”€â”€ */}
+            {/* -- STEP 2: Personal details -- */}
             {step === 2 && (
               <motion.div variants={fadeUp}>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Your personal details</div>
@@ -567,10 +567,10 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                       <div>
                         <div style={{ fontWeight: 800, fontSize: 14 }}>KYC credential found on-chain!</div>
                         <div style={{ fontSize: 12, opacity: 0.85, marginTop: 3 }}>
-                          <b>{kycRecord.name}</b> Â· {kycRecord.credentialId} Â· {kycRecord.issuer} Â· expires {kycRecord.expires}
-                          {kycRecord.score && <span> Â· credit score <b>{kycRecord.score}</b></span>}
+                          <b>{kycRecord.name}</b> - {kycRecord.credentialId} - {kycRecord.issuer} - expires {kycRecord.expires}
+                          {kycRecord.score && <span> - credit score <b>{kycRecord.score}</b></span>}
                         </div>
-                        <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>No document uploads needed — identity already verified âš¡</div>
+                        <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>No document uploads needed - identity already verified</div>
                       </div>
                     </motion.div>
                   )}
@@ -587,7 +587,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
               </motion.div>
             )}
 
-            {/* â”€â”€ STEP 3: KYC result â”€â”€ */}
+            {/* -- STEP 3: KYC result -- */}
             {step === 3 && (
               <motion.div variants={fadeUp}>
                 {kycRecord ? (
@@ -643,7 +643,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
               </motion.div>
             )}
 
-            {/* â”€â”€ STEP 4: Finances â”€â”€ */}
+            {/* -- STEP 4: Finances -- */}
             {step === 4 && (
               <motion.div variants={fadeUp}>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Financial information</div>
@@ -707,7 +707,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
               </motion.div>
             )}
 
-            {/* â”€â”€ STEP 5: Review & submit â”€â”€ */}
+            {/* -- STEP 5: Review & submit -- */}
             {step === 5 && (
               <motion.div variants={fadeUp}>
                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Review your application</div>
@@ -720,10 +720,10 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                   <span style={{ fontSize: 22 }}>{kycRecord ? '🛡️' : '📋'}</span>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 13, color: '#1A1A14' }}>
-                      {kycRecord ? `KYC verified · ${kycRecord.credentialId}` : 'KYC pending — manual verification required'}
+                      {kycRecord ? `KYC verified - ${kycRecord.credentialId}` : 'KYC pending - manual verification required'}
                     </div>
                     <div style={{ fontSize: 11, color: '#4A4A40', marginTop: 2 }}>
-                      {kycRecord ? `Issued by ${kycRecord.issuer} · expires ${kycRecord.expires}` : 'A Lloyds officer will contact you'}
+                      {kycRecord ? `Issued by ${kycRecord.issuer} - expires ${kycRecord.expires}` : 'A Lloyds officer will contact you'}
                     </div>
                   </div>
                 </div>
@@ -781,7 +781,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
           </motion.div>
         </AnimatePresence>
 
-        {/* â”€â”€ Navigation buttons â”€â”€ */}
+        {/* -- Navigation buttons -- */}
         <div className="ncu-actions" style={{ marginTop: 32 }}>
           {step > 0 && <button className="btn-ghost" onClick={back}>Back</button>}
           {step < 5 ? (
@@ -806,7 +806,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
             </button>
           ) : (
             <button className="btn-primary" onClick={submit} disabled={submitting || !form.agreeTerms}>
-              {submitting ? 'Submitting…' : kycRecord ? ' Submit (fast-tracked)' : 'Submit application'}
+              {submitting ? 'Submitting...' : kycRecord ? 'Submit (fast-tracked)' : 'Submit application'}
             </button>
           )}
         </div>
