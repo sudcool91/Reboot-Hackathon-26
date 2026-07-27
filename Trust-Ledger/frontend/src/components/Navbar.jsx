@@ -392,7 +392,7 @@ export default function Navbar({ crumb, onFluid, variant = 'default', notificati
         )}
 
         {/* Notification Bell */}
-        <div style={{ position: 'relative' }}>
+        <div data-tour="nav-bell" style={{ position: 'relative' }}>
           <motion.div
             className="icon-btn"
             onClick={() => setNotifOpen(o => !o)}
@@ -484,7 +484,7 @@ export default function Navbar({ crumb, onFluid, variant = 'default', notificati
           </AnimatePresence>
         </div>
 
-        <motion.div className="nav-av" onClick={()=>setWalletOpen(true)} title="Open crypto wallet"
+        <motion.div data-tour="nav-wallet" className="nav-av" onClick={()=>setWalletOpen(true)} title="Open crypto wallet"
           whileHover={{ scale: 1.1, boxShadow: isAdmin ? '0 0 0 3px rgba(2,71,49,0.3), 0 4px 16px rgba(2,71,49,0.4)' : '0 0 0 3px rgba(43,94,167,0.3), 0 4px 16px rgba(43,94,167,0.4)' }}
           whileTap={{ scale: 0.95 }}
           style={{

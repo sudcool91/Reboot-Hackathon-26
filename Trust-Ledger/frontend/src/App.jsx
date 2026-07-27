@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './components/Sidebar';
 import Tour from './components/Tour';
+import Chatbot from './components/Chatbot';
 import { ToastContainer } from './components/Toast';
 import { StoreProvider, useStore } from './store';
 import Login from './pages/Login';
@@ -17,6 +18,7 @@ import LoanDecision from './pages/LoanDecision';
 import FluidOverview from './pages/FluidOverview';
 import CustomerApplication from './pages/CustomerApplication';
 import FabricTest from './pages/FabricTest';
+import FutureRoadmap from './pages/FutureRoadmap';
 import horseLogo from './assets/lloyds-horse.gif';
 
 // ── App-wide loading splash ──────────────────────────────────────────────────
@@ -72,6 +74,7 @@ const ADMIN_PAGES = {
   fluid_overview: FluidOverview,
   customer_application: CustomerApplication,
   fabric_test: FabricTest,
+  future_roadmap: FutureRoadmap,
 };
 
 // Pages accessible to customer
@@ -83,6 +86,7 @@ const CUSTOMER_PAGES = {
   ledger_explorer: LedgerExplorer,
   loan_decision: LoanDecision,
   fluid_overview: FluidOverview,
+  future_roadmap: FutureRoadmap,
 };
 
 // Hash ↔ page mapping helpers
@@ -301,6 +305,9 @@ function AppInner() {
           <PageComponent onNavigate={navigate} params={pageParams} notifications={notifications} />
         </motion.div>
       </AnimatePresence>
+      {!isFluid && (isAdmin || isCustomer) && (
+        <Chatbot />
+      )}
       {!isFluid && (isAdmin || isCustomer) && (
         <Tour currentPage={currentPage} onNavigate={navigate} autoStart={tourLaunched} role={currentUser?.role} />
       )}

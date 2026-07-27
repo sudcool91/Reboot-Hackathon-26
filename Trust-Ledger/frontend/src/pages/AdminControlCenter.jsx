@@ -817,7 +817,7 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
                         <td><StatusTag s={app.status||app.applicationStatus||"Pending"}/></td>
                         <td>
                           <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                            <button className="btn-ghost" style={{fontSize:11,padding:"5px 10px"}} onClick={()=>onNavigate("loan_applications")}>View →</button>
+                            <button className="btn-ghost" style={{fontSize:11,padding:"5px 10px"}} onClick={()=>onNavigate("loan_decision")}>View ledger →</button>
                             {isPending && <>
                               <button disabled={!!st} onClick={()=>handleDecide(app,"approved")} style={{fontSize:11,padding:"5px 10px",borderRadius:7,background:"#F0FAF4",color:"#024731",border:"1px solid #C6E8D4",cursor:"pointer",fontWeight:700}}>{st==="approved"?"⏳":"✔ Approve"}</button>
                               <button disabled={!!st} onClick={()=>handleDecide(app,"rejected")} style={{fontSize:11,padding:"5px 10px",borderRadius:7,background:"#FCEBEB",color:"#A32D2D",border:"1px solid #F0C0C0",cursor:"pointer",fontWeight:700}}>{st==="rejected"?"⏳":"✘ Reject"}</button>

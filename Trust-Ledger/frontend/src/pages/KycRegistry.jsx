@@ -270,7 +270,7 @@ export default function KycRegistry({ onNavigate, notifications = [] }) {
     setLoading(true);
     try {
       const [kycData, srData] = await Promise.all([getKycRegistry(), getShareRequests()]);
-      setRows((Array.isArray(kycData) ? kycData : []).map(d => ({
+      setRows((Array.isArray(kycData) ? kycData : []).sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0)).map(d => ({
         ...d,
         av: (d.customerName || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
       })));

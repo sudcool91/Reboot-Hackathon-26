@@ -175,7 +175,7 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
       <div className="content" style={{maxWidth:1100}}>
 
         {/* Welcome hero */}
-        <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}
+        <motion.div data-tour="cd-hero" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}
           style={{background:"linear-gradient(135deg,#024731 0%,#0B5C3F 100%)",borderRadius:18,padding:"28px 32px",marginBottom:28,color:"#F2F0E6",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:20}}>
           <div>
             <div style={{fontSize:11,color:"#8FCBAE",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6,fontWeight:700}}>Welcome back</div>
@@ -315,7 +315,7 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
         </AnimatePresence>
 
         {/* Stat cards */}
-        <motion.div initial="hidden" animate="show" variants={container}
+        <motion.div data-tour="cd-stats" initial="hidden" animate="show" variants={container}
           style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:28}}>
           {[
             { label:"KYC status", value:loading?"…":kycRecord?kycRecord.status:(latestKycReq?"Request "+latestKycReq.status:"Not issued"),
@@ -341,7 +341,7 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
 
         <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr",gap:20}}>
 
-          <section className="block" style={{marginBottom:0}}>
+          <section data-tour="cd-activity" className="block" style={{marginBottom:0}}>
             <div className="block-head">
               <div className="block-title"><span className="block-num">01</span>My activity</div>
               <button className="btn-ghost" style={{fontSize:11,padding:"5px 12px"}} onClick={()=>onNavigate("customer_application")}>+ New</button>
@@ -415,7 +415,7 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
           <div style={{display:"flex",flexDirection:"column",gap:16}}>
 
             {/* KYC card */}
-            <section className="block" style={{marginBottom:0}}>
+            <section data-tour="cd-kyc" className="block" style={{marginBottom:0}}>
               <div className="block-head">
                 <div className="block-title"><span className="block-num">02</span>My KYC credential</div>
               </div>
@@ -469,7 +469,7 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
 
             {/* Credential share requests status */}
             {shareRequests.length>0 && (
-              <section className="block" style={{marginBottom:0}}>
+              <section data-tour="cd-shares" className="block" style={{marginBottom:0}}>
                 <div className="block-head"><div className="block-title"><span className="block-num">03</span>Credential share requests</div></div>
                 <div className="card">
                   <table>
@@ -493,7 +493,7 @@ export default function CustomerDashboard({ onNavigate, notifications=[] }) {
             )}
 
             {/* Quick actions */}
-            <section className="block" style={{marginBottom:0}}>
+            <section data-tour="cd-quickactions" className="block" style={{marginBottom:0}}>
               <div className="block-head"><div className="block-title"><span className="block-num">04</span>Quick actions</div></div>
               <div className="card card-pad" style={{display:"flex",flexDirection:"column",gap:8}}>
                 {[

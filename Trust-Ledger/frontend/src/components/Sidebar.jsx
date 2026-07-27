@@ -32,6 +32,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
           {link('loan_applications', 'Loan applications', null, <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>)}
           {link('credit_cards', 'Credit cards', null, <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>)}
           {link('kyc_registry', 'KYC registry', null, <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg>)}
+          {link('future_roadmap', 'Future roadmap', null, <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>)}
           <div className="sb-label">Customer view</div>
           {link('customer_application', 'Apply for product', null, <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M12 8v8"/></svg>)}
           {link('new_customer_upload', 'New customer upload', null, <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>)}
@@ -42,16 +43,17 @@ export default function Sidebar({ currentPage, onNavigate }) {
           {link('ledger_explorer', 'Ledger explorer', null, <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88"/><path d="M14.47 14.48L20 20"/><path d="M8.12 8.12L12 12"/></svg>)}
         </>}
 
-        {!isAdmin && <>
+        {!isAdmin && <div data-tour="sb-customer-nav">
           <div className="sb-label">My account</div>
           {link('customer_dashboard', 'My Dashboard', null, <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>)}
-          {link('customer_application', 'Apply for product', null, <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M12 8v8"/></svg>)}
           {link('new_customer_upload', 'Upload KYC documents', null, <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>)}
+          {link('customer_application', 'Apply for product', null, <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M12 8v8"/></svg>)}
+          {link('future_roadmap', 'Future roadmap', null, <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>)}
           <div className="sb-label">Blockchain</div>
           {link('ledger_explorer', 'Ledger explorer', null, <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88"/><path d="M14.47 14.48L20 20"/><path d="M8.12 8.12L12 12"/></svg>)}
-        </>}
+        </div>}
 
-        <div className="sb-foot" onClick={() => setProfileOpen(v => !v)} style={{ cursor: 'pointer' }} title="View profile">
+        <div data-tour="sb-profile" className="sb-foot" onClick={() => setProfileOpen(v => !v)} style={{ cursor: 'pointer' }} title="View profile">
           <div className="sb-av" style={{ background: isAdmin ? '#0E6E4B' : '#2B5EA7', fontSize: 12, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             {currentUser?.initials || 'U'}
           </div>

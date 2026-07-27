@@ -49,6 +49,25 @@ export default function LedgerExplorer({ onNavigate, params, notifications = [] 
   const [filterAction, setFilterAction] = useState('All');
   const feedRef = useRef(null);
 
+  const [autoScroll, setAutoScroll] = useState(true);
+  const autoScrollRef = useRef(null);
+
+  // Auto-scroll the feed box slowly like a live ticker — pauses on hover
+  useEffect(() => {
+    if (!isAdmin || allLoading || !autoScroll) return;
+    autoScrollRef.current = setInterval(() => {
+      if (!feedRef.current) return;
+      const { scrollTop, scrollHeight, clientHeight } = feedRef.current;
+      if (scrollTop + clientHeight >= scrollHeight - 5) {
+        // Loop back to top
+        feedRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        feedRef.current.scrollBy({ top: 1, behavior: 'auto' });
+      }
+    }, 40);
+    return () => clearInterval(autoScrollRef.current);
+  }, [isAdmin, allLoading, autoScroll]);
+
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
     if (!feedRef.current) return;
@@ -143,9 +162,11 @@ export default function LedgerExplorer({ onNavigate, params, notifications = [] 
       // Loan applications
       loanList.forEach(loan => {
         const st = (loan.status || '').toLowerCase();
-        const amt = loan.amount ? `£${Number(loan.amount).toLocaleString()}` : '';
+        // amount is stored as "GBP 50,000" — use as-is, or strip prefix
+        const rawAmt = loan.amount || '';
+        const amt = rawAmt.startsWith('GBP ') ? `£${rawAmt.slice(4)}` : rawAmt ? `£${rawAmt}` : '';
         const prod = loan.product || 'product';
-        const bank = loan.bank || 'Lloyds';
+        const bank = loan.targetBank || loan.bank || 'Lloyds';
         const name = loan.customerName || loan.applicantName || loan.email || '—';
         if (st === 'approved') {
           events.push({
@@ -478,28 +499,50 @@ export default function LedgerExplorer({ onNavigate, params, notifications = [] 
               </div>
 
               {/* Infinite scroll feed box */}
-              <div style={{ background:'#fff', border:'1.5px solid #E8E7DD', borderRadius:20,
-                boxShadow:'0 4px 20px rgba(0,0,0,0.06)', overflow:'hidden' }}>
+              <div style={{ background:'#F2F9F5',
+                border:'1.5px solid #C6E8D4', borderRadius:20,
+                boxShadow:'0 4px 24px rgba(2,71,49,0.08)', overflow:'hidden', position:'relative' }}>
+                {/* Subtle grid texture */}
+                <div style={{ position:'absolute', inset:0, pointerEvents:'none',
+                  backgroundImage:'repeating-linear-gradient(0deg,rgba(2,71,49,0.03) 0px,rgba(2,71,49,0.03) 1px,transparent 1px,transparent 32px),repeating-linear-gradient(90deg,rgba(2,71,49,0.03) 0px,rgba(2,71,49,0.03) 1px,transparent 1px,transparent 32px)' }} />
 
                 {/* Column headers */}
-                <div style={{ display:'grid', gridTemplateColumns:'160px 1fr 150px 110px 80px',
-                  padding:'10px 20px', background:'linear-gradient(90deg,#024731,#036844)',
-                  borderBottom:'1px solid #E8E7DD', gap:8 }}>
-                  {['Event type','Description','Customer','Time','Block'].map(h => (
-                    <div key={h} style={{ fontSize:10, fontWeight:700, color:'rgba(255,255,255,0.7)', textTransform:'uppercase', letterSpacing:'0.08em' }}>{h}</div>
-                  ))}
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
+                  padding:'11px 20px', background:'linear-gradient(90deg,#024731 0%,#036844 100%)',
+                  borderBottom:'1px solid #C6E8D4' }}>
+                  <div style={{ display:'grid', gridTemplateColumns:'160px 1fr 150px 110px 80px', gap:8, flex:1 }}>
+                    {['Event type','Description','Customer','Time','Block'].map(h => (
+                      <div key={h} style={{ fontSize:10, fontWeight:700, color:'rgba(255,255,255,0.6)', textTransform:'uppercase', letterSpacing:'0.12em' }}>{h}</div>
+                    ))}
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginLeft:16, flexShrink:0 }}>
+                    <span style={{ display:'flex', alignItems:'center', gap:5, fontSize:10, color:'#4DFF9A', fontWeight:800, letterSpacing:'0.12em' }}>
+                      <span style={{ width:6, height:6, borderRadius:'50%', background:'#4DFF9A', display:'inline-block',
+                        boxShadow:'0 0 8px rgba(77,255,154,0.9)', animation:'pulse 1.5s infinite' }} />
+                      LIVE
+                    </span>
+                    <button onClick={() => setAutoScroll(a => !a)}
+                      style={{ fontSize:10, padding:'4px 12px', borderRadius:99, cursor:'pointer', fontFamily:'inherit', fontWeight:700,
+                        border: autoScroll ? '1px solid #4DFF9A' : '1px solid rgba(255,255,255,0.3)',
+                        background: autoScroll ? 'rgba(77,255,154,0.18)' : 'rgba(255,255,255,0.1)',
+                        color: autoScroll ? '#4DFF9A' : 'rgba(255,255,255,0.6)', transition:'all 0.2s' }}>
+                      {autoScroll ? '⏸ Pause' : '▶ Resume'}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Scrollable rows */}
                 <div ref={feedRef} onScroll={handleScroll}
-                  style={{ maxHeight:580, overflowY:'auto', scrollbarWidth:'thin', scrollbarColor:'#D4D3C4 #F5F4EE' }}>
+                  onMouseEnter={() => setAutoScroll(false)}
+                  onMouseLeave={() => setAutoScroll(true)}
+                  style={{ maxHeight:580, overflowY:'auto', scrollbarWidth:'thin', scrollbarColor:'#A8D4B8 #E8F5EE' }}>
 
                   {allLoading ? (
                     Array.from({length:8}).map((_,i) => (
                       <div key={i} style={{ display:'grid', gridTemplateColumns:'160px 1fr 150px 110px 80px',
-                        padding:'14px 20px', borderBottom:'1px solid #F0EFE6', gap:8, alignItems:'center' }}>
+                        padding:'14px 20px', borderBottom:'1px solid rgba(255,255,255,0.04)', gap:8, alignItems:'center' }}>
                         {[160,400,140,90,60].map((w,j) => (
-                          <div key={j} style={{ height:14, borderRadius:7, background:'#F0EFE6', width:'85%' }}/>
+                          <div key={j} style={{ height:14, borderRadius:7, background:'rgba(255,255,255,0.06)', width:'85%' }}/>
                         ))}
                       </div>
                     ))
@@ -513,10 +556,12 @@ export default function LedgerExplorer({ onNavigate, params, notifications = [] 
                     const isOpen = expanded === `all-${i}`;
                     return (
                       <motion.div key={i}
-                        initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} transition={{ delay: Math.min(i*0.03, 0.3) }}
-                        style={{ borderBottom: i < visible.length-1 ? '1px solid #F0EFE6' : 'none',
-                          background: isOpen ? meta.bg : i%2===0 ? '#fff' : '#FAFAF8',
+                        initial={{ opacity:0, y:4 }} animate={{ opacity:1, y:0 }} transition={{ delay: Math.min(i*0.02, 0.25) }}
+                        style={{ borderBottom: i < visible.length-1 ? '1px solid #E2EEE7' : 'none',
+                          background: isOpen ? '#E2EEE7' : i%2===0 ? '#fff' : '#F5FBF7',
                           cursor:'pointer', transition:'background 0.15s' }}
+                        onMouseEnter={e => e.currentTarget.style.background='#EAF5EE'}
+                        onMouseLeave={e => e.currentTarget.style.background=isOpen?'#E2EEE7':i%2===0?'#fff':'#F5FBF7'}
                         onClick={() => setExpanded(isOpen ? null : `all-${i}`)}>
 
                         {/* Main row */}
@@ -526,15 +571,15 @@ export default function LedgerExplorer({ onNavigate, params, notifications = [] 
                           {/* Event type pill */}
                           <div style={{ display:'flex', alignItems:'center', gap:7 }}>
                             <span style={{ color:meta.color }}>{icon}</span>
-                            <span style={{ fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:99,
-                              background:meta.bg, color:meta.color, border:`1px solid ${meta.border}`,
+                            <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:99,
+                              background:`${meta.color}18`, color:meta.color, border:`1px solid ${meta.color}40`,
                               fontFamily:'monospace', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:110 }}>
                               {meta.fn}
                             </span>
                           </div>
 
                           {/* Description */}
-                          <div style={{ fontSize:12, color:'#1A1A14', lineHeight:1.4,
+                          <div style={{ fontSize:12, color:'#2A3D2E', lineHeight:1.4,
                             overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2,
                             WebkitBoxOrient:'vertical', paddingRight:8 }}>
                             {ev.description}
@@ -543,14 +588,14 @@ export default function LedgerExplorer({ onNavigate, params, notifications = [] 
                           {/* Customer */}
                           <div style={{ fontSize:12 }}>
                             <div style={{ fontWeight:700, color:'#1A1A14', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{ev.customerName || '—'}</div>
-                            {ev.credentialId && <div style={{ fontSize:10, color:'#9A9A8A', marginTop:2, fontFamily:'monospace' }}>{ev.credentialId}</div>}
+                            {ev.credentialId && <div style={{ fontSize:10, color:'#5A9A7A', marginTop:2, fontFamily:'monospace' }}>{ev.credentialId}</div>}
                           </div>
 
                           {/* Time */}
                           <div style={{ fontSize:11, color:'#6A6A5A' }}>{fmt(ev.timestamp)}</div>
 
                           {/* Block */}
-                          <div style={{ fontSize:11, color:'#9A9A8A', fontFamily:'monospace' }}>
+                          <div style={{ fontSize:11, color:'#024731', fontFamily:'monospace', fontWeight:700 }}>
                             {ev.blockNumber ? `#${Number(ev.blockNumber).toLocaleString()}` : '—'}
                           </div>
                         </div>
@@ -560,7 +605,7 @@ export default function LedgerExplorer({ onNavigate, params, notifications = [] 
                           {isOpen && (
                             <motion.div initial={{ height:0,opacity:0 }} animate={{ height:'auto',opacity:1 }} exit={{ height:0,opacity:0 }}
                               transition={{ duration:0.2 }} style={{ overflow:'hidden' }}>
-                              <div style={{ padding:'12px 20px 16px', borderTop:`1px solid ${meta.border}`,
+                              <div style={{ padding:'12px 20px 16px', borderTop:`1px solid #C6E8D4`,
                                 display:'flex', flexWrap:'wrap', gap:10 }}>
                                 {[
                                   ['Actor',    ev.actor],
@@ -570,9 +615,9 @@ export default function LedgerExplorer({ onNavigate, params, notifications = [] 
                                   ['Timestamp',fmt(ev.timestamp)],
                                 ].filter(([,v])=>v).map(([label,val]) => (
                                   <div key={label} style={{ background:'#fff', borderRadius:8, padding:'7px 12px',
-                                    border:`1px solid ${meta.border}`, minWidth:120 }}>
+                                    border:`1px solid #C6E8D4`, minWidth:120 }}>
                                     <div style={{ fontSize:9, color:'#9A9A8A', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:3 }}>{label}</div>
-                                    <div style={{ fontSize:12, fontWeight:700, color:meta.color,
+                                    <div style={{ fontSize:12, fontWeight:700, color:'#024731',
                                       fontFamily:/hash|block|tx/i.test(label)?'monospace':'inherit',
                                       wordBreak:'break-all' }}>{val}</div>
                                   </div>
