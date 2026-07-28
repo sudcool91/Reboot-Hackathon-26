@@ -29,6 +29,12 @@ export class User {
   @Column({ type: 'varchar', length: 128, nullable: true })
   branch: string;
 
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  phone: string;
+
+  @Column({ type: 'varchar', length: 16, nullable: true })
+  dob: string;
+
   @Column({ type: 'varchar', length: 64, nullable: true })
   credentialId: string;
 

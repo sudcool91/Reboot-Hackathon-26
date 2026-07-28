@@ -38,6 +38,7 @@ const PRODUCTS = [
 ];
 
 const LBG_BANKS = ['Lloyds Bank', 'Halifax', 'Bank of Scotland', 'Scottish Widows', 'MBNA', 'Black Horse', 'Lex Autolease', 'Lloyds Wealth'];
+const DEFAULT_DOB = '1990-01-01';
 
 /* ── Future scope products ──────────────────────────────────── */
 const FUTURE_PRODUCTS = [
@@ -260,12 +261,12 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
 
   /* â”€â”€ Load existing share requests for current user â”€â”€ */
   useEffect(() => {
-    const email = currentUser?.email || form.email;
+    const email = currentUser?.role === 'admin' ? form.email : (currentUser?.email || form.email);
     if (!email || !email.includes('@')) return;
     getShareRequestsByEmail(email).then(data => {
       setExistingShares(Array.isArray(data) ? data : []);
     }).catch(() => { });
-  }, [currentUser?.email, form.email]);
+  }, [currentUser?.email, currentUser?.role, form.email]);
 
   /* â”€â”€ Auto-check KYC as user types email on step 2 â”€â”€ */
   useEffect(() => {
@@ -287,12 +288,30 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
   /* ── Pre-fill from logged-in user + KYC credential (customers only) ── */
   useEffect(() => {
     if (!currentUser) return;
+    if (currentUser?.role === 'admin') {
+      // Admin applies on behalf of customers, so personal details must start blank.
+      setForm(f => ({
+        ...f,
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        dob: '',
+        address: '',
+        postcode: '',
+      }));
+      return;
+    }
     const parts = (currentUser.name || '').split(' ');
     setForm(f => ({
       ...f,
       email: f.email || currentUser.email || '',
       firstName: f.firstName || parts[0] || '',
       lastName: f.lastName || parts.slice(1).join(' ') || '',
+      phone: f.phone || currentUser.phone || '',
+      dob: f.dob || DEFAULT_DOB,
+      address: f.address || currentUser.address || '',
+      postcode: f.postcode || currentUser.postcode || '',
     }));
   }, [currentUser]);
 
@@ -312,7 +331,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
         lastName: f.lastName || parts.slice(1).join(' ') || '',
         email: email,
         phone: f.phone || rec?.phone || currentUser.phone || '',
-        dob: f.dob || rec?.dob || currentUser.dob || '',
+        dob: DEFAULT_DOB,
         address: f.address || rec?.address || currentUser.address || '',
         postcode: f.postcode || rec?.postcode || currentUser.postcode || '',
       }));
@@ -368,7 +387,10 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
     try {
       const productLabel = PRODUCTS.find(p => p.id === form.product)?.label || form.product;
       // Always use logged-in user's registered name as primary — guarantees DB filter works
-      const applicantName = currentUser?.name || kycRecord?.name || `${form.firstName} ${form.lastName}`.trim();
+      const isAdmin = currentUser?.role === 'admin';
+      const applicantName = isAdmin
+        ? `${form.firstName} ${form.lastName}`.trim()
+        : (currentUser?.name || kycRecord?.name || `${form.firstName} ${form.lastName}`.trim());
       const nameParts = applicantName.trim().split(/\s+/);
       const avatarInitials = (nameParts.length >= 2
         ? nameParts[0][0] + nameParts[nameParts.length - 1][0]
@@ -381,7 +403,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
         await submitShareRequest({
           credentialId: kycForShare.credentialId,
           customerName: applicantName,
-          customerEmail: currentUser?.email || form.email,
+          customerEmail: isAdmin ? form.email : (currentUser?.email || form.email),
           targetBank: form.bank,
           status: 'pending',
           source: 'product_application',
@@ -399,14 +421,14 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
         credentialId: kycRecord?.credentialId || null,
         creditScore: kycRecord?.score || null,
         status: kycRecord?.status === 'Active' ? 'Auto-eligible' : 'Pending docs',
-        email: currentUser?.email || form.email,
+        email: isAdmin ? form.email : (currentUser?.email || form.email),
         phone: form.phone,
         annualIncome: form.annualIncome,
         employmentStatus: form.employmentStatus,
         purpose: form.purpose,
         loanTerm: form.loanTerm,
         existingDebts: form.existingDebts,
-        dob: form.dob,
+        dob: isAdmin ? form.dob : DEFAULT_DOB,
         address: `${form.address}, ${form.postcode}`,
         targetBank: form.bank,
         shareConsent: form.shareConsent,
@@ -818,7 +840,10 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
                         <div key={f.key} className="ncu-field">
                           <label className="ncu-label">{f.label}</label>
                           <input className="ncu-input" type={f.type} placeholder={f.placeholder}
-                            value={form[f.key]} onChange={e => set(f.key, e.target.value)} />
+                            value={f.key === 'dob' ? (currentUser?.role === 'admin' ? form[f.key] : DEFAULT_DOB) : form[f.key]}
+                            onChange={e => set(f.key, e.target.value)}
+                            readOnly={f.key === 'dob' && currentUser?.role !== 'admin'}
+                            style={f.key === 'dob' && currentUser?.role !== 'admin' ? { background: '#F0FAF4', color: '#024731', fontWeight: 600, cursor: 'not-allowed', border: '1.5px solid #C6E8D4' } : undefined} />
                           {err(f.key)}
                         </div>
                       ))}

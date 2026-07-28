@@ -90,7 +90,8 @@ function StatusTag({ s }) {
 
 // ── User Management Component ────────────────────────────────────────────────
 function UserManagement({ pushToast }) {
-  const EMPTY_FORM = { name:'', email:'', password:'', phone:'' };
+  const EMPTY_FORM = { name:'', email:'', password:'' };
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
   const [customUsers, setCustomUsers] = useState(getCustomUsers());
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
@@ -99,7 +100,7 @@ function UserManagement({ pushToast }) {
   const validate = () => {
     const e = {};
     if (!form.name.trim()) e.name = 'Full name required';
-    if (!form.email.includes('@')) e.email = 'Valid email required';
+    if (!EMAIL_RE.test(form.email.trim())) e.email = 'Valid email required';
     if (!form.password || form.password.length < 4) e.password = 'Min 4 characters';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -121,12 +122,19 @@ function UserManagement({ pushToast }) {
       initials: parts.map(w => w[0]).join('').toUpperCase().slice(0,2),
       title: 'Personal Banking Customer',
       email: form.email.trim().toLowerCase(),
-      phone: form.phone?.trim() || '',
       _custom: true,
       _createdAt: new Date().toISOString(),
     };
     const dbResult = await registerUser(newUser);
-    if (dbResult?.error) { setErrors(e => ({...e, email: dbResult.error})); return; }
+    if (!dbResult) {
+      setErrors(e => ({ ...e, email: 'Backend unavailable. User was not created.' }));
+      pushToast('❌ Backend unavailable — user not created', 'error');
+      return;
+    }
+    if (dbResult?.error) {
+      setErrors(e => ({ ...e, email: dbResult.error }));
+      return;
+    }
     const savedUser = dbResult ? { ...newUser, ...dbResult, password: newUser.password } : newUser;
     const updated = [...getCustomUsers().filter(u => u.username !== savedUser.username), savedUser];
     saveCustomUsers(updated);
@@ -159,12 +167,11 @@ function UserManagement({ pushToast }) {
           style={{background:'#F0FAF4',border:'1.5px solid #C6E8D4',borderRadius:14,padding:'20px 24px',marginBottom:20}}>
           <div style={{fontWeight:700,fontSize:14,color:'#024731',marginBottom:4}}>🆕 New login account</div>
           <div style={{fontSize:11,color:'#6A6A5A',marginBottom:16}}>Creates a customer login. Username is auto-derived from email.</div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:14,marginBottom:16}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:14,marginBottom:16}}>
             {[
-              {label:'Full Name', key:'name',     type:'text',  placeholder:'e.g. Priya Nair'},
-              {label:'Email',     key:'email',    type:'email', placeholder:'e.g. priya@email.com'},
-              {label:'Phone',     key:'phone',    type:'tel',   placeholder:'e.g. 07700 900000'},
-              {label:'Password',  key:'password', type:'text',  placeholder:'min 4 characters'},
+              {label:'Full Name',    key:'name',     type:'text',  placeholder:'e.g. Priya Nair'},
+              {label:'Email',        key:'email',    type:'email', placeholder:'e.g. priya@email.com'},
+              {label:'Password',     key:'password', type:'text',  placeholder:'min 4 characters'},
             ].map(({label,key,type,placeholder}) => (
               <div key={key}>
                 <label style={{fontSize:11,fontWeight:700,color:'#4A4A40',display:'block',marginBottom:4}}>{label}</label>
@@ -293,19 +300,21 @@ function BlockchainCustomerManagement({ pushToast }) {
           initials: parts.map(w => w[0]).join('').toUpperCase().slice(0, 2),
           title: 'Personal Banking Customer',
           email: form.email.trim().toLowerCase(),
-          phone: form.phone?.trim() || '',
           _custom: true,
           _createdAt: new Date().toISOString(),
         };
         try {
-          await registerUser(loginUser);
+          const regRes = await registerUser(loginUser);
+          if (!regRes || regRes?.error) {
+            throw new Error(regRes?.error || 'Backend unavailable while creating login account');
+          }
           const updated = [...getCustomUsers().filter(u => u.username !== loginUser.username), loginUser];
           saveCustomUsers(updated);
           setBanner({ type: 'success', msg: `✅ Customer "${form.fullName}" written to Fabric & saved to DB. Login: ${finalUsername} / ${autoPassword}`, txId: txShort });
           pushToast(`✅ ${form.fullName} on Fabric. Login: ${finalUsername} / ${autoPassword}`, 'success');
         } catch {
-          setBanner({ type: 'success', msg: `✅ Customer "${form.fullName}" written to Fabric & saved to DB`, txId: txShort });
-          pushToast(`✅ ${form.fullName} added to Fabric ledger & DB`, 'success');
+          setBanner({ type: 'db', msg: `⚠️ Customer written to Fabric, but login account was not saved in DB. Please retry with backend running.`, txId: txShort });
+          pushToast(`⚠️ Fabric success, login account DB save failed`, 'warn');
         }
         // ──────────────────────────────────────────────────────────────────
 
@@ -556,14 +565,17 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
             initials: parts.map(w => w[0]).join('').toUpperCase().slice(0, 2),
             title: 'Personal Banking Customer',
             email: req.email.trim().toLowerCase(),
-            phone: req.phone?.trim() || '',
             _custom: true,
             _createdAt: new Date().toISOString(),
           };
-          try { await registerUser(loginUser); } catch {}
-          const updated = [...getCustomUsers().filter(u => u.username !== loginUser.username), loginUser];
-          saveCustomUsers(updated);
-          pushToast(`✅ Login created — ${finalUsername} / ${autoPassword}`, 'success');
+          const regRes = await registerUser(loginUser);
+          if (!regRes || regRes?.error) {
+            pushToast(`⚠️ KYC approved, but login DB creation failed. Please retry.`, 'warn');
+          } else {
+            const updated = [...getCustomUsers().filter(u => u.username !== loginUser.username), loginUser];
+            saveCustomUsers(updated);
+            pushToast(`✅ Login created — ${finalUsername} / ${autoPassword}`, 'success');
+          }
         }
         // ─────────────────────────────────────────────────────────────────
       }

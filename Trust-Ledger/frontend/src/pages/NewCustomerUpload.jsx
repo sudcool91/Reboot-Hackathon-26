@@ -84,11 +84,16 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
   const [txHash, setTxHash] = useState('');
   const [credentialId, setCredentialId] = useState('');
   const [customerId, setCustomerId] = useState('');
+  // Admins upload documents on behalf of any customer, so their own details
+  // must never be prefilled. Only prefill when the logged-in user is the
+  // customer completing their own KYC upload.
+  const isSelfUpload = currentUser?.role !== 'admin';
   const [form, setForm] = useState({
-    fullName: currentUser?.name || '',
-    email:    currentUser?.email || '',
-    phone:    currentUser?.phone || '',
-    dob: '', nationality: 'British', address: '',
+    fullName: isSelfUpload ? (currentUser?.name || '') : '',
+    email:    isSelfUpload ? (currentUser?.email || '') : '',
+    phone:    isSelfUpload ? (currentUser?.phone || '') : '',
+    dob:      isSelfUpload ? (currentUser?.dob  || '') : '',
+    nationality: 'British', address: '',
   });
   const [uploads, setUploads] = useState({});
   const fileRefs = useRef({});
@@ -111,6 +116,13 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
 
   // Page-load: check if logged-in user already has KYC
   useEffect(() => {
+    // Admins should always start with a blank onboarding slate here.
+    if (currentUser?.role === 'admin') {
+      setPageKycStatus('none');
+      setApprovedDocs(null);
+      return;
+    }
+
     if (!currentUser?.email) { setPageKycStatus('none'); return; }
 
     // 1. Instant check — if user object already has a credentialId, they're approved
@@ -138,6 +150,7 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
 
   // Load approved docs when user is verified
   useEffect(() => {
+    if (currentUser?.role === 'admin') return;
     if (pageKycStatus !== 'approved' || !currentUser?.email) return;
     const eL = currentUser.email.toLowerCase().trim();
     getKycRequestsByEmail(eL).then(reqData => {
@@ -172,9 +185,10 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
         const credMatch = credList.find(r => {
           const emailMatch = r.email?.toLowerCase().trim() === eL;
           const nameMatch  = r.customerName?.toLowerCase().trim() === nL;
-          const phoneMatch = pH ? (r.phone || '').replace(/\D/g, '') === pH : true;
-          // All three must match if phone is provided; else name+email
-          return pH ? (emailMatch && nameMatch && phoneMatch) : (emailMatch && nameMatch);
+          const recPhone   = (r.phone || '').replace(/\D/g, '');
+          const phoneMatch = pH && recPhone ? pH === recPhone : true;
+          // Name, email and phone (when both sides provide one) must all match
+          return emailMatch && nameMatch && phoneMatch;
         });
 
         // ── Match in KYC Requests (pending / approved requests) ────────────
@@ -182,8 +196,9 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
         const reqMatch = reqList.find(r => {
           const emailMatch = r.email?.toLowerCase().trim() === eL;
           const nameMatch  = r.customerName?.toLowerCase().trim() === nL;
-          const phoneMatch = pH ? (r.phone || '').replace(/\D/g, '') === pH : true;
-          return pH ? (emailMatch && nameMatch && phoneMatch) : (emailMatch && nameMatch);
+          const recPhone   = (r.phone || '').replace(/\D/g, '');
+          const phoneMatch = pH && recPhone ? pH === recPhone : true;
+          return emailMatch && nameMatch && phoneMatch;
         });
 
         // Prefer credential record (approved), fall back to request record
@@ -244,9 +259,9 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
     pushToast('📨 Submitting KYC request to admin…', 'info');
     const docKeys = Object.keys(uploads).filter(k => uploads[k]?.status === 'done').join(',');
     await submitKycRequest({
-      customerName: currentUser?.name || form.fullName,
-      email:        currentUser?.email || form.email,
-      phone:        currentUser?.phone || form.phone,
+      customerName: isSelfUpload ? (currentUser?.name || form.fullName) : form.fullName,
+      email:        isSelfUpload ? (currentUser?.email || form.email)   : form.email,
+      phone:        isSelfUpload ? (currentUser?.phone || form.phone)   : form.phone,
       dob:          form.dob,
       nationality:  form.nationality,
       address:      form.address,
@@ -263,7 +278,14 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
   const resetForm = () => {
     setStep(0); setUploads({}); setKycChecked(false); setExistingKyc(null); setShowErrors(false);
     // Keep account values pre-filled on reset
-    setForm({ fullName: currentUser?.name || '', email: currentUser?.email || '', phone: currentUser?.phone || '', dob: '', nationality: 'British', address: '' });
+    setForm({
+      fullName: isSelfUpload ? (currentUser?.name || '')  : '',
+      email:    isSelfUpload ? (currentUser?.email || '') : '',
+      phone:    isSelfUpload ? (currentUser?.phone || '') : '',
+      dob:      isSelfUpload ? (currentUser?.dob || '')   : '',
+      nationality: 'British',
+      address: '',
+    });
   };
 
   return (
@@ -470,8 +492,8 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                 <div className="block-head"><div className="block-title"><span className="block-num">01</span>Personal details</div></div>
                 <div className="card-pad-standalone">
                   <div className="ncu-form-grid">
-                    {/* Full Name — locked if from account */}
-                    {currentUser?.name ? (
+                    {/* Full Name — locked if from account (self-upload only; admins always get an editable blank field) */}
+                    {isSelfUpload && currentUser?.name ? (
                       <div className="ncu-field">
                         <label className="ncu-label">Full Name <span style={{color:'#059669',fontSize:10,fontWeight:700,marginLeft:4}}>🔒 from your account</span></label>
                         <input className="ncu-input" type="text" value={currentUser.name} readOnly
@@ -480,8 +502,8 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                     ) : (
                       <Field label="Full Name" fkey="fullName" type="text" placeholder="e.g. Rohan Sharma" value={form.fullName} onChange={v => set('fullName', v)} required />
                     )}
-                    {/* Email — locked if from account */}
-                    {currentUser?.email ? (
+                    {/* Email — locked if from account (self-upload only) */}
+                    {isSelfUpload && currentUser?.email ? (
                       <div className="ncu-field">
                         <label className="ncu-label">Email Address <span style={{color:'#059669',fontSize:10,fontWeight:700,marginLeft:4}}>🔒 from your account</span></label>
                         <input className="ncu-input" type="email" value={currentUser.email} readOnly
@@ -490,8 +512,8 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                     ) : (
                       <Field label="Email Address" fkey="email" type="email" placeholder="e.g. rohan@email.com" value={form.email} onChange={v => set('email', v)} required />
                     )}
-                    {/* Phone — locked if from account, editable otherwise */}
-                    {currentUser?.phone ? (
+                    {/* Phone — locked if from account (self-upload only), editable otherwise */}
+                    {isSelfUpload && currentUser?.phone ? (
                       <div className="ncu-field">
                         <label className="ncu-label">Phone Number <span style={{color:'#059669',fontSize:10,fontWeight:700,marginLeft:4}}>🔒 from your account</span></label>
                         <input className="ncu-input" type="tel" value={currentUser.phone} readOnly
@@ -500,7 +522,16 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                     ) : (
                       <Field label="Phone Number" fkey="phone" type="tel" placeholder="+44 7700 900000" value={form.phone} onChange={v => set('phone', v)} />
                     )}
-                    <Field label="Date of Birth" fkey="dob" type="date" placeholder="" value={form.dob} onChange={v => set('dob', v)} required />
+                    {/* DOB — locked if from account (self-upload only), editable otherwise */}
+                    {isSelfUpload && currentUser?.dob ? (
+                      <div className="ncu-field">
+                        <label className="ncu-label">Date of Birth <span style={{color:'#059669',fontSize:10,fontWeight:700,marginLeft:4}}>🔒 from your account</span></label>
+                        <input className="ncu-input" type="date" value={currentUser.dob} readOnly
+                          style={{background:'#F0FAF4',color:'#024731',border:'1.5px solid #C6E8D4',cursor:'not-allowed'}} />
+                      </div>
+                    ) : (
+                      <Field label="Date of Birth" fkey="dob" type="date" placeholder="" value={form.dob} onChange={v => set('dob', v)} required />
+                    )}
                     <div className="ncu-field">
                       <label className="ncu-label">Nationality</label>
                       <input className="ncu-input" type="text" placeholder="e.g. British" value={form.nationality} onChange={e => set('nationality', e.target.value)} />
@@ -749,8 +780,8 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                     <div style={{fontWeight:700,color:'#FCD34D',fontSize:14}}>Awaiting admin approval</div>
                   </div>
                   {[
-                    ['Customer', currentUser?.name || form.fullName],
-                    ['Email', currentUser?.email || form.email],
+                    ['Customer', isSelfUpload ? (currentUser?.name || form.fullName) : form.fullName],
+                    ['Email', isSelfUpload ? (currentUser?.email || form.email) : form.email],
                     ['Documents uploaded', Object.keys(uploads).filter(k => uploads[k]?.status === 'done').length + ' files'],
                     ['Submitted at', new Date().toLocaleString()],
                   ].map(([l, v]) => (

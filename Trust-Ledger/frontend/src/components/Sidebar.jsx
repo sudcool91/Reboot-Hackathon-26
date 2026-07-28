@@ -1,12 +1,76 @@
-﻿import { useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import lloydHorse from '../assets/lloyds-horse.gif';
 import { useStore } from '../store';
+import { getKycRegistry, getKycRequestsByEmail } from '../services/api';
 
 export default function Sidebar({ currentPage, onNavigate }) {
   const { currentUser, logout } = useStore();
   const [profileOpen, setProfileOpen] = useState(false);
   const isAdmin = currentUser?.role === 'admin';
+  const [liveKyc, setLiveKyc] = useState({ loading: false, status: null, credentialId: null });
+
+  useEffect(() => {
+    if (!profileOpen || isAdmin || !currentUser?.email) return;
+
+    let cancelled = false;
+    setLiveKyc({ loading: true, status: null, credentialId: currentUser?.credentialId || null });
+
+    Promise.all([
+      getKycRegistry().catch(() => []),
+      getKycRequestsByEmail(currentUser.email).catch(() => []),
+    ]).then(([kycData, reqData]) => {
+      if (cancelled) return;
+
+      const email = currentUser.email.toLowerCase().trim();
+      const name = (currentUser.name || '').toLowerCase().trim();
+      const registry = Array.isArray(kycData) ? kycData : [];
+      const reqs = Array.isArray(reqData) ? reqData : [];
+
+      const regMatch = registry.find(r =>
+        (r.email || '').toLowerCase().trim() === email ||
+        (r.customerName || '').toLowerCase().trim() === name,
+      );
+
+      const regStatus = (regMatch?.status || '').toLowerCase();
+      if (regMatch && ['active', 'approved', 'verified'].includes(regStatus)) {
+        setLiveKyc({
+          loading: false,
+          status: 'Verified ✓',
+          credentialId: regMatch.credentialId || regMatch.credential_id || currentUser?.credentialId || null,
+        });
+        return;
+      }
+
+      const approvedReq = reqs.find(r => (r.status || '').toLowerCase() === 'approved');
+      if (approvedReq) {
+        setLiveKyc({
+          loading: false,
+          status: 'Verified ✓',
+          credentialId: approvedReq.credentialId || currentUser?.credentialId || null,
+        });
+        return;
+      }
+
+      const pendingReq = reqs.find(r => (r.status || '').toLowerCase() === 'pending');
+      if (pendingReq) {
+        setLiveKyc({ loading: false, status: 'Pending review', credentialId: currentUser?.credentialId || null });
+        return;
+      }
+
+      setLiveKyc({ loading: false, status: currentUser?.credentialId ? 'Verified ✓' : 'Not verified', credentialId: currentUser?.credentialId || null });
+    }).catch(() => {
+      if (cancelled) return;
+      setLiveKyc({ loading: false, status: currentUser?.credentialId ? 'Verified ✓' : 'Not verified', credentialId: currentUser?.credentialId || null });
+    });
+
+    return () => { cancelled = true; };
+  }, [profileOpen, isAdmin, currentUser?.email, currentUser?.name, currentUser?.credentialId]);
+
+  const profileCredentialId = !isAdmin ? (liveKyc.credentialId || currentUser?.credentialId || null) : null;
+  const profileKycStatus = isAdmin
+    ? null
+    : (liveKyc.loading ? 'Checking…' : (liveKyc.status || (currentUser?.credentialId ? 'Verified ✓' : 'Not verified')));
 
   const link = (page, label, badge, icon) => (
     <button className={`sb-link${currentPage === page ? ' on' : ''}`} data-page={page} onClick={() => onNavigate(page)}>
@@ -106,10 +170,10 @@ export default function Sidebar({ currentPage, onNavigate }) {
                   {[
                     { icon: '\u2709', label: 'Email', value: currentUser?.email },
                     isAdmin && currentUser?.branch ? { icon: '\uD83C\uDFE2', label: 'Branch', value: currentUser.branch } : null,
-                    !isAdmin && currentUser?.credentialId ? { icon: '\u26D3', label: 'Credential ID', value: currentUser.credentialId, mono: true } : null,
+                    !isAdmin && profileCredentialId ? { icon: '\u26D3', label: 'Credential ID', value: profileCredentialId, mono: true } : null,
                     isAdmin
                       ? { icon: '\uD83D\uDEE1', label: 'Access level', value: 'Full platform access' }
-                      : { icon: '\uD83D\uDD10', label: 'KYC status', value: currentUser?.credentialId ? 'Verified \u2713' : 'Not verified' },
+                      : { icon: '\uD83D\uDD10', label: 'KYC status', value: profileKycStatus },
                   ].filter(Boolean).map(({ icon, label, value, mono }) => value ? (
                     <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(255,255,255,0.06)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.09)' }}>
                       <span style={{ fontSize: 13, flexShrink: 0 }}>{icon}</span>
