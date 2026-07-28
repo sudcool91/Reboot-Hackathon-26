@@ -266,3 +266,156 @@
   line: [32m'638'[39m,
   routine: [32m'varchar'[39m
 }
+[31m[Nest] 20022  - [39m07/26/2026, 2:16:51 PM [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mQueryFailedError: value too long for type character varying(8)
+    at PostgresQueryRunner.query [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/driver/src/driver/postgres/PostgresQueryRunner.ts:325:19[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async InsertQueryBuilder.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/query-builder/src/query-builder/InsertQueryBuilder.ts:164:33[90m)[39m
+    at async SubjectExecutor.executeInsertOperations [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:435:42[90m)[39m
+    at async SubjectExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:137:9[90m)[39m
+    at async EntityPersistExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/EntityPersistExecutor.ts:182:21[90m)[39m
+    at async PresentationApiService.createLoanApplication [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/presentation-api/presentation-api.service.ts:117:20[90m)[39m
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17 {
+  query: [32m'INSERT INTO "loan_applications"("applicationId", "avatar", "applicantName", "product", "amount", "creditScore", "kycSource", "credentialId", "email", "targetBank", "shareConsent", "status", "decision", "remark", "decidedBy", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, DEFAULT, $8, $9, $10, $11, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT) RETURNING "shareConsent", "status", "createdAt", "updatedAt"'[39m,
+  parameters: [
+    [32m'LN20464'[39m,
+    [32m'SUNDEFINED'[39m,
+    [32m'saurabh s '[39m,
+    [32m'Personal Loan'[39m,
+    [32m'GBP 345,454,356'[39m,
+    [1mnull[22m,
+    [32m'On-chain · Lloyds'[39m,
+    [32m'ssss@gmail.com'[39m,
+    [32m'Scottish Widows'[39m,
+    [33mfalse[39m,
+    [32m'Pending docs'[39m
+  ],
+  driverError: error: value too long for type character varying(8)
+      at [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mpg[24m/lib/client.js:652:17
+  [90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+      at async PostgresQueryRunner.query [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/driver/src/driver/postgres/PostgresQueryRunner.ts:254:25[90m)[39m
+      at async InsertQueryBuilder.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/query-builder/src/query-builder/InsertQueryBuilder.ts:164:33[90m)[39m
+      at async SubjectExecutor.executeInsertOperations [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:435:42[90m)[39m
+      at async SubjectExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:137:9[90m)[39m
+      at async EntityPersistExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/EntityPersistExecutor.ts:182:21[90m)[39m
+      at async PresentationApiService.createLoanApplication [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/presentation-api/presentation-api.service.ts:117:20[90m)[39m
+      at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
+      at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17 {
+    length: [33m97[39m,
+    severity: [32m'ERROR'[39m,
+    code: [32m'22001'[39m,
+    detail: [90mundefined[39m,
+    hint: [90mundefined[39m,
+    position: [90mundefined[39m,
+    internalPosition: [90mundefined[39m,
+    internalQuery: [90mundefined[39m,
+    where: [90mundefined[39m,
+    schema: [90mundefined[39m,
+    table: [90mundefined[39m,
+    column: [90mundefined[39m,
+    dataType: [90mundefined[39m,
+    constraint: [90mundefined[39m,
+    file: [32m'varchar.c'[39m,
+    line: [32m'638'[39m,
+    routine: [32m'varchar'[39m
+  },
+  length: [33m97[39m,
+  severity: [32m'ERROR'[39m,
+  code: [32m'22001'[39m,
+  detail: [90mundefined[39m,
+  hint: [90mundefined[39m,
+  position: [90mundefined[39m,
+  internalPosition: [90mundefined[39m,
+  internalQuery: [90mundefined[39m,
+  where: [90mundefined[39m,
+  schema: [90mundefined[39m,
+  table: [90mundefined[39m,
+  column: [90mundefined[39m,
+  dataType: [90mundefined[39m,
+  constraint: [90mundefined[39m,
+  file: [32m'varchar.c'[39m,
+  line: [32m'638'[39m,
+  routine: [32m'varchar'[39m
+}
+[31m[Nest] 20022  - [39m07/26/2026, 2:40:23 PM [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mQueryFailedError: value too long for type character varying(8)
+    at PostgresQueryRunner.query [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/driver/src/driver/postgres/PostgresQueryRunner.ts:325:19[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async InsertQueryBuilder.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/query-builder/src/query-builder/InsertQueryBuilder.ts:164:33[90m)[39m
+    at async SubjectExecutor.executeInsertOperations [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:435:42[90m)[39m
+    at async SubjectExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:137:9[90m)[39m
+    at async EntityPersistExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/EntityPersistExecutor.ts:182:21[90m)[39m
+    at async PresentationApiService.createLoanApplication [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/presentation-api/presentation-api.service.ts:117:20[90m)[39m
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17 {
+  query: [32m'INSERT INTO "loan_applications"("applicationId", "avatar", "applicantName", "product", "amount", "creditScore", "kycSource", "credentialId", "email", "targetBank", "shareConsent", "status", "decision", "remark", "decidedBy", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, DEFAULT, $8, $9, $10, $11, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT) RETURNING "shareConsent", "status", "createdAt", "updatedAt"'[39m,
+  parameters: [
+    [32m'LN20465'[39m,
+    [32m'SUNDEFINED'[39m,
+    [32m'saurabh s '[39m,
+    [32m'Home Loan'[39m,
+    [32m'GBP 345,436'[39m,
+    [1mnull[22m,
+    [32m'On-chain · Lloyds'[39m,
+    [32m'ssss@gmail.com'[39m,
+    [32m'Black Horse'[39m,
+    [33mtrue[39m,
+    [32m'Pending docs'[39m
+  ],
+  driverError: error: value too long for type character varying(8)
+      at [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mpg[24m/lib/client.js:652:17
+  [90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+      at async PostgresQueryRunner.query [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/driver/src/driver/postgres/PostgresQueryRunner.ts:254:25[90m)[39m
+      at async InsertQueryBuilder.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/query-builder/src/query-builder/InsertQueryBuilder.ts:164:33[90m)[39m
+      at async SubjectExecutor.executeInsertOperations [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:435:42[90m)[39m
+      at async SubjectExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:137:9[90m)[39m
+      at async EntityPersistExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/EntityPersistExecutor.ts:182:21[90m)[39m
+      at async PresentationApiService.createLoanApplication [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/presentation-api/presentation-api.service.ts:117:20[90m)[39m
+      at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
+      at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17 {
+    length: [33m97[39m,
+    severity: [32m'ERROR'[39m,
+    code: [32m'22001'[39m,
+    detail: [90mundefined[39m,
+    hint: [90mundefined[39m,
+    position: [90mundefined[39m,
+    internalPosition: [90mundefined[39m,
+    internalQuery: [90mundefined[39m,
+    where: [90mundefined[39m,
+    schema: [90mundefined[39m,
+    table: [90mundefined[39m,
+    column: [90mundefined[39m,
+    dataType: [90mundefined[39m,
+    constraint: [90mundefined[39m,
+    file: [32m'varchar.c'[39m,
+    line: [32m'638'[39m,
+    routine: [32m'varchar'[39m
+  },
+  length: [33m97[39m,
+  severity: [32m'ERROR'[39m,
+  code: [32m'22001'[39m,
+  detail: [90mundefined[39m,
+  hint: [90mundefined[39m,
+  position: [90mundefined[39m,
+  internalPosition: [90mundefined[39m,
+  internalQuery: [90mundefined[39m,
+  where: [90mundefined[39m,
+  schema: [90mundefined[39m,
+  table: [90mundefined[39m,
+  column: [90mundefined[39m,
+  dataType: [90mundefined[39m,
+  constraint: [90mundefined[39m,
+  file: [32m'varchar.c'[39m,
+  line: [32m'638'[39m,
+  routine: [32m'varchar'[39m
+}
+[32m[Nest] 20022  - [39m07/26/2026, 3:04:01 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-AA-241495 on Fabric...[39m
+[32m[Nest] 20022  - [39m07/26/2026, 3:04:03 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-AA-241495 committed to Fabric. TxID: [39m
+[32m[Nest] 20022  - [39m07/26/2026, 3:04:04 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-AA-241495 saved to PostgreSQL[39m
+[32m[Nest] 20022  - [39m07/26/2026, 3:40:47 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-RS-447270 on Fabric...[39m
+[32m[Nest] 20022  - [39m07/26/2026, 3:40:50 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-RS-447270 committed to Fabric. TxID: [39m
+[32m[Nest] 20022  - [39m07/26/2026, 3:40:50 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-RS-447270 saved to PostgreSQL[39m
+[32m[Nest] 20022  - [39m07/26/2026, 3:41:56 PM [32m    LOG[39m [38;5;3m[KycRequestsService] [39m[32mFabric IssueKYC success for KYC-RS-8, txId: [39m
+[32m[Nest] 20022  - [39m07/27/2026, 9:22:48 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-CK-168712 on Fabric...[39m
+[32m[Nest] 20022  - [39m07/27/2026, 9:22:52 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-CK-168712 committed to Fabric. TxID: [39m
+[32m[Nest] 20022  - [39m07/27/2026, 9:22:52 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-CK-168712 saved to PostgreSQL[39m
+[32m[Nest] 20022  - [39m07/27/2026, 9:23:38 AM [32m    LOG[39m [38;5;3m[KycRequestsService] [39m[32mFabric IssueKYC success for KYC-CK-9, txId: [39m

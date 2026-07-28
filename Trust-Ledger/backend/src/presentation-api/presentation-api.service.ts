@@ -173,7 +173,10 @@ export class PresentationApiService {
     const newStatus = payload.decision === 'grant' ? 'Approved' : 'Rejected';
     await this.data.updateApplication(applicationId, { status: newStatus, decision: payload.decision, remark: payload.remark, decidedBy: actor });
     if (application.credentialId) {
-      await this.data.pushLedgerEvent(application.credentialId, payload.decision === 'grant' ? 'LoanGranted' : 'LoanRejected', `Loan ${payload.decision} for ${applicationId}`, actor);
+      const desc = payload.decision === 'grant'
+        ? `Loan application approved — ${application.product} ${application.amount || ''} for ${application.customerName || application.applicantName || applicationId}.`
+        : `Loan application for ${application.product} (${application.customerName || application.applicantName || applicationId}) was declined.`;
+      await this.data.pushLedgerEvent(application.credentialId, payload.decision === 'grant' ? 'LoanGranted' : 'LoanRejected', desc, actor);
     }
     return { applicationId, status: newStatus, actor, remark: payload.remark ?? null, message: payload.decision === 'grant' ? 'Loan granted and written to ledger' : 'Loan rejected and written to ledger' };
   }

@@ -4,6 +4,17 @@ import Navbar from '../components/Navbar';
 import { useStore } from '../store';
 import { submitApplication, getKycRegistry, getShareRequestsByEmail, submitShareRequest, getKycRequestsByEmail } from '../services/api';
 
+/* Helper: find an active KYC record for an email from the registry */
+async function lookupKyc(email) {
+  try {
+    const data = await getKycRegistry();
+    const list = Array.isArray(data) ? data : (data?.records || []);
+    return list.find(r => r.email?.toLowerCase() === email?.toLowerCase()) || null;
+  } catch {
+    return null;
+  }
+}
+
 const fadeUp = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } };
 
 const EMPTY = {
@@ -25,6 +36,8 @@ const PRODUCTS = [
   { id: 'business_loan', label: 'Business Loan', icon: '🏢', desc: 'SME & commercial finance up to £500,000', maxAmount: 500000 },
   { id: 'credit_card', label: 'Credit Card (based on your credit score)', icon: '💰', desc: 'Rewards & cashback credit cards', maxAmount: 50000 },
 ];
+
+const LBG_BANKS = ['Lloyds Bank', 'Halifax', 'Bank of Scotland', 'Scottish Widows', 'MBNA', 'Black Horse', 'Lex Autolease', 'Lloyds Wealth'];
 
 /* ── Future scope products ──────────────────────────────────── */
 const FUTURE_PRODUCTS = [
@@ -61,11 +74,11 @@ const FUTURE_PRODUCTS = [
     color: '#059669',
     lightBg: '#F0FBF6',
     border: '#B8E8D0',
-    tag: 'Tokenised Assets',
-    headline: 'Tokenised FDs with instant liquidity',
-    desc: 'Fixed deposits issued as blockchain tokens — meaning they can be fractionalised, traded, or used as collateral for loans without breaking the deposit. Yield is auto-distributed via smart contracts with full transparency.',
-    benefits: ['Tokenised deposit certificates', 'Use FD as loan collateral', 'Auto yield distribution', 'Fractional ownership support'],
-    techStack: 'ERC-1400 tokens · Hyperledger · DeFi bridges',
+    tag: 'KYC-Enabled Banking',
+    headline: 'FDs without re-KYC across Lloyds Group',
+    desc: 'Standard fixed deposits offered by Lloyds Banking Group — no blockchain issuance. The innovation is that your KYC Credential is reused automatically, so you can open FDs across any LBG entity instantly without submitting documents again.',
+    benefits: ['Zero re-KYC friction', 'Instant cross-entity FD opening', 'Reusable KYC Credential', 'Standard FD rates & FSCS protection'],
+    techStack: 'Hyperledger Fabric · KYC Credentials · Reusable Identity',
   },
   {
     id: 'corporate_bonds',
@@ -74,11 +87,11 @@ const FUTURE_PRODUCTS = [
     color: '#1D4ED8',
     lightBg: '#EFF6FF',
     border: '#BFDBFE',
-    tag: 'Capital Markets DLT',
-    headline: 'On-chain corporate bond issuance',
-    desc: 'Lloyds Banking Group will issue corporate bonds directly on a permissioned DLT network, enabling instant settlement (T+0), automated coupon payments, and real-time secondary market trading — eliminating traditional clearing house delays.',
-    benefits: ['T+0 instant settlement', 'Automated coupon payments', 'Fractional bond ownership', 'Regulatory-compliant smart issuance'],
-    techStack: 'Corda · ISO 20022 · Smart Contracts · FIX Protocol',
+    tag: 'KYC-Enabled Capital Markets',
+    headline: 'Corporate bonds with KYC-powered onboarding',
+    desc: 'Standard Lloyds Banking Group corporate bonds — not issued on Fabric. The DLT innovation is in compliance: your reusable KYC Credential eliminates the lengthy investor onboarding process, allowing instant verification across bond issuances.',
+    benefits: ['No re-KYC per issuance', 'Instant investor onboarding', 'Reusable KYC Credential', 'Standard bond terms & FCA compliance'],
+    techStack: 'Hyperledger Fabric · KYC Credentials · ISO 20022',
   },
 ];
 
