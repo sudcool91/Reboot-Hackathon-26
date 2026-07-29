@@ -118,11 +118,24 @@ export class PresentationApiService {
       applicationId,
       avatar: body.avatar || (body.applicantName || 'XX').slice(0, 2).toUpperCase(),
       applicantName: body.applicantName,
+      customerName: body.applicantName,
       product: body.product,
       amount: body.amount,
       kycSource: body.kycSource || 'New · customer portal',
-      status: 'Pending docs',
-      creditScore: body.creditScoreSelf ? parseInt(body.creditScoreSelf) : null,
+      status: body.status || 'Pending docs',
+      creditScore: body.creditScore ? parseInt(body.creditScore) : (body.creditScoreSelf ? parseInt(body.creditScoreSelf) : null),
+      email: body.email || null,
+      phone: body.phone || null,
+      dob: body.dob || null,
+      address: body.address || null,
+      employmentStatus: body.employmentStatus || null,
+      annualIncome: body.annualIncome ? String(body.annualIncome) : undefined,
+      purpose: body.purpose || undefined,
+      loanTerm: body.loanTerm ? String(body.loanTerm) : undefined,
+      existingDebts: body.existingDebts ? String(body.existingDebts) : undefined,
+      targetBank: body.targetBank || null,
+      shareConsent: !!body.shareConsent,
+      credentialId: body.credentialId || null,
     });
 
     // Push a ledger event for tracking
@@ -160,7 +173,10 @@ export class PresentationApiService {
     const newStatus = payload.decision === 'grant' ? 'Approved' : 'Rejected';
     await this.data.updateApplication(applicationId, { status: newStatus, decision: payload.decision, remark: payload.remark, decidedBy: actor });
     if (application.credentialId) {
-      await this.data.pushLedgerEvent(application.credentialId, payload.decision === 'grant' ? 'LoanGranted' : 'LoanRejected', `Loan ${payload.decision} for ${applicationId}`, actor);
+      const desc = payload.decision === 'grant'
+        ? `Loan application approved — ${application.product} ${application.amount || ''} for ${application.customerName || application.applicantName || applicationId}.`
+        : `Loan application for ${application.product} (${application.customerName || application.applicantName || applicationId}) was declined.`;
+      await this.data.pushLedgerEvent(application.credentialId, payload.decision === 'grant' ? 'LoanGranted' : 'LoanRejected', desc, actor);
     }
     return { applicationId, status: newStatus, actor, remark: payload.remark ?? null, message: payload.decision === 'grant' ? 'Loan granted and written to ledger' : 'Loan rejected and written to ledger' };
   }

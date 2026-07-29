@@ -26,6 +26,13 @@ EOF
 
 banner
 
+# WSL + Docker Desktop: auto-detect context/socket
+docker context use desktop-linux >/dev/null 2>&1 || true
+if ! docker info >/dev/null 2>&1; then
+  for sock in /run/docker.sock /var/run/docker.sock; do
+    if [ -S "$sock" ]; then export DOCKER_HOST=unix://$sock; break; fi
+  done
+fi
 docker info >/dev/null 2>&1 || fail "Docker daemon is not running."
 [[ -d "$FABRIC_DIR" ]] || fail "fabric-network directory not found."
 [[ -d "${PROJECT_ROOT}/chaincode/trustledger" ]] || fail "Chaincode directory missing."
