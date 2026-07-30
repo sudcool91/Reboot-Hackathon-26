@@ -1,5 +1,6 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { FabricService } from '../fabric/fabric.service';
+import { SdkFabricGateway } from '../fabric/gateways/sdk-fabric.gateway';
 import { PresentationDataService } from '../presentation-api/presentation-data.service';
 import { IssueKycDto } from './dto/issue-kyc.dto';
 import { VerifyKycDto } from './dto/verify-kyc.dto';
@@ -9,8 +10,11 @@ import type { KycOperationToFunction } from './kyc.types';
 
 @Injectable()
 export class KycService {
+  private readonly logger = new Logger(KycService.name);
+
   constructor(
     private readonly fabricService: FabricService,
+    private readonly sdkGateway: SdkFabricGateway,
     private readonly dataService: PresentationDataService,
     @Inject(KYC_OPERATION_TO_FUNCTION)
     private readonly operationToFunction: KycOperationToFunction,
@@ -43,7 +47,9 @@ export class KycService {
     // Try Fabric first: create customer on ledger, then issue KYC.
     let fabricTxHash = '';
     try {
-      const createResult = await this.fabricService.submit('CreateCustomer', {
+      const contractService = this.sdkGateway.getSDK().getContractService();
+
+      const createResult = await contractService.createCustomer({
         customerID: customerId,
         fullName: name,
         dateOfBirth,
@@ -52,29 +58,29 @@ export class KycService {
         address,
         nationalID,
         issuingBank: payload.issuer || 'Lloyds',
-        documentHash: payload.documentHash,
+        documentHash: payload.documentHash || `HASH-${customerId}`,
       });
 
-      if (this.isFabricFailure(createResult) && !this.isAlreadyExistsFailure(createResult)) {
-        throw new Error(this.getFabricError(createResult));
+      if (!createResult.success && !createResult.message?.toLowerCase().includes('already exists')) {
+        throw new Error(createResult.message);
       }
 
-      const issueResult = await this.fabricService.submit(
-        this.operationToFunction.issue,
-        { customerID: customerId },
-      );
+      const issueResult = await contractService.issueKYC(customerId);
 
-      if (this.isFabricFailure(issueResult)) {
-        throw new Error(this.getFabricError(issueResult));
+      if (!issueResult.success) {
+        throw new Error(issueResult.message);
       }
 
-      fabricTxHash = this.getFabricTxHash(issueResult);
-    } catch (_) {
-      // Keep UX resilient even if Fabric is unavailable.
+      fabricTxHash = issueResult.txId || '';
+      this.logger.log(`Fabric IssueKYC success for ${customerId}, txId: ${fabricTxHash}`);
+    } catch (err) {
+      this.logger.error(`Fabric write failed in KycService.issue for ${customerId}: ${(err as Error).message}`, (err as Error).stack);
+      // Keep UX resilient — credential still issued in DB, but txHash will be empty.
     }
 
     const credentialId = `KYC-${initials}-${suffix}`;
-    const txHash = fabricTxHash || `0x${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 6)}`;
+    // Use real Fabric txHash if available; empty string otherwise — never generate a fake hash.
+    const txHash = fabricTxHash || '';
     const expiresDate = new Date(); expiresDate.setFullYear(expiresDate.getFullYear() + 1);
     const expiresOn = expiresDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -103,9 +109,12 @@ export class KycService {
     return {
       customerId,
       credentialId,
-      txHash,
+      txHash: txHash || null,
+      fabricSuccess: !!fabricTxHash,
       status: 'Active',
-      message: 'KYC credential issued and saved to registry',
+      message: fabricTxHash
+        ? 'KYC credential issued and committed to Fabric ledger'
+        : 'KYC credential issued to registry (Fabric write failed — check backend logs)',
     };
   }
 
@@ -118,7 +127,11 @@ export class KycService {
   }
 
   async revoke(payload: RevokeKycDto) {
-    try { await this.fabricService.submit(this.operationToFunction.revoke, payload); } catch (_) {}
+    try {
+      await this.fabricService.submit(this.operationToFunction.revoke, payload);
+    } catch (err) {
+      this.logger.error(`Fabric revoke failed for ${payload.credentialId}: ${(err as Error).message}`);
+    }
     await this.dataService.updateCredential(payload.credentialId, { status: 'Revoked' });
     await this.dataService.pushLedgerEvent(payload.credentialId, 'ConsentRevoked', 'Revoked by admin', 'Admin');
     return { credentialId: payload.credentialId, status: 'Revoked' };
@@ -126,36 +139,5 @@ export class KycService {
 
   getHistory(credentialId: string) {
     return this.dataService.getEvents(credentialId);
-  }
-
-  private isFabricFailure(result: unknown): boolean {
-    if (!result || typeof result !== 'object') {
-      return false;
-    }
-
-    return 'success' in result && (result as { success?: boolean }).success === false;
-  }
-
-  private isAlreadyExistsFailure(result: unknown): boolean {
-    const message = this.getFabricError(result).toLowerCase();
-    return message.includes('already exists');
-  }
-
-  private getFabricError(result: unknown): string {
-    if (!result || typeof result !== 'object') {
-      return '';
-    }
-
-    const message = (result as { message?: string }).message;
-    return typeof message === 'string' ? message : '';
-  }
-
-  private getFabricTxHash(result: unknown): string {
-    if (!result || typeof result !== 'object') {
-      return '';
-    }
-
-    const txId = (result as { txId?: string }).txId;
-    return typeof txId === 'string' ? txId : '';
   }
 }
