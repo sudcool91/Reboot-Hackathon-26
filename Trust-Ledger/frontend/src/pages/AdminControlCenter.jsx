@@ -498,8 +498,14 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
   const [sharePage,    setSharePage]    = useState(0);
   const [expiringPage, setExpiringPage] = useState(0);
 
-  const fabricBusy = Object.keys(kycDeciding).length > 0;
+  const fabricBusy = Object.keys(kycDeciding).length > 0 || Object.keys(deciding).length > 0;
   const actor = currentUser?.name || "Admin";
+  const ADMIN_MIN_LOADER_MS = 1500;
+  const flushAndWait = async (startTime) => {
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const elapsed = Date.now() - startTime;
+    if (elapsed < ADMIN_MIN_LOADER_MS) await new Promise(r => setTimeout(r, ADMIN_MIN_LOADER_MS - elapsed));
+  };
 
   const load = async () => {
     setLoading(true);
@@ -526,18 +532,23 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
 
   const handleDecide = async (app, decision) => {
     const appId = app.applicationId || app.id;
+    const t0 = Date.now();
     setDeciding(d => ({...d,[appId]:decision}));
     pushToast(decision==="approved"?"⏳ Approving...":"⏳ Rejecting...","info");
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     try {
       await decideLoan(appId, decision, (decision==="approved"?"Approved":"Rejected")+" by "+actor, actor);
       await load();
       pushToast(decision==="approved"?"✅ Application approved":"❌ Application rejected","success");
     } catch { pushToast("Action saved","success"); }
+    await flushAndWait(t0);
     setDeciding(d => { const n={...d}; delete n[appId]; return n; });
   };
 
   const handleKycDecide = async (req, decision) => {
+    const t0 = Date.now();
     setKycDeciding(d => ({...d,[req.id]:decision}));
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     pushToast(decision==="approved"?"\u23F3 Approving KYC request...":"\u23F3 Rejecting KYC request...","info");
     try {
       const remark = decision==="approved"
@@ -587,6 +598,7 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
         "success"
       );
     } catch { pushToast("Action saved","success"); }
+    await flushAndWait(t0);
     setKycDeciding(d => { const n={...d}; delete n[req.id]; return n; });
   };
 
@@ -1014,7 +1026,14 @@ export default function AdminControlCenter({ onNavigate, notifications=[] }) {
       </div>
     </div>
 
-    <FabricLoader visible={fabricBusy} message="Issuing KYC credential on Hyperledger Fabric…" />
+    <FabricLoader
+      visible={fabricBusy}
+      message={
+        Object.keys(kycDeciding).length > 0
+          ? 'Issuing KYC credential on Hyperledger Fabric…'
+          : 'Recording loan decision on Hyperledger Fabric…'
+      }
+    />
     </>
   );
 }

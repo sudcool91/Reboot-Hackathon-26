@@ -24,7 +24,7 @@ async function main() {
         await gateway.connect(connectionProfile, {
             wallet,
             identity: 'admin',
-            discovery: { enabled: true, asLocalhost: true },
+            discovery: { enabled: false, asLocalhost: true },
         });
         console.log('✅ Gateway connected');
 

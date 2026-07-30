@@ -2,420 +2,238 @@
 > trust-ledger@0.0.1 start:dev
 > nest start --watch
 
-[2J[3J[H[[90m6:25:43 AM[0m] Starting compilation in watch mode...
+[2J[3J[H[[90m12:16:14 PM[0m] Starting compilation in watch mode...
 
-[[90m6:27:34 AM[0m] Found 0 errors. Watching for file changes.
+[[90m12:18:11 PM[0m] Found 0 errors. Watching for file changes.
 
-[32m[Nest] 20022  - [39m07/26/2026, 6:27:59 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:27:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +17ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:27:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:27:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:27:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:27:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUploadsModule dependencies initialized[39m[38;5;3m +435ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCustomersModule dependencies initialized[39m[38;5;3m +17ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmCoreModule dependencies initialized[39m[38;5;3m +252ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFabricModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mKycRequestsModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCredentialShareModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPresentationApiModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mKycModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/}:[39m[38;5;3m +4ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCustomersController {/customers}:[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers/:id, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers/:id/approve, PATCH} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers/:id/reject, PATCH} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers/:id/consent, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers/:id/consent, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFabricController {/api/v1/fabric}:[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/fabric/health, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFabricSdkController {/fabric-sdk}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/health, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/info, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers/:customerID, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers/:customerID, PUT} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers/:customerID, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers/:customerID/exists, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers/:customerID/history, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/kyc/:customerID/issue, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/kyc/verify, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/consent/grant, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/consent/revoke, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/init-ledger, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/admin/customers, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/admin/customers, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mKycController {/api/v1/kyc}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc/issue, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc/verify, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc/history/:credentialId, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc/:credentialId, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc/revoke, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPresentationApiController {/api/v1}:[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/dashboard/summary, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/dashboard/activity, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/dashboard/network, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc-registry, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc-registry/:credentialId/consent, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/loan-applications, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/loan-applications, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/loan-applications/:applicationId/decision, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/loan-applications/:applicationId/decision, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/ledger-explorer/:credentialId, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin-control-center, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUploadsController {/api/v1/uploads}:[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/uploads, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/api/v1/auth}:[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/login, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/register, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/users, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mKycRequestsController {/api/v1/kyc-requests}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc-requests, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc-requests, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc-requests/:id, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc-requests/:id/decide, PATCH} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCredentialShareController {/api/v1/credential-share-requests}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/credential-share-requests, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/credential-share-requests, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/credential-share-requests/:id/decide, PATCH} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[SdkFabricGateway] [39m[32mInitializing Fabric SDK...[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[FabricSDK] [39m[32mInitializing Fabric SDK...[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[FabricWalletManager] [39m[32mWallet initialized at ./wallet[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[FabricConnectionManager] [39m[32mConnection profile loaded from /mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/fabric-network/organizations/peerOrganizations/org1.example.com/connection-org1.json[39m
-[33m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [33m   WARN[39m [38;5;3m[FabricConnectionManager] [39m[33mChannel kycchannel not declared in connection profile; continuing and relying on gateway channel access.[39m
-[33m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [33m   WARN[39m [38;5;3m[FabricConnectionManager] [39m[33mNo organization with mspid LloydsMSP found in profile; continuing with configured identity.[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[FabricConnectionManager] [39m[32mConnection profile validation passed[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[FabricGatewayManager] [39m[32mConnected to Fabric gateway as admin (LloydsMSP)[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[FabricGatewayManager] [39m[32mConnected to channel: kycchannel[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[FabricGatewayManager] [39m[32mConnected to chaincode: trustledger[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[FabricSDK] [39m[32mFabric SDK initialized successfully[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:00 AM [32m    LOG[39m [38;5;3m[SdkFabricGateway] [39m[32mFabric SDK initialized successfully[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:28:01 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +90ms[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:44:59 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-LG-299765 on Fabric...[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:45:02 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-LG-299765 committed to Fabric. TxID: [39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:45:02 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-LG-299765 saved to PostgreSQL[39m
-[32m[Nest] 20022  - [39m07/26/2026, 6:45:42 AM [32m    LOG[39m [38;5;3m[KycRequestsService] [39m[32mFabric IssueKYC success for KYC-LG-1, txId: [39m
-[32m[Nest] 20022  - [39m07/26/2026, 7:13:12 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-LG-992360 on Fabric...[39m
-[32m[Nest] 20022  - [39m07/26/2026, 7:13:14 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-LG-992360 committed to Fabric. TxID: [39m
-[32m[Nest] 20022  - [39m07/26/2026, 7:13:14 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-LG-992360 saved to PostgreSQL[39m
-[32m[Nest] 20022  - [39m07/26/2026, 7:13:27 AM [32m    LOG[39m [38;5;3m[KycRequestsService] [39m[32mFabric IssueKYC success for KYC-LG-2, txId: [39m
-[32m[Nest] 20022  - [39m07/26/2026, 9:00:28 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-LG-428687 on Fabric...[39m
-[32m[Nest] 20022  - [39m07/26/2026, 9:00:31 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-LG-428687 committed to Fabric. TxID: [39m
-[32m[Nest] 20022  - [39m07/26/2026, 9:00:31 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-LG-428687 saved to PostgreSQL[39m
-[32m[Nest] 20022  - [39m07/26/2026, 9:00:52 AM [32m    LOG[39m [38;5;3m[KycRequestsService] [39m[32mFabric IssueKYC success for KYC-LG-3, txId: [39m
-[32m[Nest] 20022  - [39m07/26/2026, 10:36:49 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-SS-209826 on Fabric...[39m
-[32m[Nest] 20022  - [39m07/26/2026, 10:36:52 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-SS-209826 committed to Fabric. TxID: [39m
-[32m[Nest] 20022  - [39m07/26/2026, 10:36:52 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-SS-209826 saved to PostgreSQL[39m
-[32m[Nest] 20022  - [39m07/26/2026, 10:51:33 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-LK-093066 on Fabric...[39m
-[32m[Nest] 20022  - [39m07/26/2026, 10:51:35 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-LK-093066 committed to Fabric. TxID: [39m
-[32m[Nest] 20022  - [39m07/26/2026, 10:51:35 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-LK-093066 saved to PostgreSQL[39m
-[32m[Nest] 20022  - [39m07/26/2026, 10:52:39 AM [32m    LOG[39m [38;5;3m[KycRequestsService] [39m[32mFabric IssueKYC success for KYC-LK-5, txId: [39m
-[32m[Nest] 20022  - [39m07/26/2026, 11:07:34 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-SS-054526 on Fabric...[39m
-[32m[Nest] 20022  - [39m07/26/2026, 11:07:37 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-SS-054526 committed to Fabric. TxID: [39m
-[32m[Nest] 20022  - [39m07/26/2026, 11:07:37 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-SS-054526 saved to PostgreSQL[39m
-[32m[Nest] 20022  - [39m07/26/2026, 11:10:09 AM [32m    LOG[39m [38;5;3m[KycRequestsService] [39m[32mFabric IssueKYC success for KYC-SS-6, txId: [39m
-[31m[Nest] 20022  - [39m07/26/2026, 11:36:37 AM [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mQueryFailedError: value too long for type character varying(8)
-    at PostgresQueryRunner.query [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/driver/src/driver/postgres/PostgresQueryRunner.ts:325:19[90m)[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +15ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUploadsModule dependencies initialized[39m[38;5;3m +378ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCustomersModule dependencies initialized[39m[38;5;3m +18ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmCoreModule dependencies initialized[39m[38;5;3m +114ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +6ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFabricModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mKycRequestsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCredentialShareModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPresentationApiModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mKycModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/}:[39m[38;5;3m +3ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCustomersController {/customers}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers/:id, GET} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers/:id/approve, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers/:id/reject, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers/:id/consent, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customers/:id/consent, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFabricController {/api/v1/fabric}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/fabric/health, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFabricSdkController {/fabric-sdk}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/health, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/info, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers/:customerID, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers/:customerID, PUT} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers/:customerID, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers/:customerID/exists, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/customers/:customerID/history, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/kyc/:customerID/issue, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/kyc/verify, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/consent/grant, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/consent/revoke, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/init-ledger, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/admin/customers, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/fabric-sdk/admin/customers, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mKycController {/api/v1/kyc}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc/issue, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc/verify, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc/history/:credentialId, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc/:credentialId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc/revoke, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPresentationApiController {/api/v1}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/dashboard/summary, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/dashboard/activity, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/dashboard/network, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc-registry, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc-registry/:credentialId/consent, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/loan-applications, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/loan-applications, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/loan-applications/:applicationId/decision, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/loan-applications/:applicationId/decision, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/ledger-explorer/:credentialId, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin-control-center, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUploadsController {/api/v1/uploads}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/uploads, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/api/v1/auth}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/login, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/register, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/users, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mKycRequestsController {/api/v1/kyc-requests}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc-requests, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc-requests, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc-requests/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/kyc-requests/:id/decide, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCredentialShareController {/api/v1/credential-share-requests}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/credential-share-requests, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/credential-share-requests, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/credential-share-requests/:id/decide, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[SdkFabricGateway] [39m[32mInitializing Fabric SDK...[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[FabricSDK] [39m[32mInitializing Fabric SDK...[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[FabricWalletManager] [39m[32mWallet initialized at ./wallet[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[FabricConnectionManager] [39m[32mConnection profile loaded from /mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/fabric-network/organizations/peerOrganizations/org1.example.com/connection-org1.json[39m
+[33m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [33m   WARN[39m [38;5;3m[FabricConnectionManager] [39m[33mChannel kycchannel not declared in connection profile; continuing and relying on gateway channel access.[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:38 PM [32m    LOG[39m [38;5;3m[FabricConnectionManager] [39m[32mConnection profile validation passed[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:39 PM [32m    LOG[39m [38;5;3m[FabricGatewayManager] [39m[32mConnected to Fabric gateway as admin (Org1MSP)[39m
+2026-07-29T12:18:39.055Z - [31merror[39m: [DiscoveryResultsProcessor]: parseDiscoveryResults[kycchannel] - Channel:kycchannel received discovery error:access denied
+[31m[Nest] 2850  - [39m07/29/2026, 12:18:39 PM [31m  ERROR[39m [38;5;3m[FabricGatewayManager] [39m[31mFailed to connect to Fabric network: DiscoveryService: kycchannel error: access denied[39m
+[31m[Nest] 2850  - [39m07/29/2026, 12:18:39 PM [31m  ERROR[39m [38;5;3m[FabricGatewayManager] [39mError: DiscoveryService: kycchannel error: access denied
+    at DiscoveryResultsProcessor.parseDiscoveryResults [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-common[24m/lib/DiscoveryResultsProcessor.js:31:11[90m)[39m
+    at DiscoveryService.send [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-common[24m/lib/DiscoveryService.js:341:35[90m)[39m
 [90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
-    at async InsertQueryBuilder.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/query-builder/src/query-builder/InsertQueryBuilder.ts:164:33[90m)[39m
-    at async SubjectExecutor.executeInsertOperations [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:435:42[90m)[39m
-    at async SubjectExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:137:9[90m)[39m
-    at async EntityPersistExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/EntityPersistExecutor.ts:182:21[90m)[39m
-    at async PresentationApiService.createLoanApplication [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/presentation-api/presentation-api.service.ts:117:20[90m)[39m
-    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
-    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17 {
-  query: [32m'INSERT INTO "loan_applications"("applicationId", "avatar", "applicantName", "product", "amount", "creditScore", "kycSource", "credentialId", "email", "targetBank", "shareConsent", "status", "decision", "remark", "decidedBy", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, DEFAULT, $8, $9, $10, $11, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT) RETURNING "shareConsent", "status", "createdAt", "updatedAt"'[39m,
-  parameters: [
-    [32m'LN20464'[39m,
-    [32m'SUNDEFINED'[39m,
-    [32m'saurabh s '[39m,
-    [32m'Credit Card (based on your credit score)'[39m,
-    [32m'GBP 5,345'[39m,
-    [1mnull[22m,
-    [32m'On-chain · Lloyds'[39m,
-    [32m'ssss@gmail.com'[39m,
-    [32m'Halifax'[39m,
-    [33mtrue[39m,
-    [32m'Pending docs'[39m
-  ],
-  driverError: error: value too long for type character varying(8)
-      at [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mpg[24m/lib/client.js:652:17
-  [90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
-      at async PostgresQueryRunner.query [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/driver/src/driver/postgres/PostgresQueryRunner.ts:254:25[90m)[39m
-      at async InsertQueryBuilder.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/query-builder/src/query-builder/InsertQueryBuilder.ts:164:33[90m)[39m
-      at async SubjectExecutor.executeInsertOperations [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:435:42[90m)[39m
-      at async SubjectExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:137:9[90m)[39m
-      at async EntityPersistExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/EntityPersistExecutor.ts:182:21[90m)[39m
-      at async PresentationApiService.createLoanApplication [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/presentation-api/presentation-api.service.ts:117:20[90m)[39m
-      at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
-      at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17 {
-    length: [33m97[39m,
-    severity: [32m'ERROR'[39m,
-    code: [32m'22001'[39m,
-    detail: [90mundefined[39m,
-    hint: [90mundefined[39m,
-    position: [90mundefined[39m,
-    internalPosition: [90mundefined[39m,
-    internalQuery: [90mundefined[39m,
-    where: [90mundefined[39m,
-    schema: [90mundefined[39m,
-    table: [90mundefined[39m,
-    column: [90mundefined[39m,
-    dataType: [90mundefined[39m,
-    constraint: [90mundefined[39m,
-    file: [32m'varchar.c'[39m,
-    line: [32m'638'[39m,
-    routine: [32m'varchar'[39m
-  },
-  length: [33m97[39m,
-  severity: [32m'ERROR'[39m,
-  code: [32m'22001'[39m,
-  detail: [90mundefined[39m,
-  hint: [90mundefined[39m,
-  position: [90mundefined[39m,
-  internalPosition: [90mundefined[39m,
-  internalQuery: [90mundefined[39m,
-  where: [90mundefined[39m,
-  schema: [90mundefined[39m,
-  table: [90mundefined[39m,
-  column: [90mundefined[39m,
-  dataType: [90mundefined[39m,
-  constraint: [90mundefined[39m,
-  file: [32m'varchar.c'[39m,
-  line: [32m'638'[39m,
-  routine: [32m'varchar'[39m
-}
-[31m[Nest] 20022  - [39m07/26/2026, 1:01:01 PM [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mQueryFailedError: value too long for type character varying(8)
-    at PostgresQueryRunner.query [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/driver/src/driver/postgres/PostgresQueryRunner.ts:325:19[90m)[39m
+    at async NetworkImpl._initializeInternalChannel [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-network[24m/src/network.ts:340:4[90m)[39m
+    at async NetworkImpl._initialize [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-network[24m/src/network.ts:283:3[90m)[39m
+    at async Gateway.getNetwork [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-network[24m/src/gateway.ts:400:3[90m)[39m
+    at async FabricGatewayManager.initializeNetwork [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/gateway/fabric-gateway.manager.ts:100:20[90m)[39m
+    at async FabricGatewayManager.connect [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/gateway/fabric-gateway.manager.ts:83:7[90m)[39m
+    at async FabricSDK.initialize [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/fabric-sdk.ts:56:7[90m)[39m
+    at async SdkFabricGateway.onModuleInit [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/gateways/sdk-fabric.gateway.ts:19:7[90m)[39m
+[31m[Nest] 2850  - [39m07/29/2026, 12:18:39 PM [31m  ERROR[39m [38;5;3m[FabricSDK] [39m[31mFailed to initialize SDK: DiscoveryService: kycchannel error: access denied[39m
+[31m[Nest] 2850  - [39m07/29/2026, 12:18:39 PM [31m  ERROR[39m [38;5;3m[FabricSDK] [39mError: DiscoveryService: kycchannel error: access denied
+    at DiscoveryResultsProcessor.parseDiscoveryResults [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-common[24m/lib/DiscoveryResultsProcessor.js:31:11[90m)[39m
+    at DiscoveryService.send [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-common[24m/lib/DiscoveryService.js:341:35[90m)[39m
 [90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
-    at async InsertQueryBuilder.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/query-builder/src/query-builder/InsertQueryBuilder.ts:164:33[90m)[39m
-    at async SubjectExecutor.executeInsertOperations [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:435:42[90m)[39m
-    at async SubjectExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:137:9[90m)[39m
-    at async EntityPersistExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/EntityPersistExecutor.ts:182:21[90m)[39m
-    at async PresentationApiService.createLoanApplication [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/presentation-api/presentation-api.service.ts:117:20[90m)[39m
-    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
-    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17 {
-  query: [32m'INSERT INTO "loan_applications"("applicationId", "avatar", "applicantName", "product", "amount", "creditScore", "kycSource", "credentialId", "email", "targetBank", "shareConsent", "status", "decision", "remark", "decidedBy", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, DEFAULT, $8, $9, $10, $11, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT) RETURNING "shareConsent", "status", "createdAt", "updatedAt"'[39m,
-  parameters: [
-    [32m'LN20464'[39m,
-    [32m'SUNDEFINED'[39m,
-    [32m'saurabh s '[39m,
-    [32m'Credit Card (based on your credit score)'[39m,
-    [32m'GBP 475,856,556'[39m,
-    [1mnull[22m,
-    [32m'On-chain · Lloyds'[39m,
-    [32m'ssss@gmail.com'[39m,
-    [32m'Bank of Scotland'[39m,
-    [33mtrue[39m,
-    [32m'Pending docs'[39m
-  ],
-  driverError: error: value too long for type character varying(8)
-      at [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mpg[24m/lib/client.js:652:17
-  [90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
-      at async PostgresQueryRunner.query [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/driver/src/driver/postgres/PostgresQueryRunner.ts:254:25[90m)[39m
-      at async InsertQueryBuilder.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/query-builder/src/query-builder/InsertQueryBuilder.ts:164:33[90m)[39m
-      at async SubjectExecutor.executeInsertOperations [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:435:42[90m)[39m
-      at async SubjectExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:137:9[90m)[39m
-      at async EntityPersistExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/EntityPersistExecutor.ts:182:21[90m)[39m
-      at async PresentationApiService.createLoanApplication [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/presentation-api/presentation-api.service.ts:117:20[90m)[39m
-      at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
-      at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17 {
-    length: [33m97[39m,
-    severity: [32m'ERROR'[39m,
-    code: [32m'22001'[39m,
-    detail: [90mundefined[39m,
-    hint: [90mundefined[39m,
-    position: [90mundefined[39m,
-    internalPosition: [90mundefined[39m,
-    internalQuery: [90mundefined[39m,
-    where: [90mundefined[39m,
-    schema: [90mundefined[39m,
-    table: [90mundefined[39m,
-    column: [90mundefined[39m,
-    dataType: [90mundefined[39m,
-    constraint: [90mundefined[39m,
-    file: [32m'varchar.c'[39m,
-    line: [32m'638'[39m,
-    routine: [32m'varchar'[39m
-  },
-  length: [33m97[39m,
-  severity: [32m'ERROR'[39m,
-  code: [32m'22001'[39m,
-  detail: [90mundefined[39m,
-  hint: [90mundefined[39m,
-  position: [90mundefined[39m,
-  internalPosition: [90mundefined[39m,
-  internalQuery: [90mundefined[39m,
-  where: [90mundefined[39m,
-  schema: [90mundefined[39m,
-  table: [90mundefined[39m,
-  column: [90mundefined[39m,
-  dataType: [90mundefined[39m,
-  constraint: [90mundefined[39m,
-  file: [32m'varchar.c'[39m,
-  line: [32m'638'[39m,
-  routine: [32m'varchar'[39m
-}
-[31m[Nest] 20022  - [39m07/26/2026, 2:16:51 PM [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mQueryFailedError: value too long for type character varying(8)
-    at PostgresQueryRunner.query [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/driver/src/driver/postgres/PostgresQueryRunner.ts:325:19[90m)[39m
+    at async NetworkImpl._initializeInternalChannel [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-network[24m/src/network.ts:340:4[90m)[39m
+    at async NetworkImpl._initialize [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-network[24m/src/network.ts:283:3[90m)[39m
+    at async Gateway.getNetwork [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-network[24m/src/gateway.ts:400:3[90m)[39m
+    at async FabricGatewayManager.initializeNetwork [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/gateway/fabric-gateway.manager.ts:100:20[90m)[39m
+    at async FabricGatewayManager.connect [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/gateway/fabric-gateway.manager.ts:83:7[90m)[39m
+    at async FabricSDK.initialize [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/fabric-sdk.ts:56:7[90m)[39m
+    at async SdkFabricGateway.onModuleInit [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/gateways/sdk-fabric.gateway.ts:19:7[90m)[39m
+[31m[Nest] 2850  - [39m07/29/2026, 12:18:39 PM [31m  ERROR[39m [38;5;3m[SdkFabricGateway] [39m[31mFailed to initialize Fabric SDK: DiscoveryService: kycchannel error: access denied[39m
+[31m[Nest] 2850  - [39m07/29/2026, 12:18:39 PM [31m  ERROR[39m [38;5;3m[SdkFabricGateway] [39mError: DiscoveryService: kycchannel error: access denied
+    at DiscoveryResultsProcessor.parseDiscoveryResults [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-common[24m/lib/DiscoveryResultsProcessor.js:31:11[90m)[39m
+    at DiscoveryService.send [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-common[24m/lib/DiscoveryService.js:341:35[90m)[39m
 [90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
-    at async InsertQueryBuilder.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/query-builder/src/query-builder/InsertQueryBuilder.ts:164:33[90m)[39m
-    at async SubjectExecutor.executeInsertOperations [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:435:42[90m)[39m
-    at async SubjectExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:137:9[90m)[39m
-    at async EntityPersistExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/EntityPersistExecutor.ts:182:21[90m)[39m
-    at async PresentationApiService.createLoanApplication [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/presentation-api/presentation-api.service.ts:117:20[90m)[39m
-    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
-    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17 {
-  query: [32m'INSERT INTO "loan_applications"("applicationId", "avatar", "applicantName", "product", "amount", "creditScore", "kycSource", "credentialId", "email", "targetBank", "shareConsent", "status", "decision", "remark", "decidedBy", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, DEFAULT, $8, $9, $10, $11, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT) RETURNING "shareConsent", "status", "createdAt", "updatedAt"'[39m,
-  parameters: [
-    [32m'LN20464'[39m,
-    [32m'SUNDEFINED'[39m,
-    [32m'saurabh s '[39m,
-    [32m'Personal Loan'[39m,
-    [32m'GBP 345,454,356'[39m,
-    [1mnull[22m,
-    [32m'On-chain · Lloyds'[39m,
-    [32m'ssss@gmail.com'[39m,
-    [32m'Scottish Widows'[39m,
-    [33mfalse[39m,
-    [32m'Pending docs'[39m
-  ],
-  driverError: error: value too long for type character varying(8)
-      at [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mpg[24m/lib/client.js:652:17
-  [90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
-      at async PostgresQueryRunner.query [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/driver/src/driver/postgres/PostgresQueryRunner.ts:254:25[90m)[39m
-      at async InsertQueryBuilder.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/query-builder/src/query-builder/InsertQueryBuilder.ts:164:33[90m)[39m
-      at async SubjectExecutor.executeInsertOperations [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:435:42[90m)[39m
-      at async SubjectExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:137:9[90m)[39m
-      at async EntityPersistExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/EntityPersistExecutor.ts:182:21[90m)[39m
-      at async PresentationApiService.createLoanApplication [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/presentation-api/presentation-api.service.ts:117:20[90m)[39m
-      at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
-      at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17 {
-    length: [33m97[39m,
-    severity: [32m'ERROR'[39m,
-    code: [32m'22001'[39m,
-    detail: [90mundefined[39m,
-    hint: [90mundefined[39m,
-    position: [90mundefined[39m,
-    internalPosition: [90mundefined[39m,
-    internalQuery: [90mundefined[39m,
-    where: [90mundefined[39m,
-    schema: [90mundefined[39m,
-    table: [90mundefined[39m,
-    column: [90mundefined[39m,
-    dataType: [90mundefined[39m,
-    constraint: [90mundefined[39m,
-    file: [32m'varchar.c'[39m,
-    line: [32m'638'[39m,
-    routine: [32m'varchar'[39m
-  },
-  length: [33m97[39m,
-  severity: [32m'ERROR'[39m,
-  code: [32m'22001'[39m,
-  detail: [90mundefined[39m,
-  hint: [90mundefined[39m,
-  position: [90mundefined[39m,
-  internalPosition: [90mundefined[39m,
-  internalQuery: [90mundefined[39m,
-  where: [90mundefined[39m,
-  schema: [90mundefined[39m,
-  table: [90mundefined[39m,
-  column: [90mundefined[39m,
-  dataType: [90mundefined[39m,
-  constraint: [90mundefined[39m,
-  file: [32m'varchar.c'[39m,
-  line: [32m'638'[39m,
-  routine: [32m'varchar'[39m
-}
-[31m[Nest] 20022  - [39m07/26/2026, 2:40:23 PM [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mQueryFailedError: value too long for type character varying(8)
-    at PostgresQueryRunner.query [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/driver/src/driver/postgres/PostgresQueryRunner.ts:325:19[90m)[39m
+    at async NetworkImpl._initializeInternalChannel [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-network[24m/src/network.ts:340:4[90m)[39m
+    at async NetworkImpl._initialize [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-network[24m/src/network.ts:283:3[90m)[39m
+    at async Gateway.getNetwork [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mfabric-network[24m/src/gateway.ts:400:3[90m)[39m
+    at async FabricGatewayManager.initializeNetwork [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/gateway/fabric-gateway.manager.ts:100:20[90m)[39m
+    at async FabricGatewayManager.connect [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/gateway/fabric-gateway.manager.ts:83:7[90m)[39m
+    at async FabricSDK.initialize [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/fabric-sdk.ts:56:7[90m)[39m
+    at async SdkFabricGateway.onModuleInit [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/gateways/sdk-fabric.gateway.ts:19:7[90m)[39m
+[33m[Nest] 2850  - [39m07/29/2026, 12:18:39 PM [33m   WARN[39m [38;5;3m[AuthService] [39m[33mPurged admin KYC artifacts: users=2, credentials=2, requests=2, shares=2[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:18:39 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +3ms[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:22:02 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-DC-722214 on Fabric...[39m
+[31m[Nest] 2850  - [39m07/29/2026, 12:22:02 PM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39m[31mAdmin create customer failed: SDK not initialized. Call initialize() first.[39m
+[31m[Nest] 2850  - [39m07/29/2026, 12:22:02 PM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39mError: SDK not initialized. Call initialize() first.
+    at FabricSDK.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/fabric-sdk.ts:75:13[90m)[39m
+    at BlockchainCustomerService.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:31:37[90m)[39m
+    at BlockchainCustomerService.createAndStore [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:51:34[90m)[39m
 [90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
-    at async InsertQueryBuilder.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/query-builder/src/query-builder/InsertQueryBuilder.ts:164:33[90m)[39m
-    at async SubjectExecutor.executeInsertOperations [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:435:42[90m)[39m
-    at async SubjectExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:137:9[90m)[39m
-    at async EntityPersistExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/EntityPersistExecutor.ts:182:21[90m)[39m
-    at async PresentationApiService.createLoanApplication [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/presentation-api/presentation-api.service.ts:117:20[90m)[39m
+    at async FabricSdkController.adminCreateCustomer [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/fabric-sdk.controller.ts:281:22[90m)[39m
     at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
-    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17 {
-  query: [32m'INSERT INTO "loan_applications"("applicationId", "avatar", "applicantName", "product", "amount", "creditScore", "kycSource", "credentialId", "email", "targetBank", "shareConsent", "status", "decision", "remark", "decidedBy", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, DEFAULT, $8, $9, $10, $11, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT) RETURNING "shareConsent", "status", "createdAt", "updatedAt"'[39m,
-  parameters: [
-    [32m'LN20465'[39m,
-    [32m'SUNDEFINED'[39m,
-    [32m'saurabh s '[39m,
-    [32m'Home Loan'[39m,
-    [32m'GBP 345,436'[39m,
-    [1mnull[22m,
-    [32m'On-chain · Lloyds'[39m,
-    [32m'ssss@gmail.com'[39m,
-    [32m'Black Horse'[39m,
-    [33mtrue[39m,
-    [32m'Pending docs'[39m
-  ],
-  driverError: error: value too long for type character varying(8)
-      at [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mpg[24m/lib/client.js:652:17
-  [90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
-      at async PostgresQueryRunner.query [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/driver/src/driver/postgres/PostgresQueryRunner.ts:254:25[90m)[39m
-      at async InsertQueryBuilder.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/query-builder/src/query-builder/InsertQueryBuilder.ts:164:33[90m)[39m
-      at async SubjectExecutor.executeInsertOperations [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:435:42[90m)[39m
-      at async SubjectExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/SubjectExecutor.ts:137:9[90m)[39m
-      at async EntityPersistExecutor.execute [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4mtypeorm[24m/persistence/src/persistence/EntityPersistExecutor.ts:182:21[90m)[39m
-      at async PresentationApiService.createLoanApplication [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/presentation-api/presentation-api.service.ts:117:20[90m)[39m
-      at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
-      at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17 {
-    length: [33m97[39m,
-    severity: [32m'ERROR'[39m,
-    code: [32m'22001'[39m,
-    detail: [90mundefined[39m,
-    hint: [90mundefined[39m,
-    position: [90mundefined[39m,
-    internalPosition: [90mundefined[39m,
-    internalQuery: [90mundefined[39m,
-    where: [90mundefined[39m,
-    schema: [90mundefined[39m,
-    table: [90mundefined[39m,
-    column: [90mundefined[39m,
-    dataType: [90mundefined[39m,
-    constraint: [90mundefined[39m,
-    file: [32m'varchar.c'[39m,
-    line: [32m'638'[39m,
-    routine: [32m'varchar'[39m
-  },
-  length: [33m97[39m,
-  severity: [32m'ERROR'[39m,
-  code: [32m'22001'[39m,
-  detail: [90mundefined[39m,
-  hint: [90mundefined[39m,
-  position: [90mundefined[39m,
-  internalPosition: [90mundefined[39m,
-  internalQuery: [90mundefined[39m,
-  where: [90mundefined[39m,
-  schema: [90mundefined[39m,
-  table: [90mundefined[39m,
-  column: [90mundefined[39m,
-  dataType: [90mundefined[39m,
-  constraint: [90mundefined[39m,
-  file: [32m'varchar.c'[39m,
-  line: [32m'638'[39m,
-  routine: [32m'varchar'[39m
-}
-[32m[Nest] 20022  - [39m07/26/2026, 3:04:01 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-AA-241495 on Fabric...[39m
-[32m[Nest] 20022  - [39m07/26/2026, 3:04:03 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-AA-241495 committed to Fabric. TxID: [39m
-[32m[Nest] 20022  - [39m07/26/2026, 3:04:04 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-AA-241495 saved to PostgreSQL[39m
-[32m[Nest] 20022  - [39m07/26/2026, 3:40:47 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-RS-447270 on Fabric...[39m
-[32m[Nest] 20022  - [39m07/26/2026, 3:40:50 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-RS-447270 committed to Fabric. TxID: [39m
-[32m[Nest] 20022  - [39m07/26/2026, 3:40:50 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-RS-447270 saved to PostgreSQL[39m
-[32m[Nest] 20022  - [39m07/26/2026, 3:41:56 PM [32m    LOG[39m [38;5;3m[KycRequestsService] [39m[32mFabric IssueKYC success for KYC-RS-8, txId: [39m
-[32m[Nest] 20022  - [39m07/27/2026, 9:22:48 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-CK-168712 on Fabric...[39m
-[32m[Nest] 20022  - [39m07/27/2026, 9:22:52 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-CK-168712 committed to Fabric. TxID: [39m
-[32m[Nest] 20022  - [39m07/27/2026, 9:22:52 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCustomer KYC-CK-168712 saved to PostgreSQL[39m
-[32m[Nest] 20022  - [39m07/27/2026, 9:23:38 AM [32m    LOG[39m [38;5;3m[KycRequestsService] [39m[32mFabric IssueKYC success for KYC-CK-9, txId: [39m
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17
+[31m[Nest] 2850  - [39m07/29/2026, 12:22:26 PM [31m  ERROR[39m [38;5;3m[KycRequestsService] [39m[31mFabric call failed during KYC approval: SDK not initialized. Call initialize() first.[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:26:18 PM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister request: username=tssss, role=customer, email=tssss@gmail.com, phoneProvided=false, dobProvided=false[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:26:18 PM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister success: username=tssss, id=44, phone=null, dob=null[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:26:46 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-TR-006228 on Fabric...[39m
+[31m[Nest] 2850  - [39m07/29/2026, 12:26:46 PM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39m[31mAdmin create customer failed: SDK not initialized. Call initialize() first.[39m
+[31m[Nest] 2850  - [39m07/29/2026, 12:26:46 PM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39mError: SDK not initialized. Call initialize() first.
+    at FabricSDK.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/fabric-sdk.ts:75:13[90m)[39m
+    at BlockchainCustomerService.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:31:37[90m)[39m
+    at BlockchainCustomerService.createAndStore [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:51:34[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async FabricSdkController.adminCreateCustomer [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/fabric-sdk.controller.ts:281:22[90m)[39m
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17
+[31m[Nest] 2850  - [39m07/29/2026, 12:26:57 PM [31m  ERROR[39m [38;5;3m[KycRequestsService] [39m[31mFabric call failed during KYC approval: SDK not initialized. Call initialize() first.[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:33:15 PM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister request: username=hmsjbdn, role=customer, email=hmsjbdn@gmail.com, phoneProvided=false, dobProvided=false[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:33:15 PM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister success: username=hmsjbdn, id=45, phone=null, dob=null[39m
+[32m[Nest] 2850  - [39m07/29/2026, 12:33:59 PM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-HW-439786 on Fabric...[39m
+[31m[Nest] 2850  - [39m07/29/2026, 12:33:59 PM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39m[31mAdmin create customer failed: SDK not initialized. Call initialize() first.[39m
+[31m[Nest] 2850  - [39m07/29/2026, 12:33:59 PM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39mError: SDK not initialized. Call initialize() first.
+    at FabricSDK.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/fabric-sdk.ts:75:13[90m)[39m
+    at BlockchainCustomerService.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:31:37[90m)[39m
+    at BlockchainCustomerService.createAndStore [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:51:34[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async FabricSdkController.adminCreateCustomer [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/fabric-sdk.controller.ts:281:22[90m)[39m
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17
+[31m[Nest] 2850  - [39m07/29/2026, 12:34:16 PM [31m  ERROR[39m [38;5;3m[KycRequestsService] [39m[31mFabric call failed during KYC approval: SDK not initialized. Call initialize() first.[39m
+[32m[Nest] 2850  - [39m07/30/2026, 1:38:51 AM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister request: username=hlo, role=customer, email=hlo@gmail.com, phoneProvided=false, dobProvided=false[39m
+[32m[Nest] 2850  - [39m07/30/2026, 1:38:51 AM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister success: username=hlo, id=46, phone=null, dob=null[39m
+[32m[Nest] 2850  - [39m07/30/2026, 1:42:52 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-HH-772910 on Fabric...[39m
+[31m[Nest] 2850  - [39m07/30/2026, 1:42:52 AM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39m[31mAdmin create customer failed: SDK not initialized. Call initialize() first.[39m
+[31m[Nest] 2850  - [39m07/30/2026, 1:42:52 AM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39mError: SDK not initialized. Call initialize() first.
+    at FabricSDK.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/fabric-sdk.ts:75:13[90m)[39m
+    at BlockchainCustomerService.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:31:37[90m)[39m
+    at BlockchainCustomerService.createAndStore [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:51:34[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async FabricSdkController.adminCreateCustomer [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/fabric-sdk.controller.ts:281:22[90m)[39m
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17
+[31m[Nest] 2850  - [39m07/30/2026, 1:43:10 AM [31m  ERROR[39m [38;5;3m[KycRequestsService] [39m[31mFabric call failed during KYC approval: SDK not initialized. Call initialize() first.[39m
+[32m[Nest] 2850  - [39m07/30/2026, 1:51:28 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-FS-288087 on Fabric...[39m
+[31m[Nest] 2850  - [39m07/30/2026, 1:51:28 AM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39m[31mAdmin create customer failed: SDK not initialized. Call initialize() first.[39m
+[31m[Nest] 2850  - [39m07/30/2026, 1:51:28 AM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39mError: SDK not initialized. Call initialize() first.
+    at FabricSDK.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/fabric-sdk.ts:75:13[90m)[39m
+    at BlockchainCustomerService.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:31:37[90m)[39m
+    at BlockchainCustomerService.createAndStore [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:51:34[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async FabricSdkController.adminCreateCustomer [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/fabric-sdk.controller.ts:281:22[90m)[39m
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17
+[31m[Nest] 2850  - [39m07/30/2026, 1:51:36 AM [31m  ERROR[39m [38;5;3m[KycRequestsService] [39m[31mFabric call failed during KYC approval: SDK not initialized. Call initialize() first.[39m
+[32m[Nest] 2850  - [39m07/30/2026, 1:51:36 AM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister request: username=fkvnkjn, role=customer, email=fkvnkjn@gmail.com, phoneProvided=false, dobProvided=false[39m
+[32m[Nest] 2850  - [39m07/30/2026, 1:51:36 AM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister success: username=fkvnkjn, id=47, phone=null, dob=null[39m
+[32m[Nest] 2850  - [39m07/30/2026, 2:03:01 AM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister request: username=, role=customer, email=testbc7717@lloyds.com, phoneProvided=false, dobProvided=false[39m
+[33m[Nest] 2850  - [39m07/30/2026, 2:03:01 AM [33m   WARN[39m [38;5;3m[AuthService] [39m[33mRegister rejected: missing username[39m
+[32m[Nest] 2850  - [39m07/30/2026, 2:03:10 AM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister request: username=, role=customer, email=testbc1958@lloyds.com, phoneProvided=false, dobProvided=false[39m
+[33m[Nest] 2850  - [39m07/30/2026, 2:03:10 AM [33m   WARN[39m [38;5;3m[AuthService] [39m[33mRegister rejected: missing username[39m
+[31m[Nest] 2850  - [39m07/30/2026, 2:03:54 AM [31m  ERROR[39m [38;5;3m[KycRequestsService] [39m[31mFabric call failed during KYC approval: SDK not initialized. Call initialize() first.[39m
+[31m[Nest] 2850  - [39m07/30/2026, 2:05:03 AM [31m  ERROR[39m [38;5;3m[KycRequestsService] [39m[31mFabric call failed during KYC approval: SDK not initialized. Call initialize() first.[39m
+[31m[Nest] 2850  - [39m07/30/2026, 2:09:47 AM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39m[31mCreate customer failed: SDK not initialized. Call initialize() first.[39m
+[31m[Nest] 2850  - [39m07/30/2026, 2:09:47 AM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39mError: SDK not initialized. Call initialize() first.
+    at FabricSDK.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/fabric-sdk.ts:75:13[90m)[39m
+    at FabricSdkController.createCustomer [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/fabric-sdk.controller.ts:74:35[90m)[39m
+    at [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:38:29
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17
+[32m[Nest] 2850  - [39m07/30/2026, 4:42:58 AM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister request: username=singham, role=customer, email=singham@gmail.com, phoneProvided=false, dobProvided=false[39m
+[32m[Nest] 2850  - [39m07/30/2026, 4:42:58 AM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister success: username=singham, id=48, phone=null, dob=null[39m
+[32m[Nest] 2850  - [39m07/30/2026, 4:43:49 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-SS-629048 on Fabric...[39m
+[31m[Nest] 2850  - [39m07/30/2026, 4:43:49 AM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39m[31mAdmin create customer failed: SDK not initialized. Call initialize() first.[39m
+[31m[Nest] 2850  - [39m07/30/2026, 4:43:49 AM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39mError: SDK not initialized. Call initialize() first.
+    at FabricSDK.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/fabric-sdk.ts:75:13[90m)[39m
+    at BlockchainCustomerService.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:31:37[90m)[39m
+    at BlockchainCustomerService.createAndStore [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:51:34[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async FabricSdkController.adminCreateCustomer [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/fabric-sdk.controller.ts:281:22[90m)[39m
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17
+[31m[Nest] 2850  - [39m07/30/2026, 4:44:42 AM [31m  ERROR[39m [38;5;3m[KycRequestsService] [39m[31mFabric call failed during KYC approval: SDK not initialized. Call initialize() first.[39m
+[32m[Nest] 2850  - [39m07/30/2026, 4:52:56 AM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister request: username=lakshygupta123, role=customer, email=lakshygupta123@gmail.com, phoneProvided=false, dobProvided=false[39m
+[32m[Nest] 2850  - [39m07/30/2026, 4:52:56 AM [32m    LOG[39m [38;5;3m[AuthService] [39m[32mRegister success: username=lakshygupta123, id=49, phone=null, dob=null[39m
+[32m[Nest] 2850  - [39m07/30/2026, 5:10:27 AM [32m    LOG[39m [38;5;3m[BlockchainCustomerService] [39m[32mCreating customer KYC-LG-227625 on Fabric...[39m
+[31m[Nest] 2850  - [39m07/30/2026, 5:10:27 AM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39m[31mAdmin create customer failed: SDK not initialized. Call initialize() first.[39m
+[31m[Nest] 2850  - [39m07/30/2026, 5:10:27 AM [31m  ERROR[39m [38;5;3m[FabricSdkController] [39mError: SDK not initialized. Call initialize() first.
+    at FabricSDK.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric-sdk/fabric-sdk.ts:75:13[90m)[39m
+    at BlockchainCustomerService.getContractService [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:31:37[90m)[39m
+    at BlockchainCustomerService.createAndStore [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/blockchain-customer.service.ts:51:34[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async FabricSdkController.adminCreateCustomer [90m(/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39msrc/fabric/fabric-sdk.controller.ts:281:22[90m)[39m
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-execution-context.js:47:62
+    at async [90m/mnt/d/LBG/Reboot-Hackathon-26/Trust-Ledger/backend/[39mnode_modules/[4m@nestjs/core[24m/router/router-proxy.js:9:17
+[31m[Nest] 2850  - [39m07/30/2026, 5:10:52 AM [31m  ERROR[39m [38;5;3m[KycRequestsService] [39m[31mFabric call failed during KYC approval: SDK not initialized. Call initialize() first.[39m

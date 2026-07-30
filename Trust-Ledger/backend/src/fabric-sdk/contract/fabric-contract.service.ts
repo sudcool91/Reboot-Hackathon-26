@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Fabric Contract Service
  * 
  * Type-safe wrapper for Fabric chaincode interactions
@@ -6,7 +6,7 @@
  */
 
 import { Logger } from '@nestjs/common';
-import { Contract } from 'fabric-network';
+import { Contract } from '@hyperledger/fabric-gateway';
 import {
   CustomerDTO,
   CreateCustomerDTO,
@@ -23,6 +23,11 @@ export class FabricContractService {
 
   constructor(private readonly contract: Contract) {}
 
+  /** Decode Uint8Array returned by the new fabric-gateway SDK to a UTF-8 string */
+  private decode(bytes: Uint8Array): string {
+    return Buffer.from(bytes).toString('utf8');
+  }
+
   // ============================================
   // Customer Management Methods
   // ============================================
@@ -38,25 +43,22 @@ export class FabricContractService {
       const issuingBank = data.issuingBank || 'LloydsBankingGroup';
       const documentHash = data.documentHash || `HASH-${data.customerID}-${Date.now()}`;
 
-      const result = await this.contract.submitTransaction(
-        'CreateCustomer',
-        data.customerID,
-        fullName,
-        data.dateOfBirth || '',
-        data.email || '',
-        data.phone || '',
-        data.address || '',
-        nationalID,
-        issuingBank,
-        documentHash,
-      );
+      const submitted = await this.contract.submitAsync('CreateCustomer', {
+        arguments: [
+          data.customerID, fullName, data.dateOfBirth || '',
+          data.email || '', data.phone || '', data.address || '',
+          nationalID, issuingBank, documentHash,
+        ],
+      });
+      const txId = submitted.getTransactionId();
+      await submitted.getStatus(); // wait for block commit
 
       return {
         success: true,
-        txId: result.toString(),
+        txId,
         message: `Customer ${data.customerID} created successfully`,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to create customer: ${error.message}`, error);
       return {
         success: false,
@@ -76,13 +78,13 @@ export class FabricContractService {
         customerID,
       );
 
-      const customer = JSON.parse(result.toString()) as CustomerDTO;
+      const customer = JSON.parse(this.decode(result)) as CustomerDTO;
 
       return {
         success: true,
         data: customer,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to read customer: ${error.message}`, error);
       return {
         success: false,
@@ -104,10 +106,10 @@ export class FabricContractService {
 
       return {
         success: true,
-        txId: result.toString(),
+        txId: this.decode(result),
         message: `Customer ${data.customerID} updated successfully`,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to update customer: ${error.message}`, error);
       return {
         success: false,
@@ -129,10 +131,10 @@ export class FabricContractService {
 
       return {
         success: true,
-        txId: result.toString(),
+        txId: this.decode(result),
         message: `Customer ${customerID} deleted successfully`,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to delete customer: ${error.message}`, error);
       return {
         success: false,
@@ -152,13 +154,13 @@ export class FabricContractService {
         customerID,
       );
 
-      const exists = result.toString() === 'true';
+      const exists = this.decode(result) === 'true';
 
       return {
         success: true,
         data: exists,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to check customer existence: ${error.message}`, error);
       return {
         success: false,
@@ -176,14 +178,18 @@ export class FabricContractService {
    */
   async issueKYC(customerID: string): Promise<TransactionResultDTO> {
     try {
-      const result = await this.contract.submitTransaction('IssueKYC', customerID);
+      const submitted = await this.contract.submitAsync('IssueKYC', {
+        arguments: [customerID],
+      });
+      const txId = submitted.getTransactionId();
+      await submitted.getStatus(); // wait for block commit
 
       return {
         success: true,
-        txId: result.toString(),
+        txId,
         message: `KYC issued for customer ${customerID}`,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to issue KYC: ${error.message}`, error);
       return {
         success: false,
@@ -206,10 +212,10 @@ export class FabricContractService {
 
       return {
         success: true,
-        txId: result.toString(),
+        txId: this.decode(result),
         message: `KYC verified for customer ${data.customerID} by ${data.requestingBank}`,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to verify KYC: ${error.message}`, error);
       return {
         success: false,
@@ -231,10 +237,10 @@ export class FabricContractService {
 
       return {
         success: true,
-        txId: result.toString(),
+        txId: this.decode(result),
         message: `Consent granted for customer ${data.customerID}`,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to grant consent: ${error.message}`, error);
       return {
         success: false,
@@ -256,10 +262,10 @@ export class FabricContractService {
 
       return {
         success: true,
-        txId: result.toString(),
+        txId: this.decode(result),
         message: `Consent revoked for customer ${data.customerID}`,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to revoke consent: ${error.message}`, error);
       return {
         success: false,
@@ -280,13 +286,13 @@ export class FabricContractService {
     try {
       const result = await this.contract.evaluateTransaction('GetAllCustomers');
 
-      const customers = JSON.parse(result.toString()) as CustomerDTO[];
+      const customers = JSON.parse(this.decode(result)) as CustomerDTO[];
 
       return {
         success: true,
         data: customers,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to get all customers: ${error.message}`, error);
       return {
         success: false,
@@ -307,13 +313,13 @@ export class FabricContractService {
         customerID,
       );
 
-      const history = JSON.parse(result.toString()) as CustomerHistoryDTO[];
+      const history = JSON.parse(this.decode(result)) as CustomerHistoryDTO[];
 
       return {
         success: true,
         data: history,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to get customer history: ${error.message}`, error);
       return {
         success: false,
@@ -335,10 +341,10 @@ export class FabricContractService {
 
       return {
         success: true,
-        txId: result.toString(),
+        txId: this.decode(result),
         message: 'Ledger initialized successfully',
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to init ledger: ${error.message}`, error);
       return {
         success: false,
@@ -360,11 +366,11 @@ export class FabricContractService {
 
       return {
         success: true,
-        txId: result.toString(),
+        txId: this.decode(result),
         message: `Function ${functionName} executed successfully`,
-        data: result.toString(),
+        data: this.decode(result),
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Failed to execute function ${functionName}: ${error.message}`,
         error,
@@ -386,9 +392,9 @@ export class FabricContractService {
 
       return {
         success: true,
-        data: result.toString(),
+        data: this.decode(result),
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Failed to query function ${functionName}: ${error.message}`,
         error,
@@ -400,3 +406,5 @@ export class FabricContractService {
     }
   }
 }
+
+

@@ -420,7 +420,7 @@ export default function CustomerApplication({ onNavigate, notifications = [] }) 
         kycSource: kycRecord ? `On-chain · ${kycRecord.issuer}` : 'New · customer portal',
         credentialId: kycRecord?.credentialId || null,
         creditScore: kycRecord?.score || null,
-        status: kycRecord?.status === 'Active' ? 'Auto-eligible' : 'Pending docs',
+        status: 'Pending',
         email: isAdmin ? form.email : (currentUser?.email || form.email),
         phone: form.phone,
         annualIncome: form.annualIncome,

@@ -33,7 +33,7 @@ export const LLOYDS_FABRIC_CONFIG: FabricNetworkConfig = {
 export const HALIFAX_FABRIC_CONFIG: FabricNetworkConfig = {
   channelName: 'kycchannel',
   chaincodeName: 'trustledger',
-  mspId: 'HalifaxMSP',
+  mspId: 'Org2MSP',
   walletPath: './wallet',
   connectionProfilePath:
     '../fabric-network/organizations/peerOrganizations/org2.example.com/connection-org2.json',

@@ -9,6 +9,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const isAdmin = currentUser?.role === 'admin';
   const [liveKyc, setLiveKyc] = useState({ loading: false, status: null, credentialId: null });
+  const selfiePhoto = (() => { try { return localStorage.getItem(`tl_user_selfie_${(currentUser?.email || 'guest').toLowerCase()}`) || null; } catch { return null; } })();
 
   useEffect(() => {
     if (!profileOpen || isAdmin || !currentUser?.email) return;
@@ -118,8 +119,10 @@ export default function Sidebar({ currentPage, onNavigate }) {
         </div>}
 
         <div data-tour="sb-profile" className="sb-foot" onClick={() => setProfileOpen(v => !v)} style={{ cursor: 'pointer' }} title="View profile">
-          <div className="sb-av" style={{ background: isAdmin ? '#0E6E4B' : '#2B5EA7', fontSize: 12, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            {currentUser?.initials || 'U'}
+          <div className="sb-av" style={{ background: isAdmin ? '#0E6E4B' : '#2B5EA7', fontSize: 12, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', padding: 0 }}>
+            {selfiePhoto && !isAdmin
+              ? <img src={selfiePhoto} alt="profile" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'inherit'}}/>
+              : (currentUser?.initials || 'U')}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="sb-fname">{currentUser?.name || 'User'}</div>
@@ -160,8 +163,10 @@ export default function Sidebar({ currentPage, onNavigate }) {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'center', marginTop: -34, position: 'relative', zIndex: 2 }}>
-                <div style={{ width: 68, height: 68, borderRadius: '50%', background: isAdmin ? 'linear-gradient(135deg,#024731,#059669)' : 'linear-gradient(135deg,#1D4ED8,#60A5FA)', color: '#fff', fontSize: 24, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #0D1F17', boxShadow: '0 4px 20px rgba(0,0,0,0.45), 0 0 0 1px rgba(79,216,154,0.3)' }}>
-                  {currentUser?.initials || 'U'}
+                <div style={{ width: 68, height: 68, borderRadius: '50%', background: isAdmin ? 'linear-gradient(135deg,#024731,#059669)' : 'linear-gradient(135deg,#1D4ED8,#60A5FA)', color: '#fff', fontSize: 24, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #0D1F17', boxShadow: '0 4px 20px rgba(0,0,0,0.45), 0 0 0 1px rgba(79,216,154,0.3)', overflow: 'hidden', padding: 0 }}>
+                  {selfiePhoto && !isAdmin
+                    ? <img src={selfiePhoto} alt="profile" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                    : (currentUser?.initials || 'U')}
                 </div>
               </div>
 

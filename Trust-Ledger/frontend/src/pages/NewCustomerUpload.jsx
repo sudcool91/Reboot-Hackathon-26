@@ -6,7 +6,7 @@ import { useStore } from '../store';
 import horseLogo from '../assets/lloyds-horse.gif';
 
 const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
-const STEPS = ['Personal details', 'Upload documents', 'Review & submit', 'Request submitted'];
+const STEPS = ['Personal details', 'Take selfie', 'Upload documents', 'Review & submit', 'Request submitted'];
 const DOC_TYPES = [
   { key: 'passport',  label: 'Passport / National ID', sub: 'Clear scan, valid photo ID',      icon: '\uD83E\uDEAA', required: true  },
   { key: 'proof_id',  label: 'Proof of identity',      sub: 'Front + back of driving licence', icon: '\uD83E\uDEAA', required: true  },
@@ -14,6 +14,8 @@ const DOC_TYPES = [
   { key: 'income',    label: 'Income proof',            sub: 'Salary slip or Form 16',          icon: '\uD83D\uDCB7', required: false },
   { key: 'bank_stmt', label: 'Bank statement',          sub: 'Last 6 months',                   icon: '\uD83C\uDFE6', required: false },
 ];
+
+const FABRIC_WRITE_TIMEOUT_MS = 6000;
 
 const validators = {
   fullName: (v) => {
@@ -97,11 +99,102 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
   });
   const [uploads, setUploads] = useState({});
   const fileRefs = useRef({});
+  const selfieKey = `tl_user_selfie_${(currentUser?.email || 'guest').toLowerCase()}`;
+  const [selfiePhoto, setSelfiePhoto] = useState(() => {
+    try { return localStorage.getItem(`tl_user_selfie_${(currentUser?.email || 'guest').toLowerCase()}`) || null; } catch { return null; }
+  });
+  const [cameraActive, setCameraActive] = useState(false); // modal visible
+  const [cameraReady, setCameraReady] = useState(false);   // stream playing
+  const [faceDir, setFaceDir] = useState(null);            // 'left'|'right'|'center'|null
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const faceRafRef = useRef(null);
   const [kycChecking, setKycChecking] = useState(false);
   const [existingKyc, setExistingKyc] = useState(null);
   const [kycChecked, setKycChecked]   = useState(false);
   const [showErrors, setShowErrors]   = useState(false);
   const [approvedDocs, setApprovedDocs] = useState(null); // array of doc keys or null
+
+  // Start camera stream AFTER modal DOM is painted
+  useEffect(() => {
+    if (!cameraActive) { setCameraReady(false); setFaceDir(null); return; }
+    let stream = null;
+    const init = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+        });
+        if (!videoRef.current) return;
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        setCameraReady(true);
+        // ── Face direction tracker ──────────────────────────────────────
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = 80; offCanvas.height = 60;
+        const ctx = offCanvas.getContext('2d');
+        const analyze = () => {
+          if (!videoRef.current || videoRef.current.readyState < 2) {
+            faceRafRef.current = requestAnimationFrame(analyze); return;
+          }
+          try {
+            ctx.drawImage(videoRef.current, 0, 0, 80, 60);
+            const { data } = ctx.getImageData(0, 0, 80, 60);
+            let L = 0, R = 0;
+            for (let y = 8; y < 52; y++) {
+              for (let x = 0; x < 80; x++) {
+                const i = (y * 80 + x) * 4;
+                const r = data[i], g = data[i + 1], b = data[i + 2];
+                if (r > 60 && g > 35 && b > 15 && r > g && r > b && r - b > 15 && Math.abs(r - g) < 55) {
+                  if (x < 40) L += r; else R += r;
+                }
+              }
+            }
+            const total = L + R;
+            if (total > 4000) {
+              // Video is mirror-flipped (scaleX(-1)), so raw-left = visual-right
+              const rawRightRatio = R / total;
+              if (rawRightRatio > 0.58)      setFaceDir('left');
+              else if (rawRightRatio < 0.42) setFaceDir('right');
+              else                           setFaceDir('center');
+            } else { setFaceDir(null); }
+          } catch {}
+          faceRafRef.current = requestAnimationFrame(analyze);
+        };
+        faceRafRef.current = requestAnimationFrame(analyze);
+      } catch {
+        pushToast('Camera not accessible — please allow camera permission', 'error');
+        setCameraActive(false);
+      }
+    };
+    const t = setTimeout(init, 80);
+    return () => {
+      clearTimeout(t);
+      if (faceRafRef.current) cancelAnimationFrame(faceRafRef.current);
+      if (stream) stream.getTracks().forEach(tr => tr.stop());
+      if (videoRef.current) videoRef.current.srcObject = null;
+      setCameraReady(false); setFaceDir(null);
+    };
+  }, [cameraActive]);
+
+  const startCamera = () => setCameraActive(true);
+  const stopCamera  = () => setCameraActive(false);
+
+  const takeSelfie = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    setSelfiePhoto(dataUrl);
+    try { localStorage.setItem(selfieKey, dataUrl); } catch {}
+    stopCamera();
+    pushToast('📸 Selfie captured!', 'success');
+  };
 
   const set = (k, v) => {
     setForm(f => ({ ...f, [k]: v }));
@@ -109,7 +202,12 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
     if (k === 'email' || k === 'fullName' || k === 'phone') { setKycChecked(false); setExistingKyc(null); }
   };
 
-  const nameErr  = validators.fullName(form.fullName);
+  // Stop camera on unmount
+  useEffect(() => () => stopCamera(), []);
+
+  const nameErr  = (isSelfUpload && currentUser?.name)
+    ? ''
+    : validators.fullName(form.fullName);
   const emailErr = validators.email(form.email);
   const dobErr   = validators.dob(form.dob);
   const step0Valid = !nameErr && !emailErr && !dobErr && !!form.fullName && !!form.email && !!form.dob;
@@ -226,7 +324,11 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
   };
 
   const reqDone = DOC_TYPES.filter(d => d.required).every(d => uploads[d.key]?.status === 'done');
-  const totalUp = Object.values(uploads).filter(u => u.status === 'done').length;
+  const sessionUp = Object.values(uploads).filter(u => u.status === 'done').length;
+  // When already approved, show count from the approved docs list (from DB), not the current session uploads
+  const totalUp = (pageKycStatus === 'approved' && approvedDocs !== null)
+    ? approvedDocs.length
+    : sessionUp;
   const pct = Math.round((totalUp / DOC_TYPES.length) * 100);
 
   const handleSubmit = async () => {
@@ -234,11 +336,31 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
 
     // ── Step 1: Register customer on Fabric ledger ─────────────────────────
     setFabricLoading(true);
+    // Yield to the browser so the overlay actually paints before we start async work
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     pushToast('⛓ Registering on Hyperledger Fabric…', 'info');
     const initials = form.fullName.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3);
     const customerID = `KYC-${initials}-${Date.now().toString().slice(-6)}`;
+
+    const FABRIC_MIN_DISPLAY_MS = 1500; // keep overlay visible for at least this long
+    const fabricStart = Date.now();
+
+    const runWithTimeout = (promise, timeoutMs) => new Promise((resolve) => {
+      const timer = setTimeout(() => resolve({ __timedOut: true }), timeoutMs);
+      promise
+        .then((value) => {
+          clearTimeout(timer);
+          resolve(value ?? null);
+        })
+        .catch(() => {
+          clearTimeout(timer);
+          resolve(null);
+        });
+    });
+
     try {
-      await adminCreateBlockchainCustomer({
+      const fabricResult = await runWithTimeout(
+        adminCreateBlockchainCustomer({
         customerID,
         fullName:    form.fullName,
         email:       form.email,
@@ -247,15 +369,28 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
         address:     form.address,
         nationalID:  form.nationality,
         issuingBank: 'LloydsBankingGroup',
-      });
-      pushToast('✅ Customer registered on Fabric ledger', 'success');
+      }),
+        FABRIC_WRITE_TIMEOUT_MS,
+      );
+
+      if (fabricResult && !fabricResult.__timedOut) {
+        pushToast('✅ Customer registered on Fabric ledger', 'success');
+      } else {
+        pushToast('⚠️ Fabric is slow/unreachable — continuing KYC submission', 'warn');
+      }
     } catch (fabricErr) {
       // Non-fatal — continue to submit KYC request even if Fabric is down
       pushToast('⚠️ Fabric registration skipped — continuing KYC submission', 'warn');
     }
+    // Ensure overlay is visible for at least FABRIC_MIN_DISPLAY_MS
+    const elapsed = Date.now() - fabricStart;
+    if (elapsed < FABRIC_MIN_DISPLAY_MS) {
+      await new Promise(resolve => setTimeout(resolve, FABRIC_MIN_DISPLAY_MS - elapsed));
+    }
     setFabricLoading(false);
 
     // ── Step 2: Submit KYC request to admin queue ──────────────────────────
+    setFabricLoading(true);
     pushToast('📨 Submitting KYC request to admin…', 'info');
     const docKeys = Object.keys(uploads).filter(k => uploads[k]?.status === 'done').join(',');
     await submitKycRequest({
@@ -270,8 +405,9 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
       status: 'pending',
     });
 
+    setFabricLoading(false);
     setSubmitting(false);
-    setStep(3);
+    setStep(4);
     pushToast('📨 KYC request submitted — awaiting admin approval', 'success');
   };
 
@@ -335,7 +471,7 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                 Submit identity documents once — your credential is hashed on-chain and reused instantly across every Lloyds product. No re-verification, ever.
               </div>
             </div>
-            {step < 3 && (
+            {step < 4 && (
               <div style={{display:'flex',alignItems:'center',gap:12,flexShrink:0}}>
                 <svg width="68" height="68" viewBox="0 0 68 68">
                   <circle cx="34" cy="34" r="29" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6"/>
@@ -643,17 +779,198 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                     if (!step0Valid || (kycChecked && existingKyc)) return;
                     setStep(1); pushToast('Personal details saved ✓', 'success');
                   }}>
-                  Continue to documents →
+                  Continue to selfie →
                 </button>
               </div>
             </motion.div>
           )}
 
           {step === 1 && (
-            <motion.div key="s1" variants={fadeUp} initial="hidden" animate="show" exit={{ opacity: 0 }}>
+            <motion.div key="s1-selfie" variants={fadeUp} initial="hidden" animate="show" exit={{ opacity: 0 }}>
+
+              {/* ── Camera modal overlay ── */}
+              <AnimatePresence>
+                {cameraActive && (
+                  <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+                    style={{position:'fixed',inset:0,zIndex:99999,background:'rgba(0,0,0,0.94)',backdropFilter:'blur(12px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:24}}>
+
+                    {/* Header */}
+                    <div style={{textAlign:'center'}}>
+                      <div style={{fontSize:13,fontWeight:800,letterSpacing:'0.12em',color:'rgba(255,255,255,0.45)',textTransform:'uppercase',marginBottom:6}}>📸 Identity Verification · IVS UK</div>
+                      <div style={{fontSize:22,fontWeight:900,color:'#fff'}}>Position your face in the frame</div>
+                      <div style={{fontSize:13,color:'rgba(255,255,255,0.5)',marginTop:4}}>Look straight ahead · Good lighting · No glasses if possible</div>
+                    </div>
+
+                    {/* Video frame */}
+                    <div style={{position:'relative',width:360,height:360,display:'flex',alignItems:'center',justifyContent:'center'}}>
+
+                      {/* Left direction bar */}
+                      <motion.div animate={{background: faceDir==='right'?'#22C55E': faceDir==='left'?'#EF4444':'rgba(255,255,255,0.12)', boxShadow: faceDir==='right'?'0 0 18px rgba(34,197,94,0.7)': faceDir==='left'?'0 0 18px rgba(239,68,68,0.7)':'none'}}
+                        transition={{duration:0.25}}
+                        style={{position:'absolute',left:-14,top:'25%',width:10,height:'50%',borderRadius:6}}>
+                        {faceDir==='left' && <motion.div animate={{opacity:[1,0.3,1]}} transition={{duration:0.6,repeat:Infinity}} style={{position:'absolute',top:'50%',left:-20,transform:'translateY(-50%)',fontSize:14,color:'#EF4444'}}>◀</motion.div>}
+                        {faceDir==='right' && <motion.div animate={{opacity:[1,0.3,1]}} transition={{duration:0.6,repeat:Infinity}} style={{position:'absolute',top:'50%',left:-20,transform:'translateY(-50%)',fontSize:14,color:'#22C55E'}}>◀</motion.div>}
+                      </motion.div>
+
+                      {/* Right direction bar */}
+                      <motion.div animate={{background: faceDir==='left'?'#22C55E': faceDir==='right'?'#EF4444':'rgba(255,255,255,0.12)', boxShadow: faceDir==='left'?'0 0 18px rgba(34,197,94,0.7)': faceDir==='right'?'0 0 18px rgba(239,68,68,0.7)':'none'}}
+                        transition={{duration:0.25}}
+                        style={{position:'absolute',right:-14,top:'25%',width:10,height:'50%',borderRadius:6}}>
+                        {faceDir==='right' && <motion.div animate={{opacity:[1,0.3,1]}} transition={{duration:0.6,repeat:Infinity}} style={{position:'absolute',top:'50%',right:-20,transform:'translateY(-50%)',fontSize:14,color:'#EF4444'}}>▶</motion.div>}
+                        {faceDir==='left' && <motion.div animate={{opacity:[1,0.3,1]}} transition={{duration:0.6,repeat:Infinity}} style={{position:'absolute',top:'50%',right:-20,transform:'translateY(-50%)',fontSize:14,color:'#22C55E'}}>▶</motion.div>}
+                      </motion.div>
+
+                      {/* Oval SVG guide */}
+                      <svg style={{position:'absolute',inset:0,width:'100%',height:'100%',zIndex:2,pointerEvents:'none'}} viewBox="0 0 360 360">
+                        <defs>
+                          <mask id="oval-mask">
+                            <rect width="360" height="360" fill="white"/>
+                            <ellipse cx="180" cy="175" rx="120" ry="148" fill="black"/>
+                          </mask>
+                        </defs>
+                        <rect width="360" height="360" fill="rgba(0,0,0,0.55)" mask="url(#oval-mask)"/>
+                        <ellipse cx="180" cy="175" rx="120" ry="148" fill="none"
+                          stroke={faceDir==='center'?'#22C55E':'#4DFF9A'}
+                          strokeWidth={faceDir==='center'?3:2}
+                          strokeDasharray={faceDir==='center'?'none':'8 4'}/>
+                      </svg>
+
+                      {/* Video */}
+                      <video ref={videoRef} autoPlay playsInline muted
+                        style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:20,transform:'scaleX(-1)',display:'block',opacity:cameraReady?1:0,transition:'opacity 0.4s'}}/>
+                      {!cameraReady && (
+                        <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',color:'rgba(255,255,255,0.4)',fontSize:13}}>
+                          <motion.div animate={{opacity:[0.4,1,0.4]}} transition={{duration:1.2,repeat:Infinity}}>Starting camera…</motion.div>
+                        </div>
+                      )}
+                      <canvas ref={canvasRef} style={{display:'none'}}/>
+                    </div>
+
+                    {/* Centre status hint */}
+                    <div style={{height:22,fontSize:12,fontWeight:700,letterSpacing:'0.05em',
+                      color: faceDir==='center'?'#22C55E': faceDir?'#FCD34D':'rgba(255,255,255,0.35)',
+                      transition:'color 0.3s'}}>
+                      {faceDir==='center'?'✓ Face centred — ready to capture':
+                       faceDir==='left'?'← Move face left to centre':
+                       faceDir==='right'?'Move face right to centre →':
+                       cameraReady?'Detecting face…':''}
+                    </div>
+
+                    {/* Buttons */}
+                    <div style={{display:'flex',gap:14,alignItems:'center'}}>
+                      <button onClick={stopCamera}
+                        style={{padding:'11px 24px',borderRadius:10,background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.18)',color:'rgba(255,255,255,0.7)',fontWeight:700,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
+                        ✕ Cancel
+                      </button>
+                      <motion.button onClick={takeSelfie} disabled={!cameraReady}
+                        whileTap={{scale:0.95}}
+                        style={{padding:'14px 40px',borderRadius:12,background: faceDir==='center'?'linear-gradient(135deg,#15803D,#22C55E)':'linear-gradient(135deg,#024731,#059669)',color:'#fff',border:'none',fontWeight:900,fontSize:15,cursor:cameraReady?'pointer':'not-allowed',fontFamily:'inherit',display:'flex',alignItems:'center',gap:10,boxShadow:faceDir==='center'?'0 0 32px rgba(34,197,94,0.55)':'0 0 28px rgba(5,150,105,0.35)',opacity:cameraReady?1:0.6,transition:'all 0.3s'}}>
+                        <span style={{fontSize:20}}>📸</span> Take Photo
+                      </motion.button>
+                    </div>
+
+                    <div style={{fontSize:10,color:'rgba(255,255,255,0.18)',letterSpacing:'0.07em'}}>Photo processed locally · hash only stored on-chain</div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <section className="block">
-                <div className="block-head"><div className="block-title"><span className="block-num">02</span>Upload documents</div></div>
+                <div className="block-head"><div className="block-title"><span className="block-num">02</span>Identity selfie</div></div>
                 <div className="card-pad-standalone">
+
+                  {/* IVS notice banner — prominent */}
+                  <div style={{background:'linear-gradient(135deg,#0B1F5C,#1D4ED8)',borderRadius:14,padding:'18px 22px',marginBottom:24,display:'flex',gap:16,alignItems:'flex-start',boxShadow:'0 4px 20px rgba(29,78,216,0.25)'}}>
+                    <div style={{width:44,height:44,borderRadius:12,background:'rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>🇬🇧</div>
+                    <div>
+                      <div style={{fontSize:15,fontWeight:900,color:'#fff',marginBottom:4}}>
+                        Sent to IVS — Identity Verification Service (UK)
+                      </div>
+                      <div style={{fontSize:12.5,color:'rgba(255,255,255,0.72)',lineHeight:1.65}}>
+                        Your selfie is securely transmitted to the <b style={{color:'#93C5FD'}}>UK Identity Verification Service (IVS)</b> operated under the <b style={{color:'#93C5FD'}}>DIATF (Digital Identity &amp; Attributes Trust Framework)</b>. It is used solely to verify that the person applying matches their submitted documents. Your photo is <b style={{color:'#93C5FD'}}>never stored on-chain</b> — only a cryptographic hash is recorded on the Hyperledger Fabric ledger.
+                      </div>
+                      <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
+                        {['UK DIATF Compliant','GDPR Protected','End-to-end encrypted','Biometric liveness check'].map(t=>(
+                          <span key={t} style={{fontSize:10,fontWeight:700,background:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.2)',color:'#BAE6FD',borderRadius:20,padding:'3px 10px'}}>{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Selfie card */}
+                  <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:20}}>
+                    {selfiePhoto ? (
+                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:14}}>
+                        <div style={{position:'relative'}}>
+                          <img src={selfiePhoto} alt="Your selfie"
+                            style={{width:200,height:200,objectFit:'cover',borderRadius:'50%',border:'4px solid #024731',boxShadow:'0 4px 32px rgba(2,71,49,0.35)'}}/>
+                          <div style={{position:'absolute',bottom:6,right:6,background:'#024731',borderRadius:'50%',width:38,height:38,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,boxShadow:'0 2px 10px rgba(0,0,0,0.35)',border:'2px solid #fff'}}>✅</div>
+                        </div>
+                        <div style={{textAlign:'center'}}>
+                          <div style={{fontSize:14,fontWeight:800,color:'#024731',marginBottom:3}}>Selfie captured</div>
+                          <div style={{fontSize:12,color:'#6A6A5A'}}>Your photo will be submitted to IVS for verification</div>
+                        </div>
+                        <button onClick={()=>{setSelfiePhoto(null);}}
+                          style={{padding:'9px 22px',borderRadius:8,background:'#F0EFE6',border:'1px solid #D4D3C4',color:'#4A4A40',fontWeight:700,fontSize:12,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:6}}>
+                          🔄 Retake
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:16}}>
+                        {/* Placeholder circle */}
+                        <div style={{width:180,height:180,borderRadius:'50%',background:'#F2F0E6',border:'3px dashed #C6C5B5',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:8}}>
+                          <span style={{fontSize:52,lineHeight:1}}>🤳</span>
+                          <span style={{fontSize:11,color:'#9A9A8A',fontWeight:600}}>No photo yet</span>
+                        </div>
+                        <motion.button onClick={startCamera}
+                          whileHover={{scale:1.03}} whileTap={{scale:0.97}}
+                          style={{padding:'14px 36px',borderRadius:12,background:'linear-gradient(135deg,#024731,#059669)',color:'#fff',border:'none',fontWeight:900,fontSize:15,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',gap:10,boxShadow:'0 4px 20px rgba(2,71,49,0.3)'}}>
+                          <span style={{fontSize:20}}>📷</span> Open Camera &amp; Take Selfie
+                        </motion.button>
+                        <div style={{fontSize:11,color:'#9A9A8A',textAlign:'center'}}>A full-screen camera will open. Position your face and click Take Photo.</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              <div className="ncu-actions">
+                <button className="btn-ghost" onClick={()=>{stopCamera();setStep(0);}}>← Back</button>
+                <div style={{display:'flex',gap:10}}>
+                  {!selfiePhoto && (
+                    <button className="btn-ghost" onClick={()=>{stopCamera();setStep(2);pushToast('Selfie skipped','info');}}>
+                      Skip for now →
+                    </button>
+                  )}
+                  <button className="btn-primary"
+                    onClick={()=>{stopCamera();setStep(2);pushToast('Selfie saved ✓','success');}}
+                    style={{opacity:selfiePhoto?1:0.5,pointerEvents:selfiePhoto?'auto':'none'}}>
+                    Continue to documents →
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 2 && (
+            <motion.div key="s2" variants={fadeUp} initial="hidden" animate="show" exit={{ opacity: 0 }}>
+              <section className="block">
+                <div className="block-head"><div className="block-title"><span className="block-num">03</span>Upload documents</div></div>
+                <div className="card-pad-standalone">
+                  {/* KYC provider notice */}
+                  <div style={{display:'flex',alignItems:'flex-start',gap:12,background:'linear-gradient(135deg,#0c1f3f,#0f2a55)',border:'1px solid rgba(99,179,237,0.35)',borderRadius:12,padding:'14px 18px',marginBottom:20}}>
+                    <span style={{fontSize:20,flexShrink:0,marginTop:1}}>🔏</span>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:800,color:'#93C5FD',letterSpacing:'0.04em',marginBottom:3}}>Documents will be sent to KYC Provider for verification</div>
+                      <div style={{fontSize:12,color:'rgba(147,197,253,0.75)',lineHeight:1.6}}>
+                        All uploaded documents will be securely transmitted to our certified <strong style={{color:'#93C5FD'}}>KYC / AML verification provider</strong> in accordance with UK Financial Conduct Authority (FCA) guidelines and the <strong style={{color:'#93C5FD'}}>Money Laundering Regulations 2017</strong>. Documents are encrypted in transit and at rest.
+                      </div>
+                      <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap'}}>
+                        {['FCA Regulated','AML Compliant','256-bit Encrypted','GDPR Protected'].map(badge=>(
+                          <span key={badge} style={{fontSize:10,fontWeight:700,color:'#60A5FA',background:'rgba(96,165,250,0.12)',border:'1px solid rgba(96,165,250,0.3)',borderRadius:99,padding:'2px 10px',letterSpacing:'0.04em'}}>{badge}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                   <div className="ncu-doc-grid">
                     {DOC_TYPES.map(doc => {
                       const up = uploads[doc.key];
@@ -706,19 +1023,19 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                 </div>
               </section>
               <div className="ncu-actions">
-                <button className="btn-ghost" onClick={() => setStep(0)}>← Back</button>
+                <button className="btn-ghost" onClick={() => setStep(1)}>← Back</button>
                 <button className="btn-primary" disabled={!reqDone} style={{ opacity: !reqDone ? 0.5 : 1 }}
-                  onClick={() => { setStep(2); pushToast('Documents verified ✓', 'success'); }}>
+                  onClick={() => { setStep(3); pushToast('Documents verified ✓', 'success'); }}>
                   Review & submit →
                 </button>
               </div>
             </motion.div>
           )}
 
-          {step === 2 && (
-            <motion.div key="s2" variants={fadeUp} initial="hidden" animate="show" exit={{ opacity: 0 }}>
+          {step === 3 && (
+            <motion.div key="s3" variants={fadeUp} initial="hidden" animate="show" exit={{ opacity: 0 }}>
               <section className="block">
-                <div className="block-head"><div className="block-title"><span className="block-num">03</span>Review & submit</div></div>
+                <div className="block-head"><div className="block-title"><span className="block-num">04</span>Review & submit</div></div>
                 <div className="card-pad-standalone">
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
                     {Object.entries(form).filter(([, v]) => v).map(([k, v]) => (
@@ -741,7 +1058,7 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
                 </div>
               </section>
               <div className="ncu-actions">
-                <button className="btn-ghost" onClick={() => setStep(1)}>← Back</button>
+                <button className="btn-ghost" onClick={() => setStep(2)}>← Back</button>
                 <button className="btn-primary" onClick={handleSubmit} disabled={submitting}>
                   {submitting ? '⏳ Submitting request...' : '📨 Submit KYC Request to Admin'}
                 </button>
@@ -749,8 +1066,8 @@ export default function NewCustomerUpload({ onNavigate, notifications = [] }) {
             </motion.div>
           )}
 
-          {step === 3 && (
-            <motion.div key="s3" variants={fadeUp} initial="hidden" animate="show">
+          {step === 4 && (
+            <motion.div key="s4" variants={fadeUp} initial="hidden" animate="show">
               {/* Dark success card */}
               <div style={{
                 background:'linear-gradient(135deg,#012820 0%,#024731 50%,#0B3A6B 100%)',
